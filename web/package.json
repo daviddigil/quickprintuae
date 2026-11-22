@@ -13,7 +13,7 @@
     "db:seed": "tsx --tsconfig tsconfig.json scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --tsconfig tsconfig.json --test \"src/**/*.test.ts\"",
-    "e2e": "playwright test"
+    "e2e": "node e2e/full-flow.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

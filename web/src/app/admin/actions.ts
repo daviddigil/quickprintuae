@@ -56,7 +56,6 @@ export async function bookCourier(fd: FormData) {
   try {
     const r = await bookDelivery(tenant, o, (str(fd, "provider") || undefined) as DeliveryProviderCode | undefined);
     await db.update(schema.orders).set({ deliveryProvider: r.provider, deliveryRef: r.ref, deliveryTrackingUrl: r.trackingUrl ?? null, deliveryStatus: r.status, updatedAt: new Date() }).where(eq(schema.orders.id, o.id));
-    await db.insert(schema.orderEvents).values({ orderId: o.id, status: "delivery_booked", message: `${r.provider} ${r.ref}` });
     await audit("order.delivery_booked", { orderId: o.id, provider: r.provider, ref: r.ref }, tenant.id);
     msg = `Delivery booked with ${r.provider} (${r.ref})`;
   } catch (e) {

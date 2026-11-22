@@ -119,7 +119,7 @@ Traefik works too: use a wildcard certificate via DNS challenge, plus an HTTP-ch
 | Schedule | Request | Purpose |
 |---|---|---|
 | Daily 02:15 Asia/Dubai | `GET /api/v1/superadmin/cron/billing?secret=$CRON_SECRET` | Bill last month (idempotent), collect open invoices, end trials, dunning |
-| Hourly | confidential-file purge cron (see admin/integration routes) | Delete confidential uploads past retention |
+| Hourly | `GET /api/cron/purge?secret=$CRON_SECRET` | Delete confidential uploads past retention |
 
 The `cron` service in `docker-compose.yml` runs the billing job. In the cloud, use EventBridge Scheduler, a Kubernetes CronJob, or a simple systemd timer.
 

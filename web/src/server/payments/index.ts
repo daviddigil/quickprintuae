@@ -19,6 +19,8 @@ export function enabledProviders(tenant: Tenant): ProviderCode[] {
   const out: ProviderCode[] = [];
   if (p.stripe?.enabled && p.stripe.secretKeyEnc) out.push("stripe");
   if (p.mamo?.enabled && p.mamo.apiKeyEnc) out.push("mamo");
+  // Demo mode: offer both simulated providers when the shop has none configured.
+  if (!out.length && process.env.PAYMENTS_FAKE === "1") return ["stripe", "mamo"];
   return out;
 }
 
@@ -32,7 +34,7 @@ export async function createCheckout(
   if (order.total <= 0) throw new Error("Order total must be greater than zero");
 
   let result: CheckoutResult;
-  if (fakeMode() && !enabledProviders(tenant).includes(provider)) {
+  if (fakeMode()) {
     const ref = `fake_${provider}_${order.id.slice(0, 8)}_${Date.now()}`;
     result = { providerRef: ref, url: `${urls.successUrl}${urls.successUrl.includes("?") ? "&" : "?"}fake_payment=${ref}` };
   } else {
