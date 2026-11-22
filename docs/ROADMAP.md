@@ -1,5 +1,7 @@
 # Product Roadmap
 
+_QuickPrint UAE — Powered by Nexsofture Tech_
+
 ## v1.0: MVP (this repository)
 - Multi-tenant SaaS: marketing site, self-serve signup with a 14-day trial, subdomain + custom-domain storefronts
 - Catalog pre-loaded with UAE defaults: documents (A5–A0), confidential printing, global photo sizes, passport/visa photo presets, framed prints, business cards, flyers, brochures, notebooks, posters
@@ -21,7 +23,7 @@
 
 ## v1.5: Months 4–6 (revenue expansion)
 - **B2B corporate accounts:** company profiles, multiple buyers, approval flow, credit terms, monthly statements
-- **WhatsApp ordering bot:** send a file → get a quote → pay link → done
+- **WhatsApp ordering bot (built, switched off — "Coming soon"; enable with `WHATSAPP_ENABLED=1` after Meta app review):** WhatsApp Business coexistence, AI quotes and checkout links, human takeover. See `docs/WHATSAPP.md`.
 - Multi-branch management: per-branch inventory of services, routing orders to the nearest branch
 - Re-order in one click, saved designs, brand kits for companies
 - Print-ready preflight (DPI check, bleed, CMYK warning) for uploads

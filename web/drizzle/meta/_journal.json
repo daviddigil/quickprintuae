@@ -15,6 +15,13 @@
       "when": 1795373881255,
       "tag": "0001_slimy_leopardon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795375104328,
+      "tag": "0002_sticky_owl",
+      "breakpoints": true
     }
   ]
 }

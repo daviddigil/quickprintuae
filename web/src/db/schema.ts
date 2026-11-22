@@ -231,6 +231,55 @@ export const banners = pgTable("banners", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("banners_tenant_idx").on(t.tenantId, t.active)]);
 
+/* ---------- WhatsApp (coexistence + AI ordering; shipped behind WHATSAPP_ENABLED) ---------- */
+export const whatsappAccounts = pgTable("whatsapp_accounts", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().unique().references(() => tenants.id, { onDelete: "cascade" }),
+  wabaId: text("waba_id").notNull(),
+  phoneNumberId: text("phone_number_id").notNull().unique(),
+  displayPhone: text("display_phone"),
+  accessTokenEnc: text("access_token_enc").notNull(),
+  mode: text("mode").notNull().default("coexistence"), // coexistence | cloud
+  status: text("status").notNull().default("connected"), // connected | disconnected | error
+  aiEnabled: boolean("ai_enabled").notNull().default(true),
+  greeting: text("greeting").notNull().default(""),
+  handoffMinutes: integer("handoff_minutes").notNull().default(720),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const whatsappConversations = pgTable("whatsapp_conversations", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  accountId: uuid("account_id").notNull().references(() => whatsappAccounts.id, { onDelete: "cascade" }),
+  customerWaId: text("customer_wa_id").notNull(),
+  customerName: text("customer_name"),
+  aiPausedUntil: timestamp("ai_paused_until", { withTimezone: true }),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+  /** last customer message time, drives the 24h customer-service window */
+  lastCustomerMessageAt: timestamp("last_customer_message_at", { withTimezone: true }),
+  refs: jsonb("refs").$type<{ cartLinks?: string[]; orderIds?: string[] }>().notNull().default({}),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("wa_conv_account_customer_idx").on(t.accountId, t.customerWaId),
+  index("wa_conv_tenant_last_idx").on(t.tenantId, t.lastMessageAt),
+]);
+
+export const whatsappMessages = pgTable("whatsapp_messages", {
+  id: id(),
+  conversationId: uuid("conversation_id").notNull().references(() => whatsappConversations.id, { onDelete: "cascade" }),
+  waMessageId: text("wa_message_id"), // null for fake sends
+  direction: text("direction").notNull(), // in | out
+  source: text("source").notNull(), // customer | ai | business_app | admin
+  type: text("type").notNull().default("text"),
+  body: text("body").notNull().default(""),
+  status: text("status"), // sent | delivered | read | failed
+  raw: jsonb("raw"),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("wa_msg_wamid_idx").on(t.waMessageId),
+  index("wa_msg_conv_idx").on(t.conversationId, t.createdAt),
+]);
+
 export const cardDesigns = pgTable("card_designs", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
@@ -276,3 +325,5 @@ export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
 export type Banner = typeof banners.$inferSelect;
+export type WhatsappAccount = typeof whatsappAccounts.$inferSelect;
+export type WhatsappConversation = typeof whatsappConversations.$inferSelect;

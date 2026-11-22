@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PoweredBy } from "@/components/PoweredBy";
 
 export function MarketingNav() {
   return (
@@ -32,7 +33,7 @@ export function MarketingFooter() {
         <div className="space-y-1"><p className="font-semibold text-slate-900">Product</p><Link href="/#features" className="block">Features</Link><Link href="/pricing" className="block">Pricing</Link><Link href="/s/demo" className="block">Demo store</Link></div>
         <div className="space-y-1"><p className="font-semibold text-slate-900">Company</p><Link href="/signup" className="block">Start a free trial</Link><Link href="/login" className="block">Sign in</Link><p>Prices in AED, excl. 5% VAT.</p></div>
       </div>
-      <p className="pb-8 text-center text-xs text-slate-400">© {new Date().getFullYear()} QuickPrint UAE</p>
+      <div className="pb-8 text-center"><p className="text-xs text-slate-400">© {new Date().getFullYear()} QuickPrint UAE</p><PoweredBy className="mt-1" /></div>
     </footer>
   );
 }

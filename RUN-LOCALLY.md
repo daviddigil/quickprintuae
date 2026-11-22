@@ -1,4 +1,5 @@
 # Run QuickPrint UAE on your computer
+_Powered by Nexsofture Tech_
 
 ## 1. Install once
 - Node.js 22+  (https://nodejs.org)

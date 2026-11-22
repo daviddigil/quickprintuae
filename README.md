@@ -1,5 +1,7 @@
 # QuickPrint UAE
 
+> **Powered by Nexsofture Tech**
+
 A multi-tenant print-on-demand SaaS for UAE print shops. One deployment serves:
 
 | Surface | URL | Who |

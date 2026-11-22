@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# QuickPrint UAE — production image (Next.js standalone + bundled migrate/seed scripts)
+# QuickPrint UAE (Powered by Nexsofture Tech) — production image (Next.js standalone + bundled migrate/seed scripts)
 
 FROM node:22-alpine AS deps
 WORKDIR /app
@@ -39,3 +39,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3000/ >/dev/null || exit 1
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "server.js"]
+
+LABEL org.opencontainers.image.title="QuickPrint UAE" org.opencontainers.image.vendor="Nexsofture Tech" org.opencontainers.image.description="Print-on-demand platform. Powered by Nexsofture Tech"

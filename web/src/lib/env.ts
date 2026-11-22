@@ -18,6 +18,11 @@ export const env = {
   imageApiUrl: process.env.IMAGE_API_URL || undefined,
   imageApiKey: process.env.IMAGE_API_KEY || undefined,
   imageApiModel: process.env.IMAGE_API_MODEL || "qwen-image",
+  metaAppId: process.env.META_APP_ID || undefined,
+  metaAppSecret: process.env.META_APP_SECRET || undefined,
+  metaVerifyToken: process.env.META_VERIFY_TOKEN || undefined,
+  metaEmbeddedSignupConfigId: process.env.META_EMBEDDED_SIGNUP_CONFIG_ID || undefined,
+  metaGraphVersion: process.env.META_GRAPH_VERSION || "v21.0",
   geminiKey: process.env.GEMINI_API_KEY || undefined,
   geminiImageModel: process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image",
   /** platform Stripe account used for SaaS billing of print shops */

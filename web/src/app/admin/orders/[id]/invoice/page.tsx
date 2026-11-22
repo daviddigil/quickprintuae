@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/auth";
 import { formatAED, round2 } from "@/lib/pricing";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { dubai, slotLabel } from "@/components/admin/format";
+import { PoweredBy } from "@/components/PoweredBy";
 
 export const metadata = { title: "Invoice" };
 
@@ -99,6 +100,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           </div>
         )}
         {!ticket && <p className="mt-10 text-center text-xs text-slate-400">Thank you for your business. This is a computer-generated document.</p>}
+        <PoweredBy className="mt-2 text-center" />
       </div>
     </div>
   );

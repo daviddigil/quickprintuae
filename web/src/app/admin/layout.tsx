@@ -3,6 +3,7 @@ import { db, schema } from "@/db";
 import { requireStaff } from "@/lib/auth";
 import { storePath } from "@/lib/tenant";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { PoweredBy } from "@/components/PoweredBy";
 
 export const metadata = { title: { default: "Admin", template: "%s · Admin" } };
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       )}
       <div className="lg:flex">
         <AdminNav shopName={tenant.name} storeUrl={storePath(tenant.slug)} isOwner={user.role === "owner"} userName={user.name} planLine={planLine} />
-        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8 print:p-0">{children}</main>
+        <div className="flex min-w-0 flex-1 flex-col"><main className="flex-1 p-4 sm:p-6 lg:p-8 print:p-0">{children}</main><PoweredBy className="pb-4 text-center print:hidden" /></div>
       </div>
     </div>
   );

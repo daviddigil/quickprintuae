@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LoginForm } from "./login-form";
+import { PoweredBy } from "@/components/PoweredBy";
 
 export const metadata = { title: "Sign in" };
 
@@ -15,6 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <LoginForm next={next} />
         </div>
         <p className="mt-4 text-center text-sm text-slate-500">New print shop? <a className="font-semibold text-brand-600" href="/signup">Start a free trial</a></p>
+        <PoweredBy className="mt-6 text-center" />
       </div>
     </main>
   );

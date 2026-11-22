@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth";
+import { PoweredBy } from "@/components/PoweredBy";
 
 export const metadata = { title: "Super Admin" };
 
@@ -31,7 +32,7 @@ export default async function SuperadminLayout({ children }: { children: React.R
           <a href="/logout?next=/login" className="mt-2 inline-block text-slate-400 hover:text-white">Sign out</a>
         </div>
       </aside>
-      <main className="flex-1 p-4 sm:p-8">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col"><main className="flex-1 p-4 sm:p-8">{children}</main><PoweredBy className="pb-4 text-center" /></div>
     </div>
   );
 }

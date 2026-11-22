@@ -6,6 +6,7 @@ import { db, schema } from "@/db";
 import { getCustomer } from "@/lib/auth";
 import { requireStorefrontTenant } from "@/lib/tenant";
 import { CartBadge } from "@/components/store/cart-badge";
+import { PoweredBy } from "@/components/PoweredBy";
 
 type P = { params: Promise<{ tenant: string }> };
 
@@ -65,7 +66,7 @@ export default async function StoreLayout({ children, params }: P & { children: 
           </div>
           <div>
             <p>Secure online payment by card, Apple Pay & Google Pay. Prices in AED, VAT {tenant.settings?.vatRate ?? 5}% {tenant.settings?.pricesIncludeVat ? "included" : "added at checkout"}.</p>
-            <p className="mt-2 text-xs text-slate-400">Powered by QuickPrint</p>
+            <PoweredBy className="mt-2" />
           </div>
         </div>
       </footer>

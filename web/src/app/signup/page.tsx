@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getPublicPlans } from "@/server/billing/public-plans";
 import { SignupForm } from "./signup-form";
+import { PoweredBy } from "@/components/PoweredBy";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Start your free trial" };
@@ -29,6 +30,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           <h2 className="text-2xl font-bold">Create your print shop</h2>
           <p className="mb-6 text-sm text-slate-500">Takes about 2 minutes.</p>
           <SignupForm plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.priceMonthly }))} defaultPlan={plan} />
+          <PoweredBy className="mt-8" />
         </div>
       </section>
     </main>

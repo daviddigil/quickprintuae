@@ -1,5 +1,7 @@
 # QuickPrint UAE: Business Plan (v1, Nov 2026)
 
+_Powered by Nexsofture Tech_
+
 > Written from the co-founder / CFO / analyst seat. **Every market figure here is an estimate or assumption, not verified data.** Replace each one with real numbers from customer interviews and the first pilots before showing this to investors.
 
 ## 1. One-line pitch

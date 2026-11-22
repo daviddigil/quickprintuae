@@ -49,5 +49,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
-  }
+  },
+  "author": "Nexsofture Tech",
+  "description": "QuickPrint UAE \u2014 print-on-demand platform. Powered by Nexsofture Tech"
 }

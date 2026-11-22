@@ -3,6 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "QuickPrint UAE — print-on-demand platform for UAE print shops", template: "%s · QuickPrint" },
+  applicationName: "QuickPrint",
+  authors: [{ name: "Nexsofture Tech" }],
+  creator: "Nexsofture Tech",
+  publisher: "Nexsofture Tech",
   description: "Launch an online print shop in minutes: documents, photos, business cards, flyers, with Stripe/Mamo Pay and scheduled delivery across the UAE.",
 };
 
