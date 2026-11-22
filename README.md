@@ -50,7 +50,7 @@ npm run dev                     # http://localhost:3000
 ```
 
 Seeded logins (dev only):
-- Super admin: `admin@quickprint.ae` / `admin12345` → `/superadmin`
+- Super admin: `admin@quickprint.ae` / the `SUPERADMIN_PASSWORD` from `.env` (default `change-me-now`; `admin12345` if unset) → `/superadmin`
 - Demo shop owner: `owner@demo.ae` / `owner12345` → `/admin`
 - Demo customer: `customer@demo.ae` / `customer123` → `/s/demo`
 

@@ -1,7 +1,7 @@
 import "server-only";
 
 function req(name: string, fallback?: string) {
-  const v = process.env[name] ?? fallback;
+  const v = process.env[name] || fallback; // empty string counts as unset
   if (v === undefined) throw new Error(`Missing env ${name}`);
   return v;
 }
@@ -17,5 +17,5 @@ export const env = {
   /** platform Stripe account used for SaaS billing of print shops */
   platformStripeKey: process.env.PLATFORM_STRIPE_SECRET_KEY,
   platformStripeWebhookSecret: process.env.PLATFORM_STRIPE_WEBHOOK_SECRET,
-  cronSecret: process.env.CRON_SECRET ?? "dev-cron",
+  cronSecret: process.env.CRON_SECRET || "dev-cron",
 };

@@ -20,12 +20,12 @@ export function enabledProviders(tenant: Tenant): ProviderCode[] {
   if (p.stripe?.enabled && p.stripe.secretKeyEnc) out.push("stripe");
   if (p.mamo?.enabled && p.mamo.apiKeyEnc) out.push("mamo");
   // Demo mode: offer both simulated providers when the shop has none configured.
-  if (!out.length && process.env.PAYMENTS_FAKE === "1") return ["stripe", "mamo"];
+  if (!out.length && ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "")) return ["stripe", "mamo"];
   return out;
 }
 
 /** Demo mode: PAYMENTS_FAKE=1 simulates a provider so the full flow can be tested without keys. */
-const fakeMode = () => process.env.PAYMENTS_FAKE === "1";
+const fakeMode = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
 
 export async function createCheckout(
   tenant: Tenant, order: Order, provider: ProviderCode, urls: { successUrl: string; cancelUrl: string },

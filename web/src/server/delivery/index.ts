@@ -40,7 +40,7 @@ export function providerConfig(tenant: Tenant, provider: DeliveryProviderCode): 
   const needsKey = DELIVERY_PROVIDERS.find((d) => d.code === provider)?.needsApiKey ?? false;
   return {
     apiKey, accountId: p?.accountId, sandbox: p?.sandbox,
-    fake: process.env.DELIVERY_FAKE === "1" || (needsKey && !apiKey && (p?.sandbox ?? true)),
+    fake: ["1", "true"].includes(process.env.DELIVERY_FAKE ?? "") || (needsKey && !apiKey && (p?.sandbox ?? true)),
   };
 }
 
