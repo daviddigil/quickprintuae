@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles } from "lucide-react";
 import { cn } from "@/components/ui";
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/products", label: "Products & pricing", icon: Package },
   { href: "/admin/fulfillment", label: "Pickup & delivery", icon: Truck },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
+  { href: "/admin/banners", label: "Banners (AI)", icon: Sparkles },
   { href: "/admin/settings", label: "Store settings", icon: Settings },
   { href: "/admin/customers", label: "Customers", icon: UserRound },
   { href: "/admin/staff", label: "Staff", icon: Users, ownerOnly: true },

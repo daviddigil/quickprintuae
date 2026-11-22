@@ -131,3 +131,10 @@ The `cron` service in `docker-compose.yml` runs the billing job. In the cloud, u
 
 - [docs/BUSINESS_PLAN.md](docs/BUSINESS_PLAN.md): market, positioning, unit economics, 12-month P&L, go-to-market, risks, corrections to the original idea
 - [docs/ROADMAP.md](docs/ROADMAP.md)
+
+## AI banners (admin → Banners)
+
+Shop owners create and edit storefront banners from plain-English prompts. Engine order, first one configured wins, then falls back:
+1. **Open-source model (free)** — set `IMAGE_API_URL` to any server exposing OpenAI-compatible `POST /v1/images/generations` running e.g. Qwen-Image (Apache-2.0). Needs a GPU host.
+2. **Nano Banana** — set `GEMINI_API_KEY` (`GEMINI_IMAGE_MODEL=gemini-2.5-flash-image`); supports true image editing.
+3. **Built-in template** — always works, no key needed.

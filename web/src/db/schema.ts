@@ -214,6 +214,23 @@ export const payments = pgTable("payments", {
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("payments_provider_ref_idx").on(t.provider, t.providerRef)]);
 
+export const banners = pgTable("banners", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default(""),
+  subtitle: text("subtitle").notNull().default(""),
+  linkUrl: text("link_url"),
+  prompt: text("prompt").notNull().default(""),
+  storageKey: text("storage_key").notNull(),
+  mime: text("mime").notNull().default("image/png"),
+  source: text("source").notNull().default("template"), // "nano-banana" | "template" | "upload"
+  version: integer("version").notNull().default(1),
+  active: boolean("active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("banners_tenant_idx").on(t.tenantId, t.active)]);
+
 export const cardDesigns = pgTable("card_designs", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
@@ -258,3 +275,4 @@ export type Product = typeof products.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
+export type Banner = typeof banners.$inferSelect;

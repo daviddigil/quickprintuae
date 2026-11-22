@@ -14,6 +14,12 @@ export const env = {
   get encryptionKey() { return req("ENCRYPTION_KEY", process.env.NODE_ENV === "production" ? undefined : "dev-encryption-key-change-me-0123456789"); },
   uploadDir: process.env.UPLOAD_DIR ?? "./.uploads",
   anthropicKey: process.env.ANTHROPIC_API_KEY,
+  /** open-source / self-hosted image model behind an OpenAI-compatible /v1/images/generations endpoint */
+  imageApiUrl: process.env.IMAGE_API_URL || undefined,
+  imageApiKey: process.env.IMAGE_API_KEY || undefined,
+  imageApiModel: process.env.IMAGE_API_MODEL || "qwen-image",
+  geminiKey: process.env.GEMINI_API_KEY || undefined,
+  geminiImageModel: process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image",
   /** platform Stripe account used for SaaS billing of print shops */
   platformStripeKey: process.env.PLATFORM_STRIPE_SECRET_KEY,
   platformStripeWebhookSecret: process.env.PLATFORM_STRIPE_WEBHOOK_SECRET,

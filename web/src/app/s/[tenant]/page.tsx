@@ -13,6 +13,8 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
   const tenant = await requireStorefrontTenant((await params).tenant);
   const products = await db.select().from(schema.products)
     .where(and(eq(schema.products.tenantId, tenant.id), eq(schema.products.active, true))).orderBy(asc(schema.products.sortOrder));
+  const banners = await db.select().from(schema.banners)
+    .where(and(eq(schema.banners.tenantId, tenant.id), eq(schema.banners.active, true))).orderBy(asc(schema.banners.sortOrder));
   const featured = products.filter((p) => p.featured);
   const others = products.filter((p) => !p.featured);
   const base = `/s/${tenant.slug}`;
@@ -21,6 +23,17 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
 
   return (
     <>
+      {banners.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 pt-4" data-testid="store-banners">
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto rounded-xl">
+            {banners.map((b) => {
+              // eslint-disable-next-line @next/next/no-img-element
+              const img = <img src={`/api/banners/${b.id}?v=${b.version}`} alt={b.title || `${tenant.name} promotion`} className="aspect-[3/1] w-full rounded-xl object-cover" />;
+              return <div key={b.id} className="w-full shrink-0 snap-center">{b.linkUrl ? <Link href={b.linkUrl}>{img}</Link> : img}</div>;
+            })}
+          </div>
+        </section>
+      )}
       <section className="bg-store-soft">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
           <h1 className="max-w-2xl text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">{s?.heroTitle || "Print anything, fast."}</h1>
