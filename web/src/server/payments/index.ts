@@ -20,12 +20,15 @@ export function enabledProviders(tenant: Tenant): ProviderCode[] {
   if (p.stripe?.enabled && p.stripe.secretKeyEnc) out.push("stripe");
   if (p.mamo?.enabled && p.mamo.apiKeyEnc) out.push("mamo");
   // Demo mode: offer both simulated providers when the shop has none configured.
-  if (!out.length && ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "")) return ["stripe", "mamo"];
+  if (!out.length && fakeMode(tenant)) return ["stripe", "mamo"];
   return out;
 }
 
 /** Demo mode: PAYMENTS_FAKE=1 simulates a provider so the full flow can be tested without keys. */
-const fakeMode = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
+const fakeFlag = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
+/** Simulated checkout: explicit PAYMENTS_FAKE flag, or — in local development ONLY — when the shop has no real provider configured. Never automatic in production. */
+const fakeMode = (tenant?: Tenant) => fakeFlag() || (process.env.NODE_ENV === "development" && !!tenant && !hasRealProvider(tenant));
+const hasRealProvider = (t: Tenant) => { const p = t.settings.payments ?? {}; return !!((p.stripe?.enabled && p.stripe.secretKeyEnc) || (p.mamo?.enabled && p.mamo.apiKeyEnc)); };
 
 export async function createCheckout(
   tenant: Tenant, order: Order, provider: ProviderCode, urls: { successUrl: string; cancelUrl: string },
@@ -34,7 +37,7 @@ export async function createCheckout(
   if (order.total <= 0) throw new Error("Order total must be greater than zero");
 
   let result: CheckoutResult;
-  if (fakeMode()) {
+  if (fakeMode(tenant)) {
     const ref = `fake_${provider}_${order.id.slice(0, 8)}_${Date.now()}`;
     result = { providerRef: ref, url: `${urls.successUrl}${urls.successUrl.includes("?") ? "&" : "?"}fake_payment=${ref}` };
   } else {
@@ -63,7 +66,7 @@ export async function verifyPayment(tenant: Tenant, order: Order): Promise<boole
   for (const p of attempts) {
     try {
       if (p.providerRef.startsWith("fake_")) {
-        if (!fakeMode()) continue;
+        if (!fakeMode(tenant)) continue;
         const { markOrderPaid } = await import("@/server/orders");
         if (await markOrderPaid(order.id, p.provider, p.providerRef, { fake: true })) return true;
         continue;

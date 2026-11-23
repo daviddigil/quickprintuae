@@ -1,3 +1,4 @@
+try { process.loadEnvFile(".env"); } catch { /* no .env file: use defaults */ }
 import bcrypt from "bcryptjs";
 import { eq, isNull, and } from "drizzle-orm";
 import { createDb } from "../src/db/client";

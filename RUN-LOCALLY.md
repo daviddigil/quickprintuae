@@ -19,7 +19,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-## 4. Run
+## 4. Run (the demo switches simulate payment + courier; in plain `npm run dev` payment is simulated automatically when a shop has no Stripe/Mamo keys)
 Mac/Linux:
 ```
 PAYMENTS_FAKE=1 DELIVERY_FAKE=1 npm run dev
@@ -29,7 +29,14 @@ Windows PowerShell:
 $env:PAYMENTS_FAKE="1"; $env:DELIVERY_FAKE="1"; npm run dev
 ```
 
-## 5. Open in your browser
+## 5. If you see errors — check this first
+Open http://localhost:3000/api/health . It tells you exactly what is wrong:
+- `database: unreachable` → PostgreSQL isn't running (start the Docker container from step 2) or `DATABASE_URL` in `.env` is wrong
+- `migrated: false` → run `npm run db:migrate`
+- `seeded: false` → run `npm run db:seed`
+Requires Node 22+. Use the zip/clone from the SAME version of the code as the database (old zips have fewer tables).
+
+## 6. Open in your browser
 - Store:        http://localhost:3000/s/demo       (customer@demo.ae / customer123)
 - Shop admin:   http://localhost:3000/login        (owner@demo.ae / owner12345)
 - Superadmin:   http://localhost:3000/login        (admin@quickprint.ae / change-me-now)

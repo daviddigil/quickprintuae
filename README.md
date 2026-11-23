@@ -48,6 +48,7 @@ cp .env.example .env            # defaults work for local dev
 npm install
 npx drizzle-kit migrate         # create tables
 npm run db:seed                 # plans, superadmin, demo store
+# Problems? open http://localhost:3000/api/health (DB reachable / migrated / seeded)
 npm run dev                     # http://localhost:3000
 ```
 
@@ -150,3 +151,14 @@ For a busy counter: the shop shows a QR (`/admin/walk-in` → poster). Customers
 - Print agent: see `docs/PRINT_AGENT.md` (`print-agent/agent.mjs`, no dependencies)
 - Schedule `GET /api/cron/walk-in?secret=$CRON_SECRET` hourly (docker-compose does this) — recovers stale claims, deletes orphan uploads, enforces file retention
 - Tests: `npm test` (queue, phone, flags), `node e2e/walk-in.mjs` (full chain against a running server started with `PAYMENTS_FAKE=1`)
+
+## Testing
+
+```bash
+npm test                      # 43 unit + DB tests (works on Windows/macOS/Linux; needs the DB)
+npm run build && PAYMENTS_FAKE=1 DELIVERY_FAKE=1 npx next start -p 3200   # then, in another terminal:
+node e2e/smoke-all.mjs        # crawls EVERY page as anonymous/customer/owner/superadmin/new-signup/legacy shop + fuzzes EVERY API route (fails on any 5xx)
+node e2e/full-flow.mjs        # customer order -> payment -> production -> courier -> invoice -> impersonation
+node e2e/walk-in.mjs          # walk-in QR queue -> real print agent (fake printer) -> status page
+```
+Note: signup is rate-limited (5/hour/IP, in memory) — restart the server between full smoke runs.

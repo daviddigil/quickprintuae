@@ -7,12 +7,12 @@ function req(name: string, fallback?: string) {
 }
 
 export const env = {
-  appUrl: process.env.APP_URL ?? "http://localhost:3000",
+  appUrl: process.env.APP_URL || "http://localhost:3000",
   /** root domain used for tenant subdomains, e.g. quickprint.ae => desco.quickprint.ae */
-  rootDomain: process.env.ROOT_DOMAIN ?? "localhost:3000",
+  rootDomain: process.env.ROOT_DOMAIN || "localhost:3000",
   get authSecret() { return req("AUTH_SECRET", process.env.NODE_ENV === "production" ? undefined : "dev-insecure-secret-change-me-0123456789"); },
   get encryptionKey() { return req("ENCRYPTION_KEY", process.env.NODE_ENV === "production" ? undefined : "dev-encryption-key-change-me-0123456789"); },
-  uploadDir: process.env.UPLOAD_DIR ?? "./.uploads",
+  uploadDir: process.env.UPLOAD_DIR || "./.uploads",
   anthropicKey: process.env.ANTHROPIC_API_KEY,
   /** open-source / self-hosted image model behind an OpenAI-compatible /v1/images/generations endpoint */
   imageApiUrl: process.env.IMAGE_API_URL || undefined,

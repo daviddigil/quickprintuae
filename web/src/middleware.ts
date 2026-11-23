@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const ROOT = (process.env.ROOT_DOMAIN ?? "localhost:3000").toLowerCase();
+const ROOT = (process.env.ROOT_DOMAIN || "localhost:3000").toLowerCase();
+/** Hosts that are never a tenant custom domain: localhost, IPs (v4/v6), single-label names (LAN computer names), docker hosts. */
+const isPlatformHost = (h: string) => { const n = h.split(":")[0].replace(/^\[|\]$/g, ""); return !n || n === "localhost" || n === "host.docker.internal" || /^\d{1,3}(\.\d{1,3}){3}$/.test(n) || h.startsWith("[") || !n.includes("."); };
 const PASSTHROUGH = ["/s/", "/api/", "/_next/", "/admin", "/superadmin", "/login", "/logout", "/signup", "/uploads/", "/favicon"];
 
 /**
@@ -15,7 +17,7 @@ export function middleware(req: NextRequest) {
   if (PASSTHROUGH.some((p) => pathname.startsWith(p))) return NextResponse.next();
 
   let tenantKey: string | null = null;
-  if (host === ROOT || host === `www.${ROOT}` || host.startsWith("127.0.0.1") || host === "localhost" || host.startsWith("localhost:")) {
+  if (host === ROOT || host === `www.${ROOT}` || isPlatformHost(host)) {
     tenantKey = null;
   } else if (host.endsWith(`.${ROOT}`)) {
     const sub = host.slice(0, -(ROOT.length + 1));
