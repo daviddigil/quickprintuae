@@ -49,6 +49,19 @@ export async function assertWithinPlanLimits(tenant: Tenant, kind: "order" | "st
     throw new PlanLimitError(`Your plan allows ${u.maxStaff} team members. Upgrade to add more.`);
 }
 
+export class FeatureLockedError extends PlanLimitError {}
+export type PlanFlag = "walk_in_queue";
+
+export async function hasFeature(tenant: Tenant, flag: PlanFlag) {
+  if (!tenant.planId) return false;
+  const plan = await db.query.plans.findFirst({ where: eq(schema.plans.id, tenant.planId) });
+  return !!plan?.flags?.includes(flag);
+}
+/** Throws FeatureLockedError when the tenant's plan doesn't include `flag` (superadmin sets flags per plan). */
+export async function assertFeature(tenant: Tenant, flag: PlanFlag) {
+  if (!(await hasFeature(tenant, flag))) throw new FeatureLockedError("This feature isn't included in your current plan. Upgrade to enable it.");
+}
+
 /** Idempotent per tenant + period. Bills the period containing `date` (normally run on the 1st for the previous month). */
 export async function generateInvoicesForPeriod(date: Date) {
   const { start, end } = periodBounds(date);

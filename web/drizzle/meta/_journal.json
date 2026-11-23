@@ -22,6 +22,13 @@
       "when": 1795375104328,
       "tag": "0002_sticky_owl",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795459891404,
+      "tag": "0003_numerous_the_fallen",
+      "breakpoints": true
     }
   ]
 }

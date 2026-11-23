@@ -18,6 +18,9 @@ export const orderStatus = pgEnum("order_status", [
 export const fulfillmentType = pgEnum("fulfillment_type", ["pickup", "delivery"]);
 export const paymentProvider = pgEnum("payment_provider", ["stripe", "mamo"]);
 export const paymentStatus = pgEnum("payment_status", ["pending", "succeeded", "failed", "refunded"]);
+export const printJobStatus = pgEnum("print_job_status", [
+  "awaiting_payment", "queued", "printing", "printed", "failed", "cancelled", "needs_manual",
+]);
 export const invoiceStatus = pgEnum("saas_invoice_status", ["draft", "open", "paid", "void"]);
 
 const id = () => uuid("id").primaryKey().default(sql`gen_random_uuid()`);
@@ -35,6 +38,8 @@ export const plans = pgTable("plans", {
   maxOrdersPerMonth: integer("max_orders_per_month"), // null = unlimited
   maxStaff: integer("max_staff"),
   features: jsonb("features").$type<string[]>().notNull().default([]),
+  /** machine-readable feature flags, e.g. "walk_in_queue" (features[] above is marketing text only) */
+  flags: jsonb("flags").$type<string[]>().notNull().default([]),
   active: boolean("active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: createdAt(),
@@ -140,6 +145,18 @@ export const files = pgTable("files", {
 }, (t) => [index("files_tenant_idx").on(t.tenantId)]);
 
 /* ---------- orders ---------- */
+/** One-time / repeat walk-in customers, identified by phone number per shop. */
+export const walkInCustomers = pgTable("walk_in_customers", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  phone: text("phone").notNull(), // normalised E.164, e.g. +971501234567
+  name: text("name").notNull(),
+  visits: integer("visits").notNull().default(0),
+  totalSpent: money("total_spent").notNull().default(0),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("walk_in_customers_tenant_phone_idx").on(t.tenantId, t.phone)]);
+
 export const orders = pgTable("orders", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
@@ -168,6 +185,10 @@ export const orders = pgTable("orders", {
   paidAt: timestamp("paid_at", { withTimezone: true }),
   notes: text("notes"),
   internalNotes: text("internal_notes"),
+  /** 'online' (storefront) | 'walk_in' (QR queue in the shop) */
+  source: text("source").notNull().default("online"),
+  walkInCustomerId: uuid("walk_in_customer_id").references(() => walkInCustomers.id, { onDelete: "set null" }),
+  ticketNo: text("ticket_no"),
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -213,6 +234,50 @@ export const payments = pgTable("payments", {
   raw: jsonb("raw"),
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("payments_provider_ref_idx").on(t.provider, t.providerRef)]);
+
+/** Print agent installed on the shop PC. Authenticates with an API key (stored hashed). */
+export const printAgents = pgTable("print_agents", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  apiKeyHash: text("api_key_hash").notNull().unique(),
+  apiKeyPrefix: text("api_key_prefix").notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+  printers: jsonb("printers").$type<string[]>().notNull().default([]),
+  active: boolean("active").notNull().default(true),
+  createdAt: createdAt(),
+});
+
+export interface PrintOptions { color: "bw" | "color"; sides: "single" | "double"; paperSize: string }
+
+export const printJobs = pgTable("print_jobs", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  orderItemId: uuid("order_item_id").references(() => orderItems.id, { onDelete: "set null" }),
+  fileId: uuid("file_id").notNull().references(() => files.id, { onDelete: "cascade" }),
+  filename: text("filename").notNull(),
+  ticketNo: text("ticket_no").notNull(),
+  status: printJobStatus("status").notNull().default("awaiting_payment"),
+  /** 0 normal, 1 high (e.g. small-job boost), 2 urgent (owner bump) */
+  priority: integer("priority").notNull().default(0),
+  copies: integer("copies").notNull().default(1),
+  pages: integer("pages").notNull().default(1),
+  pagesVerified: boolean("pages_verified").notNull().default(true),
+  options: jsonb("options").$type<PrintOptions>().notNull(),
+  printerName: text("printer_name"),
+  attempts: integer("attempts").notNull().default(0),
+  claimedByAgentId: uuid("claimed_by_agent_id").references(() => printAgents.id, { onDelete: "set null" }),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  queuedAt: timestamp("queued_at", { withTimezone: true }),
+  error: text("error"),
+  createdAt: createdAt(),
+}, (t) => [
+  index("print_jobs_queue_idx").on(t.tenantId, t.status, t.priority, t.queuedAt),
+  index("print_jobs_order_idx").on(t.orderId),
+]);
 
 export const banners = pgTable("banners", {
   id: id(),
@@ -325,5 +390,8 @@ export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
 export type Banner = typeof banners.$inferSelect;
+export type PrintJob = typeof printJobs.$inferSelect;
+export type PrintAgent = typeof printAgents.$inferSelect;
+export type WalkInCustomer = typeof walkInCustomers.$inferSelect;
 export type WhatsappAccount = typeof whatsappAccounts.$inferSelect;
 export type WhatsappConversation = typeof whatsappConversations.$inferSelect;

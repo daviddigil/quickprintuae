@@ -105,6 +105,18 @@ export interface DeliverySettings {
   providers: Partial<Record<DeliveryProviderCode, { enabled: boolean; apiKeyEnc?: string; accountId?: string; sandbox?: boolean }>>;
 }
 
+export interface WalkInSettings {
+  enabled: boolean;
+  /** the document product walk-in jobs are priced with (null = first active "document" product) */
+  productId: string | null;
+  /** jobs with <= this many pages jump to priority 1 (0 = off) */
+  smallJobBoostPages: number;
+  /** walk-in files are deleted this many hours after printing */
+  fileRetentionHours: number;
+  maxFilesPerVisit: number;
+}
+export const DEFAULT_WALK_IN: WalkInSettings = { enabled: false, productId: null, smallJobBoostPages: 5, fileRetentionHours: 24, maxFilesPerVisit: 10 };
+
 export interface TenantSettings {
   vatRate: number;            // 5 for UAE
   pricesIncludeVat: boolean;  // false => VAT added at checkout
@@ -114,6 +126,7 @@ export interface TenantSettings {
   payments: PaymentSettings;
   delivery: DeliverySettings;
   aiDesignerEnabled: boolean;
+  walkIn?: Partial<WalkInSettings>;
   announcement?: string;
   heroTitle?: string;
   heroSubtitle?: string;

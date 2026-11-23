@@ -34,6 +34,8 @@ export async function markOrderPaid(orderId: string, provider: "stripe" | "mamo"
   await db.update(schema.payments).set({ status: "succeeded", raw: raw as object }).where(and(eq(schema.payments.orderId, orderId), eq(schema.payments.providerRef, providerRef)));
   await db.update(schema.orders).set({ status: "paid", paidAt: new Date(), paymentProvider: provider, updatedAt: new Date() }).where(eq(schema.orders.id, orderId));
   await db.insert(schema.orderEvents).values({ orderId, status: "paid", message: `Payment received via ${provider}` });
+  // walk-in QR orders: payment is what releases their files into the print queue
+  if (order.source === "walk_in") await (await import("@/server/walk-in/queue")).enqueueOrderJobs(orderId);
   return true;
 }
 
