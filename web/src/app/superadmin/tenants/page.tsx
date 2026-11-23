@@ -37,7 +37,7 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
           <Table head={["Shop", "Plan", "Status", "Emirate", "Contact", "Created", ""]}>
             {rows.map(({ t, plan }) => (
               <tr key={t.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3"><Link href={`/superadmin/tenants/${t.id}`} className="font-medium hover:underline">{t.name}</Link><div className="text-xs text-slate-500">/{t.slug}{t.customDomain ? ` · ${t.customDomain}` : ""}</div></td>
+                <td className="px-4 py-3"><Link href={`/superadmin/tenants/${t.id}`} className="font-medium hover:underline">{t.name}</Link>{t.settings?.walkIn?.enabled && <span className="ml-2"><Badge tone="purple">walk-in</Badge></span>}<div className="text-xs text-slate-500">/{t.slug}{t.customDomain ? ` · ${t.customDomain}` : ""}</div></td>
                 <td className="px-4 py-3">{plan ?? "—"} <span className="text-xs text-slate-400">{t.billingCycle}</span></td>
                 <td className="px-4 py-3"><Badge tone={TENANT_STATUS_TONE[t.status]}>{t.status.replace("_", " ")}</Badge></td>
                 <td className="px-4 py-3">{t.emirate}</td>

@@ -10,6 +10,10 @@ import { generateSlots, findSlot } from "@/lib/slots";
 import { DEFAULT_TENANT_SETTINGS } from "@/lib/catalog-defaults";
 import { EMIRATES, type CardDesign, type DeliverySettings } from "@/lib/types";
 import { createCheckout, enabledProviders, type ProviderCode } from "./payments";
+import { normalizePhone } from "@/lib/phone";
+import { getWalkInProduct, isWalkInExtension, walkInGate } from "./walk-in/customers";
+import { walkInSettings } from "./walk-in/settings";
+import { createPrintJobs, nextTicketNo } from "./walk-in/queue";
 
 export class CheckoutError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -183,7 +187,109 @@ export function publicOrigin(req: Request) {
   return host ? `${proto}://${host}` : new URL(req.url).origin;
 }
 
-export async function startPayment(tenant: Tenant, order: Order, provider: ProviderCode, origin: string) {
-  const base = `${origin}/s/${tenant.slug}/orders/${order.id}?t=${orderToken(order.id)}`;
+/** `returnPath` lets walk-in orders come back to their own status page instead of the normal order page. */
+export async function startPayment(tenant: Tenant, order: Order, provider: ProviderCode, origin: string, returnPath?: string) {
+  const base = `${origin}${returnPath ?? `/s/${tenant.slug}/orders/${order.id}`}?t=${orderToken(order.id)}`;
   return createCheckout(tenant, order, provider, { successUrl: `${base}&paid=1`, cancelUrl: `${base}&cancelled=1` });
+}
+
+
+/* ---------- walk-in (QR queue) orders ---------- */
+export const WalkInFile = z.object({
+  fileId: z.string().uuid(),
+  copies: z.number().int().min(1).max(200).default(1),
+  color: z.enum(["bw", "color"]).default("bw"),
+  sides: z.enum(["single", "double"]).default("single"),
+  paperSize: z.string().min(1).max(30).default("A4"),
+  /** only used when the server could not count pages itself (Word/PowerPoint/Excel) */
+  pages: z.number().int().min(1).max(2000).optional(),
+});
+export const WalkInCheckoutInput = z.object({
+  name: z.string().trim().min(2).max(80),
+  phone: z.string().trim().min(7).max(30),
+  files: z.array(WalkInFile).min(1).max(50),
+  provider: z.enum(["stripe", "mamo"]),
+});
+export type WalkInCheckoutInputT = z.infer<typeof WalkInCheckoutInput>;
+
+/** Return path (without token) of the walk-in status page for an order. */
+export const walkInStatusPath = (slug: string, orderId: string) => `/s/${slug}/walk-in/status/${orderId}`;
+
+/**
+ * Creates a pending_payment walk-in order + awaiting_payment print jobs in one transaction.
+ * Prices are recomputed server-side; page counts come from the stored file whenever known.
+ * The jobs only enter the print queue when markOrderPaid fires (enqueueOrderJobs), which also counts the visit.
+ */
+export async function createWalkInOrder(tenant: Tenant, input: WalkInCheckoutInputT) {
+  await assertTenantCanTakeOrders(tenant);
+  const gate = await walkInGate(tenant);
+  if (!gate.ok) throw new CheckoutError("Walk-in printing isn't available at this shop.", 403);
+  const settings = walkInSettings(tenant);
+  if (input.files.length > settings.maxFilesPerVisit) throw new CheckoutError(`You can print up to ${settings.maxFilesPerVisit} files per visit.`);
+  if (new Set(input.files.map((f) => f.fileId)).size !== input.files.length) throw new CheckoutError("The same file was added twice.");
+  const phone = normalizePhone(input.phone);
+  if (!phone) throw new CheckoutError("Please enter a valid mobile number.");
+  if (!enabledProviders(tenant).includes(input.provider as ProviderCode)) throw new CheckoutError("Selected payment method is not available.");
+
+  const product = await getWalkInProduct(tenant);
+  if (!product || product.kind !== "document") throw new CheckoutError("Walk-in printing isn't set up at this shop yet.", 403);
+
+  const ids = input.files.map((f) => f.fileId);
+  const files = await db.select().from(schema.files)
+    .where(and(eq(schema.files.tenantId, tenant.id), inArray(schema.files.id, ids), isNull(schema.files.orderId), isNull(schema.files.deletedAt)));
+  const fileById = new Map(files.map((f) => [f.id, f]));
+  if (files.length !== ids.length) throw new CheckoutError("One of your files is no longer available. Please upload it again.");
+
+  const group = (key: string) => product.config.optionGroups.find((g) => g.key === key);
+  const items = input.files.map((l) => {
+    const f = fileById.get(l.fileId)!;
+    if (f.confidential || !isWalkInExtension(f.filename)) throw new CheckoutError(`${f.filename}: this file type can't be printed through the walk-in queue.`);
+    const verified = f.pageCount != null;
+    const pages = verified ? f.pageCount! : l.pages;
+    if (!pages) throw new CheckoutError(`${f.filename}: please enter the number of pages.`);
+    // map the customer's choices onto the product's own option groups; reject values the shop doesn't offer
+    const selections: Record<string, string> = {};
+    for (const [key, value] of [["paper_size", l.paperSize], ["color", l.color], ["sides", l.sides]] as const) {
+      const g = group(key);
+      if (!g) continue;
+      if (!g.choices.some((c) => c.value === value)) throw new CheckoutError(`${f.filename}: "${value}" isn't available for ${g.label}.`);
+      selections[key] = value;
+    }
+    let price;
+    try { price = computeLinePrice(product.config, selections, l.copies, pages); }
+    catch (e) { throw new CheckoutError(e instanceof PricingError ? `${f.filename}: ${e.message}` : "Pricing failed"); }
+    return { file: f, copies: l.copies, pages, verified, selections, price, options: { color: l.color, sides: l.sides, paperSize: l.paperSize } };
+  });
+
+  const vatRate = tenant.settings?.vatRate ?? 5;
+  const totals = computeOrderTotals(items.map((i) => i.price.lineTotal), 0, vatRate, !!tenant.settings?.pricesIncludeVat);
+  const prefix = (tenant.settings?.orderPrefix || tenant.slug.slice(0, 3)).toUpperCase();
+
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${tenant.id}))`); // same lock as createOrder: numbering + tickets
+    const [{ n }] = await tx.select({ n: sql<number>`coalesce(max(nullif(substring(${schema.orders.number} from '([0-9]+)$'), '')::bigint), 10000)::bigint` })
+      .from(schema.orders).where(eq(schema.orders.tenantId, tenant.id));
+    const number = `${prefix}-${Math.max(10000, Number(n)) + 1}`;
+    const ticketNo = await nextTicketNo(tx, tenant.id);
+    // visits/spend are NOT bumped here — enqueueOrderJobs does that once payment succeeds
+    const [cust] = await tx.insert(schema.walkInCustomers).values({ tenantId: tenant.id, phone, name: input.name })
+      .onConflictDoUpdate({ target: [schema.walkInCustomers.tenantId, schema.walkInCustomers.phone], set: { name: input.name, lastSeenAt: new Date() } }).returning();
+    const [order] = await tx.insert(schema.orders).values({
+      tenantId: tenant.id, number, customerId: null, customerName: input.name, customerEmail: "walk-in@invalid", customerPhone: phone,
+      status: "pending_payment", fulfillment: "pickup", pickupLocationId: null, slotStart: null, slotEnd: null,
+      subtotal: totals.subtotal, deliveryFee: 0, discount: 0, vat: totals.vat, total: totals.total,
+      currency: "AED", paymentProvider: input.provider, source: "walk_in", walkInCustomerId: cust.id, ticketNo,
+    }).returning();
+    const rows = await tx.insert(schema.orderItems).values(items.map((i) => ({
+      orderId: order.id, productId: product.id, productName: product.name, kind: product.kind,
+      quantity: i.copies, pages: i.pages, selections: i.selections, selectionLabels: i.price.labels,
+      fileIds: [i.file.id], unitPrice: i.price.unitPrice, lineTotal: i.price.lineTotal,
+    }))).returning();
+    await tx.update(schema.files).set({ orderId: order.id }).where(inArray(schema.files.id, ids));
+    await tx.insert(schema.orderEvents).values({ orderId: order.id, status: "pending_payment", message: `Walk-in order ${ticketNo} placed, awaiting payment` });
+    await createPrintJobs(tx, tenant.id, order.id, ticketNo, items.map((i, idx) => ({
+      orderItemId: rows[idx]?.id, fileId: i.file.id, filename: i.file.filename, copies: i.copies, pages: i.pages, pagesVerified: i.verified, options: i.options,
+    })));
+    return order;
+  });
 }

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { requireStaff } from "@/lib/auth";
 import { storePath } from "@/lib/tenant";
+import { hasFeature } from "@/server/billing";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PoweredBy } from "@/components/PoweredBy";
 
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { tenant, user, session } = await requireStaff();
   const plan = tenant.planId ? await db.query.plans.findFirst({ where: eq(schema.plans.id, tenant.planId) }) : null;
+  const walkIn = await hasFeature(tenant, "walk_in_queue");
   const trialDays = tenant.trialEndsAt ? Math.ceil((tenant.trialEndsAt.getTime() - Date.now()) / 86400_000) : null;
   const planLine = `${plan?.name ?? "No plan"} · ${tenant.status === "trial" && trialDays !== null ? (trialDays > 0 ? `trial, ${trialDays} days left` : "trial expired") : tenant.status.replace("_", " ")}`;
   return (
@@ -28,7 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       )}
       <div className="lg:flex">
-        <AdminNav shopName={tenant.name} storeUrl={storePath(tenant.slug)} isOwner={user.role === "owner"} userName={user.name} planLine={planLine} />
+        <AdminNav shopName={tenant.name} storeUrl={storePath(tenant.slug)} isOwner={user.role === "owner"} userName={user.name} planLine={planLine} walkIn={walkIn} />
         <div className="flex min-w-0 flex-1 flex-col"><main className="flex-1 p-4 sm:p-6 lg:p-8 print:p-0">{children}</main><PoweredBy className="pb-4 text-center print:hidden" /></div>
       </div>
     </div>

@@ -2,12 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles, MessageCircle } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles, MessageCircle, ScanLine } from "lucide-react";
 import { cn } from "@/components/ui";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/walk-in", label: "Walk-in queue", icon: ScanLine, walkIn: true },
   { href: "/admin/products", label: "Products & pricing", icon: Package },
   { href: "/admin/fulfillment", label: "Pickup & delivery", icon: Truck },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
@@ -19,10 +20,10 @@ const NAV = [
   { href: "/admin/billing", label: "Plan & billing", icon: Receipt },
 ];
 
-export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine }: { shopName: string; storeUrl: string; isOwner: boolean; userName: string; planLine: string }) {
+export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walkIn = false }: { shopName: string; storeUrl: string; isOwner: boolean; userName: string; planLine: string; walkIn?: boolean }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const items = NAV.filter((n) => !n.ownerOnly || isOwner);
+  const items = NAV.filter((n) => (!n.ownerOnly || isOwner) && (!("walkIn" in n) || walkIn));
   return (
     <>
       <div className="flex items-center justify-between border-b bg-white px-4 py-3 lg:hidden print:hidden">

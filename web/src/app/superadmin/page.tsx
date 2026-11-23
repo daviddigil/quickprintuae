@@ -19,6 +19,13 @@ export default async function SuperadminDashboard() {
         <Stat label="Print shops" value={m.total} sub={`${m.byStatus.active ?? 0} active · ${m.byStatus.trial ?? 0} trial`} />
       </div>
 
+      <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4" data-testid="walkin-tiles">
+        <Stat label="Walk-in jobs (month)" value={m.walkIn.jobsThisMonth} sub={`${m.walkIn.printedThisMonth} printed`} />
+        <Stat label="Walk-in GMV (month)" value={formatAED(m.walkIn.walkInGmvThisMonth)} />
+        <Stat label="Print agents online" value={m.walkIn.agentsOnline} />
+        <Stat label="Shops using walk-in" value={m.walkIn.shopsUsing} />
+      </div>
+
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader title="New signups" subtitle="Last 12 weeks" />

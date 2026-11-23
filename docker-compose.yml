@@ -43,7 +43,8 @@ services:
       start_period: 40s
       retries: 3
 
-  # Runs billing + file purge crons daily. Replace with your scheduler of choice in production.
+  # Runs billing (daily), walk-in queue sweep + orphan cleanup (hourly) and file retention purge (daily).
+  # Replace with your scheduler of choice in production.
   cron:
     image: alpine:3.20
     restart: unless-stopped
@@ -53,6 +54,8 @@ services:
     command: >
       sh -c 'apk add --no-cache curl >/dev/null &&
       echo "15 2 * * * curl -fsS \"http://web:3000/api/v1/superadmin/cron/billing?secret=$$CRON_SECRET\"" > /etc/crontabs/root &&
+      echo "30 3 * * * curl -fsS \"http://web:3000/api/cron/purge?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
+      echo "5 * * * * curl -fsS \"http://web:3000/api/cron/walk-in?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
       crond -f -l 8'
 
 volumes:

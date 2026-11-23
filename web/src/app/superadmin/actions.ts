@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { requireSuperadmin } from "@/lib/auth";
 import { audit } from "@/lib/audit";
+import { parsePlanFlags } from "@/server/billing/flags";
 import { collectInvoice, generateInvoicesForPeriod, markInvoicePaid } from "@/server/billing";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
@@ -82,11 +83,13 @@ export async function savePlan(fd: FormData) {
     sortOrder: num(fd, "sortOrder") ?? 0,
     features: str(fd, "features").split("\n").map((s) => s.trim()).filter(Boolean),
     active: fd.get("active") === "on",
+    flags: parsePlanFlags(fd.getAll("flags")) ?? [],
   };
   if (!values.code || !values.name) redirect("/superadmin/plans?error=missing");
+  if (parsePlanFlags(fd.getAll("flags")) === null) redirect("/superadmin/plans?error=flags");
   if (id) await db.update(schema.plans).set(values).where(eq(schema.plans.id, id));
   else await db.insert(schema.plans).values(values);
-  await audit(id ? "plan.updated" : "plan.created", { code: values.code }, null);
+  await audit(id ? "plan.updated" : "plan.created", { code: values.code, flags: values.flags }, null);
   revalidatePath("/superadmin/plans");
   redirect("/superadmin/plans?saved=1");
 }
@@ -115,4 +118,16 @@ export async function runInvoiceGeneration(fd: FormData) {
   await audit("invoice.generate", { month, created: created.length }, null);
   revalidatePath("/superadmin/invoices");
   redirect(`/superadmin/invoices?generated=${created.length}`);
+}
+
+/** Abuse control: switch the walk-in queue off for one shop (their owner can re-enable it unless the plan flag is also removed). */
+export async function disableWalkIn(fd: FormData) {
+  await requireSuperadmin();
+  const id = str(fd, "tenantId");
+  const t = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, id) });
+  if (!t) redirect("/superadmin/tenants");
+  await db.update(schema.tenants).set({ settings: { ...t.settings, walkIn: { ...(t.settings.walkIn ?? {}), enabled: false } } }).where(eq(schema.tenants.id, id));
+  await audit("walkin.disabled_by_admin", {}, id);
+  revalidatePath(`/superadmin/tenants/${id}`);
+  redirect(`/superadmin/tenants/${id}?walkin=disabled`);
 }

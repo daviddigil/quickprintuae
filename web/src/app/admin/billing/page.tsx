@@ -5,6 +5,7 @@ import { formatAED } from "@/lib/pricing";
 import { Alert, Badge, Card, CardHeader, EmptyState, Stat, Table } from "@/components/ui";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { dubai } from "@/components/admin/format";
+import { PLAN_FLAGS, displayFeatures } from "@/server/billing/flags";
 
 export const metadata = { title: "Plan & billing" };
 const INV_TONE = { draft: "gray", open: "yellow", paid: "green", void: "gray" } as const;
@@ -34,7 +35,15 @@ export default async function BillingPage() {
       {plan && (
         <Card>
           <CardHeader title={`${plan.name} includes`} />
-          <ul className="grid gap-2 p-5 text-sm sm:grid-cols-2">{plan.features.map((f) => <li key={f}>✓ {f}</li>)}</ul>
+          <ul className="grid gap-2 p-5 text-sm sm:grid-cols-2">{displayFeatures(plan.features, plan.flags).map((f) => <li key={f}>✓ {f}</li>)}</ul>
+          <div className="border-t border-slate-100 px-5 py-4 text-sm" data-testid="plan-flags">
+            <p className="mb-2 font-medium">Feature access</p>
+            <ul className="space-y-1">
+              {PLAN_FLAGS.map((f) => (
+                <li key={f.key}>{plan.flags?.includes(f.key) ? <span className="text-emerald-700">✓ {f.label}</span> : <span className="text-slate-500">✕ {f.label} — not in your plan. Contact support to upgrade.</span>}</li>
+              ))}
+            </ul>
+          </div>
         </Card>
       )}
       <Card>

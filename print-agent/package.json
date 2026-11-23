@@ -1,0 +1,12 @@
+{
+  "name": "quickprint-print-agent",
+  "version": "1.0.0",
+  "description": "QuickPrint walk-in print agent. Powered by Nexsofture Tech",
+  "type": "module",
+  "bin": { "quickprint-agent": "agent.mjs" },
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node agent.mjs", "test": "node --test agent.test.mjs" },
+  "author": "Nexsofture Tech",
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -3,6 +3,7 @@ import { db, schema } from "@/db";
 import type { Plan } from "@/db/schema";
 import { Alert, Badge, Button, Card, CardHeader, Field, Input, Textarea } from "@/components/ui";
 import { PageTitle } from "@/components/platform/PageTitle";
+import { PLAN_FLAGS, flagLabel } from "@/server/billing/flags";
 import { savePlan } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,18 @@ function PlanForm({ plan }: { plan?: Plan }) {
       <Field label="Max staff" hint="(blank = ∞)"><Input name="maxStaff" type="number" defaultValue={plan?.maxStaff ?? ""} /></Field>
       <Field label="Sort"><Input name="sortOrder" type="number" defaultValue={plan?.sortOrder ?? 0} /></Field>
       <div className="sm:col-span-3"><Field label="Features (one per line)"><Textarea name="features" rows={4} defaultValue={plan?.features.join("\n")} /></Field></div>
-      <div className="flex flex-col justify-end gap-3">
+      <fieldset className="sm:col-span-4 rounded-lg border border-slate-200 p-3" data-testid={`flags-${plan?.code ?? "new"}`}>
+        <legend className="px-1 text-sm font-medium text-slate-700">Feature flags</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {PLAN_FLAGS.map((f) => (
+            <label key={f.key} className="flex items-start gap-2 text-sm">
+              <input type="checkbox" name="flags" value={f.key} defaultChecked={plan?.flags?.includes(f.key)} className="mt-1" />
+              <span><b>{f.label}</b><span className="block text-xs text-slate-500">{f.description}</span></span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="flex flex-col justify-end gap-3 sm:col-span-4 sm:flex-row sm:items-center sm:justify-between">
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={plan?.active ?? true} /> Active (shown on pricing)</label>
         <Button>{plan ? "Save" : "Create plan"}</Button>
       </div>
@@ -35,11 +47,11 @@ export default async function PlansPage({ searchParams }: { searchParams: Promis
     <>
       <PageTitle title="Subscription plans" subtitle="Prices in AED excl. VAT. Order fee is charged on each shop's paid GMV." />
       {saved && <div className="mb-4"><Alert tone="green">Plan saved.</Alert></div>}
-      {error && <div className="mb-4"><Alert>Code and name are required.</Alert></div>}
+      {error && <div className="mb-4"><Alert>{error === "flags" ? "Unknown feature flag." : "Code and name are required."}</Alert></div>}
       <div className="space-y-6">
         {plans.map((p) => (
           <Card key={p.id}>
-            <CardHeader title={<span className="flex items-center gap-2">{p.name} {!p.active && <Badge>inactive</Badge>}</span>} subtitle={`AED ${p.priceMonthly}/mo · ${p.orderFeePct}% per order`} />
+            <CardHeader title={<span className="flex items-center gap-2">{p.name} {!p.active && <Badge>inactive</Badge>}{p.flags?.map((f) => <Badge key={f} tone="purple">{flagLabel(f)}</Badge>)}</span>} subtitle={`AED ${p.priceMonthly}/mo · ${p.orderFeePct}% per order`} />
             <PlanForm plan={p} />
           </Card>
         ))}

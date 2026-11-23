@@ -18,6 +18,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const where: SQL[] = [eq(schema.orders.tenantId, tenant.id)];
   if (sp.status && (ORDER_STATUSES as readonly string[]).includes(sp.status)) where.push(eq(schema.orders.status, sp.status as OrderStatus));
   if (sp.fulfillment === "pickup" || sp.fulfillment === "delivery") where.push(eq(schema.orders.fulfillment, sp.fulfillment));
+  if (sp.source === "walk_in" || sp.source === "online") where.push(eq(schema.orders.source, sp.source));
   if (sp.from) where.push(gte(schema.orders.createdAt, new Date(`${sp.from}T00:00:00+04:00`)));
   if (sp.to) where.push(lt(schema.orders.createdAt, new Date(new Date(`${sp.to}T00:00:00+04:00`).getTime() + 86400_000)));
   if (sp.q?.trim()) {
@@ -32,7 +33,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <div>
       <PageHeader title="Orders" subtitle={`${n} order${n === 1 ? "" : "s"}`} />
       <Card className="mb-4 p-4">
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
           <Input name="q" placeholder="Order #, name, phone, email" defaultValue={sp.q} className="lg:col-span-2" />
           <Select name="status" defaultValue={sp.status ?? ""}>
             <option value="">All statuses</option>
@@ -40,6 +41,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           </Select>
           <Select name="fulfillment" defaultValue={sp.fulfillment ?? ""}>
             <option value="">Pickup & delivery</option><option value="pickup">Pickup</option><option value="delivery">Delivery</option>
+          </Select>
+          <Select name="source" defaultValue={sp.source ?? ""} aria-label="Source">
+            <option value="">Online & walk-in</option><option value="online">Online</option><option value="walk_in">Walk-in (QR)</option>
           </Select>
           <Input type="date" name="from" defaultValue={sp.from} aria-label="From" />
           <div className="flex gap-2">
@@ -53,7 +57,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <Table head={["Order", "Date", "Customer", "Fulfillment", "Slot", "Total", "Status"]}>
             {rows.slice(0, PAGE).map((o) => (
               <tr key={o.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3"><Link className="font-semibold text-brand-600" href={`/admin/orders/${o.id}`}>{o.number}</Link></td>
+                <td className="px-4 py-3"><Link className="font-semibold text-brand-600" href={`/admin/orders/${o.id}`}>{o.number}</Link>{o.source === "walk_in" && <div className="mt-1"><Badge tone="purple">Walk-in {o.ticketNo}</Badge></div>}</td>
                 <td className="px-4 py-3 text-xs text-slate-500">{dubai(o.createdAt)}</td>
                 <td className="px-4 py-3"><div>{o.customerName}</div><div className="text-xs text-slate-500">{o.customerPhone}</div></td>
                 <td className="px-4 py-3"><Badge tone={o.fulfillment === "delivery" ? "blue" : "gray"}>{o.fulfillment}</Badge></td>

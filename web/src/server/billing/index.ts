@@ -4,9 +4,11 @@ import { and, count, eq, gte, inArray, lt, sql, sum } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Tenant } from "@/db/schema";
 import { env } from "@/lib/env";
+import type { PlanFlag } from "./flags";
 import { computeSaasInvoice, invoiceNumber, periodBounds, r2 } from "./math";
 
 export * from "./math";
+export { PLAN_FLAGS, type PlanFlag } from "./flags";
 
 const PAID_STATUSES = ["paid", "in_production", "ready", "out_for_delivery", "delivered", "picked_up"] as const;
 
@@ -50,7 +52,6 @@ export async function assertWithinPlanLimits(tenant: Tenant, kind: "order" | "st
 }
 
 export class FeatureLockedError extends PlanLimitError {}
-export type PlanFlag = "walk_in_queue";
 
 export async function hasFeature(tenant: Tenant, flag: PlanFlag) {
   if (!tenant.planId) return false;
@@ -212,5 +213,35 @@ export async function platformMetrics() {
   return {
     mrr: r2(mrr), arr: r2(mrr * 12), gmv, orders, feesThisMonth: r2(feesThisMonth), byStatus, total: tenants.length,
     signups: signups.map((s) => ({ week: s.week, n: Number(s.n) })), expiringTrials,
+    walkIn: await walkInMetrics(start, end),
   };
+}
+
+/** Platform-wide walk-in queue numbers for [start, end): one aggregate query, no per-tenant loops. */
+export async function walkInMetrics(start: Date, end: Date) {
+  const s = start.toISOString(), e = end.toISOString();
+  const paid = sql.raw(PAID_STATUSES.map((x) => `'${x}'`).join(","));
+  const rows = await db.execute(sql`
+    select
+      (select count(*)::int from print_jobs where queued_at >= ${s}::timestamptz and queued_at < ${e}::timestamptz) as jobs,
+      (select count(*)::int from print_jobs where status = 'printed' and finished_at >= ${s}::timestamptz and finished_at < ${e}::timestamptz) as printed,
+      (select coalesce(sum(total), 0)::float from orders where source = 'walk_in' and status in (${paid}) and paid_at >= ${s}::timestamptz and paid_at < ${e}::timestamptz) as gmv,
+      (select count(*)::int from print_agents where active and last_seen_at > now() - interval '2 minutes') as agents_online,
+      (select count(distinct tenant_id)::int from orders where source = 'walk_in' and created_at >= ${s}::timestamptz and created_at < ${e}::timestamptz) as shops`);
+  const r = (rows as unknown as Record<string, number>[])[0] ?? {};
+  return { jobsThisMonth: Number(r.jobs ?? 0), printedThisMonth: Number(r.printed ?? 0), walkInGmvThisMonth: r2(Number(r.gmv ?? 0)), agentsOnline: Number(r.agents_online ?? 0), shopsUsing: Number(r.shops ?? 0) };
+}
+
+/** Per-shop walk-in numbers for the superadmin tenant page. */
+export async function tenantWalkInStats(tenantId: string) {
+  const { start, end } = periodBounds(new Date());
+  const rows = await db.execute(sql`
+    select
+      (select count(*)::int from print_jobs where tenant_id = ${tenantId} and queued_at >= ${start.toISOString()}::timestamptz and queued_at < ${end.toISOString()}::timestamptz) as jobs,
+      (select count(*)::int from print_jobs where tenant_id = ${tenantId} and status = 'queued') as waiting,
+      (select count(*)::int from print_jobs where tenant_id = ${tenantId} and status = 'printed' and finished_at >= date_trunc('day', now() at time zone 'Asia/Dubai') at time zone 'Asia/Dubai') as printed_today,
+      (select count(*)::int from walk_in_customers where tenant_id = ${tenantId}) as customers`);
+  const r = (rows as unknown as Record<string, number>[])[0] ?? {};
+  const agents = await db.query.printAgents.findMany({ where: eq(schema.printAgents.tenantId, tenantId), orderBy: schema.printAgents.createdAt });
+  return { jobsThisMonth: Number(r.jobs ?? 0), waiting: Number(r.waiting ?? 0), printedToday: Number(r.printed_today ?? 0), customers: Number(r.customers ?? 0), agents };
 }

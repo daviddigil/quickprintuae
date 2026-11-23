@@ -6,6 +6,8 @@ import { formatAED } from "@/lib/pricing";
 import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/types";
 import { Badge, Card, CardHeader, EmptyState, ORDER_STATUS_TONE, Stat, Table } from "@/components/ui";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { hasFeature } from "@/server/billing";
+import { walkInCounts } from "@/app/admin/walk-in/data";
 import { dubai, slotLabel } from "@/components/admin/format";
 
 export const metadata = { title: "Dashboard" };
@@ -41,6 +43,8 @@ export default async function Dashboard() {
     orderBy: [asc(schema.orders.slotStart)], limit: 10,
   });
 
+  const walkIn = (await hasFeature(tenant, "walk_in_queue")) ? await walkInCounts(tenant.id) : null;
+
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(Date.now() + 4 * 3600_000 - (13 - i) * 86400_000).toISOString().slice(0, 10);
     return { day: d, revenue: daily.find((x) => x.day === d)?.revenue ?? 0 };
@@ -56,6 +60,13 @@ export default async function Dashboard() {
         <Stat label="Orders (7 days)" value={agg.weekOrders} />
         <Stat label="Revenue (7 days)" value={formatAED(agg.weekRevenue)} sub={`${agg.awaiting} awaiting payment`} />
       </div>
+
+      {walkIn && (
+        <Link href="/admin/walk-in" data-testid="dash-walkin" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:border-slate-400">
+          <div><p className="font-semibold">Walk-in queue</p><p className="text-sm text-slate-500">Customers scanning your QR and printing in the shop</p></div>
+          <p className="text-sm font-medium"><span className="text-sky-700">{walkIn.waiting} waiting</span> · <span className="text-violet-700">{walkIn.printing} printing</span> · <span className="text-emerald-700">{walkIn.printedToday} printed today</span></p>
+        </Link>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">

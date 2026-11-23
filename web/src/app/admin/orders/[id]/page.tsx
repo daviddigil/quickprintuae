@@ -11,6 +11,7 @@ import { DELIVERY_PROVIDERS } from "@/server/delivery";
 import { Alert, Badge, Button, Card, CardHeader, Input, LinkButton, ORDER_STATUS_TONE, Select, Textarea } from "@/components/ui";
 import { Flash } from "@/components/admin/Flash";
 import { ProofDownload } from "@/components/admin/ProofDownload";
+import { WalkInOrderJobs } from "@/components/admin/WalkInOrderJobs";
 import { dubai, slotLabel, waLink } from "@/components/admin/format";
 import { bookCourier, changeOrderStatus, saveInternalNotes, setManualTracking } from "../../actions";
 
@@ -29,6 +30,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
   const events = await db.query.orderEvents.findMany({ where: eq(schema.orderEvents.orderId, order.id), orderBy: [asc(schema.orderEvents.createdAt)] });
   const pickup = order.pickupLocationId ? await db.query.pickupLocations.findFirst({ where: eq(schema.pickupLocations.id, order.pickupLocationId) }) : null;
   const payments = await db.query.payments.findMany({ where: eq(schema.payments.orderId, order.id) });
+  const printJobs = order.source === "walk_in" ? await db.query.printJobs.findMany({ where: and(eq(schema.printJobs.orderId, order.id), eq(schema.printJobs.tenantId, tenant.id)), orderBy: [asc(schema.printJobs.createdAt)] }) : [];
   const next = NEXT_STATUSES[order.status];
   const enabledProviders = DELIVERY_PROVIDERS.filter((p) => p.code === "inhouse" || p.code === "manual" || tenant.settings.delivery?.providers?.[p.code]?.enabled);
   const confidential = items.some((i) => i.kind === "confidential_document");
@@ -40,7 +42,8 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
         <div>
           <Link href="/admin/orders" className="text-sm text-slate-500 hover:underline">← Orders</Link>
           <h1 className="mt-1 flex items-center gap-3 text-2xl font-bold">{order.number} <Badge tone={ORDER_STATUS_TONE[order.status]}>{ORDER_STATUS_LABEL[order.status]}</Badge>
-            {confidential && <Badge tone="red"><Lock size={12} className="mr-1" />Confidential</Badge>}</h1>
+            {confidential && <Badge tone="red"><Lock size={12} className="mr-1" />Confidential</Badge>}
+            {order.source === "walk_in" && <Badge tone="purple">Walk-in {order.ticketNo}</Badge>}</h1>
           <p className="text-sm text-slate-500">Placed {dubai(order.createdAt)} · {order.fulfillment === "delivery" ? "Delivery" : "Pickup"} · {slotLabel(order.slotStart, order.slotEnd)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -53,6 +56,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {printJobs.length > 0 && <WalkInOrderJobs ticketNo={order.ticketNo} jobs={printJobs.map((j) => ({ id: j.id, filename: j.filename, fileId: j.fileId, status: j.status, priority: j.priority, pages: j.pages, copies: j.copies, pagesVerified: j.pagesVerified, options: j.options, attempts: j.attempts, error: j.error, printerName: j.printerName }))} />}
           <Card>
             <CardHeader title="Items" />
             <div className="divide-y">
