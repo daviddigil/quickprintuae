@@ -93,7 +93,7 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
 
   const choiceSelect = (g: OptionGroup | undefined, value: string, onChange: (v: string) => void, fallback: { value: string; label: string }[]) => (
     <Select value={value} onChange={(e) => onChange(e.target.value)} className="h-11">
-      {(g?.choices ?? fallback).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+      {(g?.choices ?? fallback).map((c) => <option key={c.value} value={c.value}>{c.label.split(" (")[0]}</option>)}
     </Select>
   );
 
