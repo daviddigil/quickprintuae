@@ -18,7 +18,7 @@ export default async function PosterPage() {
     <div>
       <style>{"@page { size: A4; margin: 0 } @media print { body { background: #fff !important } }"}</style>
       <div className="mb-4 flex flex-wrap gap-2 print:hidden"><LinkButton variant="secondary" href="/admin/walk-in">← Back</LinkButton><PrintButton /></div>
-      <div data-testid="poster" className="mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col items-center bg-white px-[14mm] py-[16mm] text-center shadow-sm print:min-h-0 print:h-[297mm] print:max-w-none print:shadow-none" style={{ ["--store" as string]: tenant.primaryColor }}>
+      <div data-testid="poster" className="mx-auto flex min-h-[297mm] w-full max-w-[210mm] flex-col items-center bg-white px-[14mm] py-[16mm] text-center shadow-sm print:min-h-0 print:h-[290mm] print:overflow-hidden print:max-w-none print:shadow-none" style={{ ["--store" as string]: tenant.primaryColor }}>
         <p className="text-2xl font-bold tracking-tight text-slate-700">{tenant.name}</p>
         <h1 className="mt-6 text-6xl font-extrabold leading-tight tracking-tight" style={{ color: tenant.primaryColor }}>Scan to print</h1>
         <p className="mt-3 text-2xl text-slate-600">Upload · Pay · Collect</p>

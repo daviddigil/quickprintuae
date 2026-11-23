@@ -22,6 +22,7 @@ const FEATURES = [
   { title: "AI business card designer", text: "Customers type their details and get print-ready layouts in seconds. Fewer revisions, more orders." },
   { title: "Instant, accurate quotes", text: "Your own pricing rules by paper size, colour, sides, stock and quantity tier. No more quoting on WhatsApp." },
   { title: "VAT-ready", text: "5% VAT on every order, your TRN on tax invoices, and reports ready for FTA filing." },
+  { title: "Walk-in QR print queue", text: "Busy counter? Show a QR. Customers upload documents, pay on their phone and join a priority queue that prints automatically. Walk-ins are saved by phone number." },
   { title: "WhatsApp ordering with AI", soon: true, text: "Connect your existing WhatsApp Business number (coexistence: keep using the app too). Customers chat, AI quotes and sends a checkout link, and you can take over any time." },
   { title: "Your brand, your domain", text: "yourshop.quickprint.ae on day one. Connect print.yourshop.ae whenever you're ready." },
 ];

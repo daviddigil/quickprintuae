@@ -140,3 +140,13 @@ Shop owners create and edit storefront banners from plain-English prompts. Engin
 1. **Open-source model (free)** — set `IMAGE_API_URL` to any server exposing OpenAI-compatible `POST /v1/images/generations` running e.g. Qwen-Image (Apache-2.0). Needs a GPU host.
 2. **Nano Banana** — set `GEMINI_API_KEY` (`GEMINI_IMAGE_MODEL=gemini-2.5-flash-image`); supports true image editing.
 3. **Built-in template** — always works, no key needed.
+
+## Walk-in QR print queue (Growth+ plans)
+
+For a busy counter: the shop shows a QR (`/admin/walk-in` → poster). Customers scan, enter name + mobile, upload documents (documents only), pay online (Stripe/Mamo), and get a ticket with a live status page. Paid jobs enter a priority queue (high priority first, then first-come-first-served; short jobs get a boost) that a small **print agent** on the shop PC drains automatically. One-time walk-ins are saved by phone number.
+
+- Shop: `/admin/walk-in` (live queue, QR + poster, settings, print agents, walk-in customers under Customers)
+- Superadmin: per-plan feature flag (Plans), walk-in tiles on the dashboard, per-shop section with disable / open-as-shop
+- Print agent: see `docs/PRINT_AGENT.md` (`print-agent/agent.mjs`, no dependencies)
+- Schedule `GET /api/cron/walk-in?secret=$CRON_SECRET` hourly (docker-compose does this) — recovers stale claims, deletes orphan uploads, enforces file retention
+- Tests: `npm test` (queue, phone, flags), `node e2e/walk-in.mjs` (full chain against a running server started with `PAYMENTS_FAKE=1`)

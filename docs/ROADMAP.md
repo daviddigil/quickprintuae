@@ -45,3 +45,6 @@ _QuickPrint UAE — Powered by Nexsofture Tech_
 - Row-level security policies in Postgres as defence-in-depth for tenancy
 - Observability: OpenTelemetry traces, error tracking, uptime checks
 - Load test checkout and upload paths. Add a CDN for storefront assets.
+
+## Shipped: Walk-in QR print queue
+Walk-in customers upload + pay by QR; paid jobs print via a print agent in priority order. Next: SMS/WhatsApp OTP for the phone number, server-side Word/PowerPoint→PDF conversion (accurate page counts), multi-printer routing (A3 / colour), kiosk tablet mode, loyalty for repeat walk-ins.
