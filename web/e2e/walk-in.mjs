@@ -109,7 +109,7 @@ step("dashboard moved jobs to 'Recently printed'");
 
 // ---- superadmin sees platform stats and can open the queue as the shop ----
 const sa = await mk();
-await sa.goto(`${BASE}/login`); await sa.fill('input[name="email"]', "admin@quickprint.ae"); await sa.fill('input[name="password"]', process.env.SA_PASSWORD ?? "admin12345");
+await sa.goto(`${BASE}/login`); await sa.fill('input[name="email"]', "admin@quickprint.ae"); await sa.fill('input[name="password"]', process.env.SA_PASSWORD ?? "change-me-now");
 await sa.getByRole("button", { name: "Sign in" }).click(); await sa.waitForURL(/superadmin/, { timeout: 60000 });
 assert(/Walk-in jobs/i.test(await sa.locator("body").innerText()), "superadmin shows walk-in tiles");
 await sa.screenshot({ path: `${OUT}/superadmin.png`, fullPage: true });

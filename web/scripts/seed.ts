@@ -10,7 +10,7 @@ async function main() {
   await ensurePlans(db);
 
   const saEmail = process.env.SUPERADMIN_EMAIL ?? "admin@quickprint.ae";
-  const saPass = process.env.SUPERADMIN_PASSWORD ?? "admin12345";
+  const saPass = process.env.SUPERADMIN_PASSWORD || "change-me-now";
   const sa = await db.query.users.findFirst({ where: and(eq(schema.users.email, saEmail), isNull(schema.users.tenantId)) });
   if (!sa) {
     await db.insert(schema.users).values({ role: "superadmin", email: saEmail, name: "Platform Admin", passwordHash: await bcrypt.hash(saPass, 10) });

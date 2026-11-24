@@ -27,7 +27,13 @@ services:
     environment:
       DATABASE_URL: postgres://quickprint:${POSTGRES_PASSWORD:-quickprint}@db:5432/quickprint
       APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-5050}}
-      ROOT_DOMAIN: ${ROOT_DOMAIN:-localhost:3000}
+      ROOT_DOMAIN: ${ROOT_DOMAIN:-localhost}
+      # Demo switches: simulate payment / courier so the whole flow can be tried without real keys. NEVER enable in production.
+      PAYMENTS_FAKE: ${PAYMENTS_FAKE:-}
+      DELIVERY_FAKE: ${DELIVERY_FAKE:-}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-admin@quickprint.ae}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-change-me-now}
+      SEED_DEMO: ${SEED_DEMO:-true}
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (openssl rand -hex 32)}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY (openssl rand -hex 32)}
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
@@ -52,10 +58,9 @@ services:
     environment:
       CRON_SECRET: ${CRON_SECRET}
     command: >
-      sh -c 'apk add --no-cache curl >/dev/null &&
-      echo "15 2 * * * curl -fsS \"http://web:3000/api/v1/superadmin/cron/billing?secret=$$CRON_SECRET\"" > /etc/crontabs/root &&
-      echo "30 3 * * * curl -fsS \"http://web:3000/api/cron/purge?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
-      echo "5 * * * * curl -fsS \"http://web:3000/api/cron/walk-in?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
+      sh -c 'echo "15 2 * * * wget -q -O /dev/null \"http://web:3000/api/v1/superadmin/cron/billing?secret=$$CRON_SECRET\"" > /etc/crontabs/root &&
+      echo "30 3 * * * wget -q -O /dev/null \"http://web:3000/api/cron/purge?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
+      echo "5 * * * * wget -q -O /dev/null \"http://web:3000/api/cron/walk-in?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
       crond -f -l 8'
 
 volumes:

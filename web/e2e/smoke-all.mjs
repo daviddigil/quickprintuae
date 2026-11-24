@@ -6,7 +6,7 @@ import { readdirSync, statSync } from "fs";
 import path from "path";
 
 const BASE = process.env.BASE ?? "http://localhost:3200";
-const SA_PASS = process.env.SA_PASSWORD ?? "admin12345";
+const SA_PASS = process.env.SA_PASSWORD ?? "change-me-now";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
 const FAKE = "00000000-0000-4000-8000-000000000000";
 const problems = [];

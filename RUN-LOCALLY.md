@@ -1,6 +1,22 @@
 # Run QuickPrint UAE on your computer
 _Powered by Nexsofture Tech_
 
+## The easy way (Docker) — one double-click
+1. Install **Docker Desktop** (https://www.docker.com/products/docker-desktop/) and **open it** — wait until it says it is running.
+2. Get the project: `git clone https://github.com/daviddigil/quickprintuae.git` (or download the ZIP from GitHub and unzip it).
+3. Start it:
+   - **Windows:** double-click **`start-local.bat`**
+   - **Mac / Linux:** open a terminal in the folder and run **`./start-local.sh`**
+4. Wait 3–5 minutes the first time. Your browser opens at **http://localhost:5050/s/demo** by itself.
+
+Logins: shop owner `owner@demo.ae` / `owner12345` · superadmin `admin@quickprint.ae` / `change-me-now` (at http://localhost:5050/login).
+Stop it: `stop-local.bat` / `./stop-local.sh`. Port 5050 taken? Open the `.env` file the script created and change `WEB_PORT=5050`.
+This trial mode **simulates payment and couriers** (no real money moves). Never use it as-is for a real shop.
+
+**If the page doesn't open:** check http://localhost:5050/api/health — it says if the database or setup is the problem. Or run `docker compose logs web` and send me the last lines.
+
+---
+## Manual setup (without the scripts)
 ## 1. Install once
 - Node.js 22+  (https://nodejs.org)
 - Docker Desktop (https://docker.com) — easiest way to get PostgreSQL
