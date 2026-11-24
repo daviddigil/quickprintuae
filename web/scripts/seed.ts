@@ -29,6 +29,12 @@ async function main() {
       console.log("demo store: /s/demo  owner@demo.ae / owner12345  customer@demo.ae / customer123");
     }
   }
+  // Demo shop: switch the walk-in QR queue on so it can be tried straight away (real shops enable it themselves in /admin/walk-in).
+  const demoShop = await db.query.tenants.findFirst({ where: eq(schema.tenants.slug, "demo") });
+  if (demoShop && demoShop.settings?.walkIn?.enabled === undefined) {
+    await db.update(schema.tenants).set({ settings: { ...demoShop.settings, walkIn: { ...(demoShop.settings?.walkIn ?? {}), enabled: true } } }).where(eq(schema.tenants.id, demoShop.id));
+    console.log("demo store: walk-in QR queue enabled -> /s/demo/walk-in  (shop view: /admin/walk-in)");
+  }
   await client.end();
 }
 main().catch((e) => { console.error(e); process.exit(1); });
