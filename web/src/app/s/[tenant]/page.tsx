@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gt, isNull, lte, or } from "drizzle-orm";
 import { ArrowRight, Clock, CreditCard, Lock, MapPin, Truck, Upload } from "lucide-react";
 import { db, schema } from "@/db";
 import { requireStorefrontTenant } from "@/lib/tenant";
@@ -7,14 +7,19 @@ import { formatAED } from "@/lib/pricing";
 import { startingPrice } from "@/components/store/price";
 import { enabledProviders } from "@/server/payments";
 import { ProductIcon } from "@/components/store/product-icon";
+import { HeroSlider } from "@/components/store/HeroSlider";
 import type { Product } from "@/db/schema";
 
 export default async function StoreHome({ params }: { params: Promise<{ tenant: string }> }) {
   const tenant = await requireStorefrontTenant((await params).tenant);
   const products = await db.select().from(schema.products)
     .where(and(eq(schema.products.tenantId, tenant.id), eq(schema.products.active, true))).orderBy(asc(schema.products.sortOrder));
+  const now = new Date();
+  // only slides inside their offer window (start/end dates are optional)
   const banners = await db.select().from(schema.banners)
-    .where(and(eq(schema.banners.tenantId, tenant.id), eq(schema.banners.active, true))).orderBy(asc(schema.banners.sortOrder));
+    .where(and(eq(schema.banners.tenantId, tenant.id), eq(schema.banners.active, true),
+      or(isNull(schema.banners.startsAt), lte(schema.banners.startsAt, now)), or(isNull(schema.banners.endsAt), gt(schema.banners.endsAt, now))))
+    .orderBy(asc(schema.banners.sortOrder), asc(schema.banners.createdAt));
   const featured = products.filter((p) => p.featured);
   const others = products.filter((p) => !p.featured);
   const base = `/s/${tenant.slug}`;
@@ -23,17 +28,14 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
 
   return (
     <>
+      <HeroSlider shopName={tenant.name} slides={banners.map((b) => ({ id: b.id, version: b.version, title: b.title, subtitle: b.subtitle, linkUrl: b.linkUrl, ctaLabel: b.ctaLabel, source: b.source }))} />
       {banners.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pt-4" data-testid="store-banners">
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto rounded-xl">
-            {banners.map((b) => {
-              // eslint-disable-next-line @next/next/no-img-element
-              const img = <img src={`/api/banners/${b.id}?v=${b.version}`} alt={b.title || `${tenant.name} promotion`} className="aspect-[3/1] w-full rounded-xl object-cover" />;
-              return <div key={b.id} className="w-full shrink-0 snap-center">{b.linkUrl ? <Link href={b.linkUrl}>{img}</Link> : img}</div>;
-            })}
-          </div>
-        </section>
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-3 px-4 pt-4">
+          {products[0] && <Link href={`${base}/p/${products[0].slug}`} className="btn-store inline-flex items-center gap-2 rounded-lg px-5 py-2.5 font-semibold">Start printing <ArrowRight className="h-4 w-4" /></Link>}
+          {products.find((p) => p.kind === "business_card") && <Link href={`${base}/p/${products.find((p) => p.kind === "business_card")!.slug}`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 font-semibold">Design a business card with AI</Link>}
+        </div>
       )}
+      {banners.length === 0 && (
       <section className="bg-store-soft">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
           <h1 className="max-w-2xl text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">{s?.heroTitle || "Print anything, fast."}</h1>
@@ -46,6 +48,7 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
           </div>
         </div>
       </section>
+      )}
 
       <section className="mx-auto max-w-6xl px-4 py-12">
         <h2 className="text-2xl font-bold">Popular products</h2>

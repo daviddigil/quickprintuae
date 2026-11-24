@@ -285,6 +285,11 @@ export const banners = pgTable("banners", {
   title: text("title").notNull().default(""),
   subtitle: text("subtitle").notNull().default(""),
   linkUrl: text("link_url"),
+  /** label of the slide's call-to-action button (shown when linkUrl is set) */
+  ctaLabel: text("cta_label").notNull().default(""),
+  /** offer window: slide is shown only between these dates (null = no limit) */
+  startsAt: timestamp("starts_at", { withTimezone: true }),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
   prompt: text("prompt").notNull().default(""),
   storageKey: text("storage_key").notNull(),
   mime: text("mime").notNull().default("image/png"),

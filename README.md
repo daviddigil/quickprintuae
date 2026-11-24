@@ -142,7 +142,7 @@ Shop owners create and edit storefront banners from plain-English prompts. Engin
 2. **Nano Banana** — set `GEMINI_API_KEY` (`GEMINI_IMAGE_MODEL=gemini-2.5-flash-image`); supports true image editing.
 3. **Built-in template** — always works, no key needed.
 
-## Walk-in QR print queue (Growth+ plans)
+## Walk-in QR print queue (all plans, incl. Starter)
 
 For a busy counter: the shop shows a QR (`/admin/walk-in` → poster). Customers scan, enter name + mobile, upload documents (documents only), pay online (Stripe/Mamo), and get a ticket with a live status page. Paid jobs enter a priority queue (high priority first, then first-come-first-served; short jobs get a boost) that a small **print agent** on the shop PC drains automatically. One-time walk-ins are saved by phone number.
 
@@ -162,3 +162,8 @@ node e2e/full-flow.mjs        # customer order -> payment -> production -> couri
 node e2e/walk-in.mjs          # walk-in QR queue -> real print agent (fake printer) -> status page
 ```
 Note: signup is rate-limited (5/hour/IP, in memory) — restart the server between full smoke runs.
+
+## Hero slider for offers (shop admin → Hero slider)
+
+Owners upload their own offer images (JPG/PNG/WebP up to 5 MB, 1920×640 recommended) or create them with AI, add a headline, button label and link, set optional **start/end dates** (UAE time) and reorder up to 8 slides. Live slides appear as an auto-playing slider (dots, arrows, swipe) at the top of the storefront home; with no live slides the normal headline hero shows.
+Security: file type is checked from the file bytes (SVG refused), links must be same-site paths or https, everything is tenant-scoped. Test: `node e2e/hero-slider.mjs`.

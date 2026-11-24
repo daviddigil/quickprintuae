@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { generateBanner } from "@/server/ai/banner";
 import { putFile, getFile } from "@/server/storage";
+import { MAX_SLIDES, safeLink } from "@/lib/banners";
 
 const Body = z.object({
   prompt: z.string().trim().min(3).max(600),
@@ -48,6 +49,12 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   const b = parsed.data;
 
+  const linkUrl = safeLink(b.linkUrl);
+  if (b.linkUrl && !linkUrl) return NextResponse.json({ error: "Link must be a page on your store (starting with /) or an https:// address" }, { status: 400 });
+  if (!b.editBannerId) {
+    const existingCount = (await db.select({ id: schema.banners.id }).from(schema.banners).where(eq(schema.banners.tenantId, tenant.id))).length;
+    if (existingCount >= MAX_SLIDES) return NextResponse.json({ error: `You can have up to ${MAX_SLIDES} slides. Delete one first.` }, { status: 409 });
+  }
   let existing: typeof schema.banners.$inferSelect | undefined;
   let source: { data: Buffer; mime: string } | undefined;
   if (b.editBannerId) {
@@ -70,7 +77,7 @@ export async function POST(req: Request) {
     }).where(eq(schema.banners.id, existing.id)).returning();
   } else {
     [banner] = await db.insert(schema.banners).values({
-      tenantId: tenant.id, title: b.title ?? "", subtitle: b.subtitle ?? "", linkUrl: b.linkUrl || null, prompt: b.prompt,
+      tenantId: tenant.id, title: b.title ?? "", subtitle: b.subtitle ?? "", linkUrl, prompt: b.prompt,
       storageKey: key, mime: result.mime, source: result.source, sortOrder: Date.now() % 1_000_000,
     }).returning();
   }

@@ -11,8 +11,16 @@ import { computeLinePrice } from "@/lib/pricing";
 
 const suffix = Date.now().toString(36);
 const created: string[] = [];
+/** A plan WITHOUT the walk_in_queue flag (all real plans include it now), to test the feature lock. */
+const NOFLAG = `noflag-${suffix}`;
+async function ensureNoFlagPlan() {
+  if (!(await db.query.plans.findFirst({ where: eq(schema.plans.code, NOFLAG) })))
+    await db.insert(schema.plans).values({ code: NOFLAG, name: "No flag (test)", priceMonthly: 1, priceYearly: 1, flags: [], features: [], active: false });
+}
+
 
 async function shop(opts: { plan?: string; walkIn?: Record<string, unknown> | false } = {}) {
+  if (opts.plan === NOFLAG) await ensureNoFlagPlan();
   const { tenant: t } = await provisionTenant(createDb().db, { shopName: `W ${suffix}`, slug: `w${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: opts.plan ?? "growth" });
   created.push(t.id);
   const settings = { ...t.settings, payments: { stripe: { enabled: true, secretKeyEnc: "x" } }, walkIn: opts.walkIn === false ? undefined : { enabled: true, ...(opts.walkIn ?? {}) } };
@@ -26,7 +34,7 @@ async function file(tenantId: string, filename: string, pageCount: number | null
 const input = (files: WalkInCheckoutInputT["files"], extra: Partial<WalkInCheckoutInputT> = {}): WalkInCheckoutInputT => ({ name: "Aisha Test", phone: "050 123 4567", provider: "stripe", files, ...extra });
 const rejects = (p: Promise<unknown>, re: RegExp) => assert.rejects(p, (e: Error) => e instanceof CheckoutError && re.test(e.message));
 
-after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); });
+after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); await db.delete(schema.plans).where(eq(schema.plans.code, NOFLAG)); });
 
 test("happy path: priced server-side, jobs awaiting payment, pages verified flags, no visit yet", async () => {
   const t = await shop();
@@ -58,7 +66,7 @@ test("client-supplied pages are ignored when the server counted them", async () 
 });
 
 test("rejections: plan/switch off, bad phone, foreign/used/confidential/bad-type files, too many files, bad option, no document product", async () => {
-  const ok = await shop(), starter = await shop({ plan: "starter" }), off = await shop({ walkIn: false });
+  const ok = await shop(), starter = await shop({ plan: NOFLAG }), off = await shop({ walkIn: false });
   const line = (id: string) => ({ fileId: id, copies: 1, color: "bw" as const, sides: "single" as const, paperSize: "A4" });
   const sf = await file(starter.id, "a.pdf", 1), of = await file(off.id, "a.pdf", 1);
   await assert.rejects(() => createWalkInOrder(starter, input([line(sf.id)])), (e: Error) => e instanceof CheckoutError && (e as CheckoutError).status === 403);

@@ -59,7 +59,7 @@ Sizing approach (to be validated):
 
 | Plan | AED / month | Yearly | Order fee | Limits |
 |---|---|---|---|---|
-| Starter | 199 | 1,990 | 2% | 300 orders/mo, 2 staff |
+| Starter | 199 | 1,990 | 2% | 300 orders/mo, 2 staff, walk-in QR print queue, hero slider |
 | Growth | 499 | 4,990 | 1% | 2,000 orders/mo, 10 staff, AI designer, couriers, custom domain |
 | Enterprise | 1,499 | 14,990 | 0.5% | Unlimited, multi-branch, API |
 

@@ -11,9 +11,17 @@ import { enqueueOrderJobs, claimNext, completeJob, bumpJob, cancelJob, sweepStal
 
 const suffix = Date.now().toString(36);
 const created: string[] = [];
+/** A plan WITHOUT the walk_in_queue flag (all real plans include it now), to test the feature lock. */
+const NOFLAG = `noflag-${suffix}`;
+async function ensureNoFlagPlan() {
+  if (!(await db.query.plans.findFirst({ where: eq(schema.plans.code, NOFLAG) })))
+    await db.insert(schema.plans).values({ code: NOFLAG, name: "No flag (test)", priceMonthly: 1, priceYearly: 1, flags: [], features: [], active: false });
+}
+
 const OPTS = { color: "bw", sides: "single", paperSize: "A4" } as const;
 
 async function tenant(plan = "growth") {
+  if (plan === NOFLAG) await ensureNoFlagPlan();
   const { tenant: t } = await provisionTenant(createDb().db, { shopName: `Q ${suffix}`, slug: `q${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: plan });
   created.push(t.id);
   return t;
@@ -32,7 +40,7 @@ async function walkInOrder(tenantId: string, pages: number[], phone = "+97150000
 }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); });
+after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); await db.delete(schema.plans).where(eq(schema.plans.code, NOFLAG)); });
 
 test("paid order enqueues once; small jobs are boosted; visits counted once", async () => {
   const t = await tenant();
@@ -109,7 +117,8 @@ test("tenant isolation + agent auth", async () => {
 });
 
 test("plan flag gates the feature", async () => {
-  const starter = await tenant("starter"), growth = await tenant("growth");
-  await assert.rejects(() => assertFeature(starter, "walk_in_queue"), FeatureLockedError);
+  const locked = await tenant(NOFLAG), growth = await tenant("growth"), starter = await tenant("starter");
+  await assert.rejects(() => assertFeature(locked, "walk_in_queue"), FeatureLockedError);
+  await assertFeature(starter, "walk_in_queue"); // Starter now includes walk-in
   await assertFeature(growth, "walk_in_queue");
 });

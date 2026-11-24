@@ -12,7 +12,7 @@ const NAV = [
   { href: "/admin/products", label: "Products & pricing", icon: Package },
   { href: "/admin/fulfillment", label: "Pickup & delivery", icon: Truck },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
-  { href: "/admin/banners", label: "Banners (AI)", icon: Sparkles },
+  { href: "/admin/banners", label: "Hero slider", icon: Sparkles },
   { href: "/admin/whatsapp", label: "WhatsApp (soon)", icon: MessageCircle },
   { href: "/admin/settings", label: "Store settings", icon: Settings },
   { href: "/admin/customers", label: "Customers", icon: UserRound },
