@@ -29,6 +29,10 @@ Windows PowerShell:
 $env:PAYMENTS_FAKE="1"; $env:DELIVERY_FAKE="1"; npm run dev
 ```
 
+### Port 3000 already used? Pick another port
+Docker: `WEB_PORT=4000 docker compose up -d --build` (PowerShell: `$env:WEB_PORT="4000"`), then open http://localhost:4000 instead of 3000.
+Without Docker: `npm run dev -- -p 4000`.
+
 ## 5. If you see errors — check this first
 Open http://localhost:3000/api/health . It tells you exactly what is wrong:
 - `database: unreachable` → PostgreSQL isn't running (start the Docker container from step 2) or `DATABASE_URL` in `.env` is wrong
