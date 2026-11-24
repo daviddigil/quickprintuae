@@ -26,14 +26,14 @@ services:
         required: false
     environment:
       DATABASE_URL: postgres://quickprint:${POSTGRES_PASSWORD:-quickprint}@db:5432/quickprint
-      APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3000}}
+      APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-5050}}
       ROOT_DOMAIN: ${ROOT_DOMAIN:-localhost:3000}
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (openssl rand -hex 32)}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY (openssl rand -hex 32)}
       CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
       UPLOAD_DIR: /data/uploads
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - "${WEB_PORT:-5050}:3000"
     volumes:
       - uploads:/data/uploads
     healthcheck:

@@ -29,19 +29,20 @@ Windows PowerShell:
 $env:PAYMENTS_FAKE="1"; $env:DELIVERY_FAKE="1"; npm run dev
 ```
 
-### Port 3000 already used? Pick another port
-Docker: `WEB_PORT=4000 docker compose up -d --build` (PowerShell: `$env:WEB_PORT="4000"`), then open http://localhost:4000 instead of 3000.
-Without Docker: `npm run dev -- -p 4000`.
+### Ports
+QuickPrint uses **5050** by default (so it doesn't clash with other apps on 3000/4000). Change it if 5050 is taken:
+Docker: `WEB_PORT=5060 docker compose up -d --build` (PowerShell: `$env:WEB_PORT="5060"`), then open http://localhost:5060.
+Without Docker: `npm run dev -- -p 5050`.
 
 ## 5. If you see errors — check this first
-Open http://localhost:3000/api/health . It tells you exactly what is wrong:
+Open http://localhost:5050/api/health . It tells you exactly what is wrong:
 - `database: unreachable` → PostgreSQL isn't running (start the Docker container from step 2) or `DATABASE_URL` in `.env` is wrong
 - `migrated: false` → run `npm run db:migrate`
 - `seeded: false` → run `npm run db:seed`
 Requires Node 22+. Use the zip/clone from the SAME version of the code as the database (old zips have fewer tables).
 
 ## 6. Open in your browser
-- Store:        http://localhost:3000/s/demo       (customer@demo.ae / customer123)
-- Shop admin:   http://localhost:3000/login        (owner@demo.ae / owner12345)
-- Superadmin:   http://localhost:3000/login        (admin@quickprint.ae / change-me-now)
-- Platform site http://localhost:3000/
+- Store:        http://localhost:5050/s/demo       (customer@demo.ae / customer123)
+- Shop admin:   http://localhost:5050/login        (owner@demo.ae / owner12345)
+- Superadmin:   http://localhost:5050/login        (admin@quickprint.ae / change-me-now)
+- Platform site http://localhost:5050/
