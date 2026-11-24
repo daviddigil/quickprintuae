@@ -3,6 +3,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { createSession, getCurrentUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
+import { publicOrigin } from "@/lib/origin";
 
 /** Superadmin "log in as" the tenant owner. Accepts JSON or form posts. */
 export async function POST(req: Request) {
@@ -25,5 +26,5 @@ export async function POST(req: Request) {
   await createSession({ uid: owner.id, role: owner.role, tid: tenantId, imp: cu.user.id });
   await audit("impersonate.session", { superadmin: cu.user.email }, tenantId); // logged under the impersonated session
   if (ct.includes("json")) return NextResponse.json({ ok: true, redirect: next });
-  return NextResponse.redirect(new URL(next, req.url), 303);
+  return NextResponse.redirect(new URL(next, publicOrigin(req)), 303);
 }

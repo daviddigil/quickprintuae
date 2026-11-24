@@ -180,12 +180,7 @@ export async function createOrder(tenant: Tenant, input: CheckoutInputT, custome
   });
 }
 
-export function publicOrigin(req: Request) {
-  const h = req.headers;
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
-  return host ? `${proto}://${host}` : new URL(req.url).origin;
-}
+export { publicOrigin } from "@/lib/origin";
 
 /** `returnPath` lets walk-in orders come back to their own status page instead of the normal order page. */
 export async function startPayment(tenant: Tenant, order: Order, provider: ProviderCode, origin: string, returnPath?: string) {
