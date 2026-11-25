@@ -1,19 +1,27 @@
 import { requireStaff } from "@/lib/auth";
-import { env } from "@/lib/env";
-import { whatsappEnabled } from "@/lib/whatsapp-flag";
+import { embeddedSignupReady, metaConfig, whatsappEnabled } from "@/lib/whatsapp-flag";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { WhatsappComingSoon } from "@/components/admin/WhatsappComingSoon";
 import { WhatsappPanel } from "@/components/admin/WhatsappPanel";
+import { Alert } from "@/components/ui";
 
 export const metadata = { title: "WhatsApp" };
+export const dynamic = "force-dynamic";
 
 export default async function WhatsappPage() {
-  await requireStaff();
-  if (!whatsappEnabled()) return <WhatsappComingSoon />;
+  const { user } = await requireStaff();
+  if (!whatsappEnabled()) {
+    return (
+      <div>
+        <PageHeader title="WhatsApp orders" />
+        <Alert tone="yellow">WhatsApp is switched off on this platform (WHATSAPP_ENABLED=0). Ask the platform administrator to turn it on.</Alert>
+      </div>
+    );
+  }
+  const m = metaConfig();
   return (
     <div>
-      <PageHeader title="WhatsApp orders" subtitle="Receive orders on WhatsApp and let AI reply — you stay in control." />
-      <WhatsappPanel meta={{ appId: env.metaAppId, configId: env.metaEmbeddedSignupConfigId, graphVersion: env.metaGraphVersion }} />
+      <PageHeader title="WhatsApp orders" subtitle="Customers chat on WhatsApp, AI answers and builds their cart, and sends a checkout link — you stay in control and can reply from your phone at any time." />
+      <WhatsappPanel isOwner={user.role === "owner"} meta={{ appId: m.appId, configId: m.signupConfigId, graphVersion: m.graphVersion, embeddedReady: embeddedSignupReady() }} />
     </div>
   );
 }

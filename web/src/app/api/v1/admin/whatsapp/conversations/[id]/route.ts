@@ -26,6 +26,6 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (!conv) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const p = z.object({ resumeAi: z.literal(true) }).safeParse(await req.json().catch(() => ({})));
   if (!p.success) return NextResponse.json({ error: "Invalid" }, { status: 400 });
-  await db.update(schema.whatsappConversations).set({ aiPausedUntil: null }).where(eq(schema.whatsappConversations.id, conv.id));
+  await db.update(schema.whatsappConversations).set({ aiPausedUntil: null, needsHuman: false, needsHumanReason: null }).where(eq(schema.whatsappConversations.id, conv.id));
   return NextResponse.json({ ok: true });
 }

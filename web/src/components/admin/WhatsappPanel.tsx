@@ -1,12 +1,17 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, Textarea } from "@/components/ui";
+import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, Textarea, cn } from "@/components/ui";
 import { WhatsappConnect } from "./WhatsappConnect";
+import { WhatsappManualConnect } from "./WhatsappManualConnect";
+import { WhatsappSetupStatus, type SetupStatus } from "./WhatsappSetupStatus";
+import { WhatsappTestChat } from "./WhatsappTestChat";
 
-interface Account { displayPhone: string | null; status: string; mode: string; aiEnabled: boolean; greeting: string; handoffMinutes: number }
-interface Conv { id: string; customerWaId: string; customerName: string | null; lastMessageAt: string; aiPausedUntil: string | null }
+interface Account { displayPhone: string | null; status: string; mode: string; connectionMethod: string; aiEnabled: boolean; greeting: string; handoffMinutes: number; lastWebhookAt: string | null; tokenMask: string | null; verifyToken: string | null }
+interface CartItem { name: string; quantity: number; subtotalAed: number }
+interface Conv { id: string; customerWaId: string; customerName: string | null; lastMessageAt: string; aiPausedUntil: string | null; needsHuman: boolean; needsHumanReason: string | null; cart: CartItem[] }
 interface Msg { id: string; direction: string; source: string; body: string; status: string | null; createdAt: string }
 const SRC: Record<string, { label: string; tone: "gray" | "green" | "purple" | "blue" }> = { customer: { label: "Customer", tone: "gray" }, ai: { label: "AI", tone: "purple" }, business_app: { label: "You (app)", tone: "green" }, admin: { label: "You (panel)", tone: "blue" } };
+const REASON: Record<string, string> = { ai_error: "AI was unavailable", ai_refusal: "AI declined a request", ai_loop: "AI couldn't finish", ai_empty: "AI gave no answer", handoff: "Customer asked for a person", send_failed: "A reply could not be sent" };
 
 async function api<T>(url: string, method = "GET", body?: unknown): Promise<T> {
   const res = await fetch(url, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
@@ -15,83 +20,125 @@ async function api<T>(url: string, method = "GET", body?: unknown): Promise<T> {
   return j as T;
 }
 
-export function WhatsappPanel({ meta }: { meta: { appId?: string; configId?: string; graphVersion: string } }) {
-  const [account, setAccount] = useState<Account | null>(null);
+export function WhatsappPanel({ isOwner, meta }: { isOwner: boolean; meta: { appId?: string; configId?: string; graphVersion: string; embeddedReady: boolean } }) {
+  const [status, setStatus] = useState<(SetupStatus & { account: Account | null }) | null>(null);
   const [convs, setConvs] = useState<Conv[]>([]);
   const [open, setOpen] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [openConvData, setOpenConvData] = useState<Conv | null>(null);
   const [reply, setReply] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [greeting, setGreeting] = useState("");
   const [handoff, setHandoff] = useState(720);
+  const [method, setMethod] = useState<"facebook" | "manual">(meta.embeddedReady ? "facebook" : "manual");
+  const [manualResult, setManualResult] = useState<{ webhookUrl: string; verifyToken: string | null } | null>(null);
+
+  const account = status?.account ?? null;
+  const active = account?.status === "connected";
 
   const refresh = useCallback(async () => {
-    const s = await api<{ account: Account | null }>("/api/v1/admin/whatsapp/status");
-    setAccount(s.account); setGreeting(s.account?.greeting ?? ""); setHandoff(s.account?.handoffMinutes ?? 720);
-    if (s.account) setConvs((await api<{ conversations: Conv[] }>("/api/v1/admin/whatsapp/conversations")).conversations);
+    const s = await api<SetupStatus & { account: Account | null }>("/api/v1/admin/whatsapp/status");
+    setStatus(s); setGreeting(s.account?.greeting ?? ""); setHandoff(s.account?.handoffMinutes ?? 720);
+    if (s.account?.status === "connected") setConvs((await api<{ conversations: Conv[] }>("/api/v1/admin/whatsapp/conversations")).conversations);
   }, []);
   useEffect(() => { refresh().catch((e) => setError(e.message)); }, [refresh]);
+  // light polling so new customer chats appear without a reload
+  useEffect(() => { if (!active) return; const t = setInterval(() => { refresh().catch(() => {}); }, 8000); return () => clearInterval(t); }, [active, refresh]);
 
-  async function openConv(id: string) { setOpen(id); setMsgs((await api<{ messages: Msg[] }>(`/api/v1/admin/whatsapp/conversations/${id}`)).messages); }
+  async function openConv(id: string) {
+    setOpen(id);
+    const r = await api<{ messages: Msg[]; conversation: Conv }>(`/api/v1/admin/whatsapp/conversations/${id}`);
+    setMsgs(r.messages); setOpenConvData(r.conversation);
+  }
   const guarded = (fn: () => Promise<unknown>) => fn().catch((e: Error) => setError(e.message));
 
-  const active = account?.status === "connected";
   return (
-    <div className="space-y-6">
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>}
+    <div className="space-y-6" data-testid="wa-panel">
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="wa-error">{error}</div>}
+      {notice && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div>}
+
+      {status && <WhatsappSetupStatus s={status} />}
+
       <Card>
-        <CardHeader title="WhatsApp connection" subtitle="Coexistence: your number works in the WhatsApp Business app and with AI at the same time."
+        <CardHeader title="WhatsApp connection" subtitle="Coexistence: your number keeps working in the WhatsApp Business app while AI answers through the official Cloud API."
           action={account && <Badge tone={active ? "green" : "gray"}>{active ? "Connected" : account.status}</Badge>} />
         <div className="space-y-4 p-5">
           {active ? (
             <>
-              <p className="text-sm">Number: <b>{account!.displayPhone ?? "connected"}</b> · mode: {account!.mode}</p>
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={account!.aiEnabled} onChange={(e) => guarded(async () => { await api("/api/v1/admin/whatsapp/settings", "PATCH", { aiEnabled: e.target.checked }); await refresh(); })} />AI replies enabled</label>
-              <Field label="AI greeting (optional)"><Textarea rows={2} value={greeting} onChange={(e) => setGreeting(e.target.value)} placeholder="Hi! Welcome to our print shop 👋 What can we print for you?" /></Field>
-              <Field label="Pause AI after you reply (minutes)"><Input type="number" min={1} value={handoff} onChange={(e) => setHandoff(Number(e.target.value))} className="max-w-40" /></Field>
-              <div className="flex gap-2">
-                <Button onClick={() => guarded(async () => { await api("/api/v1/admin/whatsapp/settings", "PATCH", { greeting, handoffMinutes: handoff }); await refresh(); })}>Save settings</Button>
-                <Button variant="danger" onClick={() => confirm("Disconnect WhatsApp?") && guarded(async () => { await api("/api/v1/admin/whatsapp/connect", "DELETE"); await refresh(); })}>Disconnect</Button>
-              </div>
+              <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2" data-testid="wa-connected">
+                <dt className="text-slate-500">Number</dt><dd className="font-medium">{account!.displayPhone ?? "connected"}</dd>
+                <dt className="text-slate-500">Connected via</dt><dd>{account!.connectionMethod === "manual" ? "Your own Meta app (manual)" : "Facebook sign-in (Embedded Signup)"} · {account!.mode}</dd>
+                <dt className="text-slate-500">Access token</dt><dd className="font-mono text-xs">{account!.tokenMask ?? "—"} <span className="font-sans text-slate-400">(stored encrypted, never shown)</span></dd>
+                <dt className="text-slate-500">Last message from Meta</dt><dd>{account!.lastWebhookAt ? new Date(account!.lastWebhookAt).toLocaleString("en-AE") : "none yet — send your number a WhatsApp message"}</dd>
+                {account!.verifyToken && <><dt className="text-slate-500">Webhook verify token</dt><dd className="break-all font-mono text-xs" data-testid="wa-verify-token">{account!.verifyToken}</dd></>}
+              </dl>
+              {account!.connectionMethod === "manual" && <p className="text-xs text-slate-500">In your Meta app → WhatsApp → Configuration → Webhook: callback URL <code className="rounded bg-slate-100 px-1">{status?.webhookUrl}</code>, the verify token above, then subscribe to <code>messages</code> and <code>smb_message_echoes</code>.</p>}
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={account!.aiEnabled} disabled={!isOwner} onChange={(e) => guarded(async () => { await api("/api/v1/admin/whatsapp/settings", "PATCH", { aiEnabled: e.target.checked }); await refresh(); })} />AI replies enabled</label>
+              <Field label="AI greeting (optional)"><Textarea rows={2} value={greeting} disabled={!isOwner} onChange={(e) => setGreeting(e.target.value)} placeholder="Hi! Welcome to our print shop 👋 What can we print for you?" /></Field>
+              <Field label="Pause AI after you reply (minutes)"><Input type="number" min={1} value={handoff} disabled={!isOwner} onChange={(e) => setHandoff(Number(e.target.value))} className="max-w-40" /></Field>
+              {isOwner && (
+                <div className="flex gap-2">
+                  <Button onClick={() => guarded(async () => { await api("/api/v1/admin/whatsapp/settings", "PATCH", { greeting, handoffMinutes: handoff }); setNotice("Settings saved."); await refresh(); })}>Save settings</Button>
+                  <Button variant="danger" data-testid="wa-disconnect" onClick={() => confirm("Disconnect WhatsApp? Stored credentials are deleted; chat history is kept.") && guarded(async () => { await api("/api/v1/admin/whatsapp/connect", "DELETE"); setManualResult(null); await refresh(); })}>Disconnect</Button>
+                </div>
+              )}
             </>
-          ) : meta.appId && meta.configId ? (
-            <WhatsappConnect appId={meta.appId} configId={meta.configId} graphVersion={meta.graphVersion} onConnected={() => guarded(refresh)} />
+          ) : !isOwner ? (
+            <p className="text-sm text-slate-600">Only the shop owner can connect WhatsApp.</p>
           ) : (
-            <p className="text-sm text-amber-700">Meta app not configured on this server (META_APP_ID, META_EMBEDDED_SIGNUP_CONFIG_ID). See docs/WHATSAPP.md.</p>
+            <div className="space-y-4">
+              <div className="inline-flex rounded-lg bg-slate-100 p-1 text-sm font-medium">
+                <button type="button" onClick={() => setMethod("facebook")} className={cn("rounded-md px-3 py-1.5", method === "facebook" ? "bg-white shadow-sm" : "text-slate-600")} data-testid="wa-tab-facebook">Connect with Facebook</button>
+                <button type="button" onClick={() => setMethod("manual")} className={cn("rounded-md px-3 py-1.5", method === "manual" ? "bg-white shadow-sm" : "text-slate-600")} data-testid="wa-tab-manual">Manual connect (your own Meta app)</button>
+              </div>
+              {method === "facebook" ? (
+                meta.embeddedReady && meta.appId && meta.configId
+                  ? <WhatsappConnect appId={meta.appId} configId={meta.configId} graphVersion={meta.graphVersion} onConnected={() => guarded(refresh)} />
+                  : <div className="space-y-2"><Button disabled data-testid="connect-whatsapp">Connect WhatsApp Business</Button><p className="text-sm text-amber-700" data-testid="wa-connect-reason">“Connect with Facebook” isn&apos;t available yet: the platform administrator must set META_APP_ID, META_APP_SECRET, META_VERIFY_TOKEN and META_EMBEDDED_SIGNUP_CONFIG_ID (see the Setup status above). You can use Manual connect with your own Meta app right now.</p></div>
+              ) : (
+                <WhatsappManualConnect onConnected={(r) => { setManualResult(r); setNotice("Connected. Now add the webhook in your Meta app (details below)."); guarded(refresh); }} />
+              )}
+              {manualResult && <p className="text-xs text-slate-600">Webhook callback URL: <code>{manualResult.webhookUrl}</code></p>}
+            </div>
           )}
         </div>
       </Card>
+
+      <WhatsappTestChat />
 
       {active && (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
           <Card>
             <CardHeader title="Conversations" />
             {convs.length === 0 ? <EmptyState title="No chats yet" /> : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-slate-100" data-testid="wa-convs">
                 {convs.map((c) => (
                   <li key={c.id}><button onClick={() => guarded(() => openConv(c.id))} className={`w-full px-4 py-3 text-left text-sm hover:bg-slate-50 ${open === c.id ? "bg-slate-50" : ""}`}>
-                    <p className="font-medium">{c.customerName ?? c.customerWaId}</p>
-                    <p className="text-xs text-slate-500">{new Date(c.lastMessageAt).toLocaleString("en-AE")}{c.aiPausedUntil && new Date(c.aiPausedUntil) > new Date() ? " · AI paused" : ""}</p>
+                    <p className="flex items-center justify-between gap-2 font-medium"><span>{c.customerName ?? c.customerWaId}</span>{c.needsHuman && <Badge tone="red">Needs you</Badge>}</p>
+                    <p className="text-xs text-slate-500">{new Date(c.lastMessageAt).toLocaleString("en-AE")}{c.aiPausedUntil && new Date(c.aiPausedUntil) > new Date() ? " · AI paused" : ""}{c.cart?.length ? ` · cart: ${c.cart.length} item${c.cart.length > 1 ? "s" : ""}` : ""}</p>
                   </button></li>
                 ))}
               </ul>
             )}
           </Card>
           <Card>
-            <CardHeader title="Thread" action={open && <Button variant="secondary" onClick={() => guarded(async () => { await api(`/api/v1/admin/whatsapp/conversations/${open}`, "PATCH", { resumeAi: true }); await refresh(); })}>Resume AI</Button>} />
+            <CardHeader title="Thread" action={open && <Button variant="secondary" onClick={() => guarded(async () => { await api(`/api/v1/admin/whatsapp/conversations/${open}`, "PATCH", { resumeAi: true }); await refresh(); await openConv(open); })}>Resume AI</Button>} />
             {!open ? <EmptyState title="Select a conversation" /> : (
               <div className="space-y-3 p-4">
+                {openConvData?.needsHuman && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">Needs you: {REASON[openConvData.needsHumanReason ?? ""] ?? openConvData.needsHumanReason}. Reply below (pauses the AI) or tap Resume AI.</div>}
+                {!!openConvData?.cart?.length && <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">Cart: {openConvData.cart.map((i) => `${i.quantity} × ${i.name}`).join(" · ")}</div>}
                 <div className="max-h-96 space-y-2 overflow-y-auto" data-testid="wa-thread">
                   {msgs.map((m) => (
                     <div key={m.id} className={`flex ${m.direction === "in" ? "justify-start" : "justify-end"}`}>
                       <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${m.direction === "in" ? "bg-slate-100" : "bg-emerald-50"}`}>
-                        <div className="mb-1"><Badge tone={SRC[m.source]?.tone ?? "gray"}>{SRC[m.source]?.label ?? m.source}</Badge></div>
+                        <div className="mb-1 flex gap-1"><Badge tone={SRC[m.source]?.tone ?? "gray"}>{SRC[m.source]?.label ?? m.source}</Badge>{m.status === "skipped" && <Badge tone="yellow">Not sent: 24h window</Badge>}{m.status === "failed" && <Badge tone="red">Failed</Badge>}</div>
                         <p className="whitespace-pre-wrap">{m.body}</p>
                       </div>
                     </div>
                   ))}
                 </div>
-                <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!reply.trim()) return; guarded(async () => { await api("/api/v1/admin/whatsapp/messages", "POST", { conversationId: open, text: reply }); setReply(""); await openConv(open); }); }}>
+                <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!reply.trim()) return; guarded(async () => { await api("/api/v1/admin/whatsapp/messages", "POST", { conversationId: open, text: reply }); setReply(""); await openConv(open); await refresh(); }); }}>
                   <Input value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Reply as the shop (pauses the AI)" />
                   <Button>Send</Button>
                 </form>

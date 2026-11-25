@@ -17,6 +17,10 @@ const VARS: { name: string; purpose: string; required?: boolean }[] = [
   { name: "PLATFORM_STRIPE_WEBHOOK_SECRET", purpose: "Verifies platform Stripe webhooks" },
   { name: "CRON_SECRET", purpose: "Protects cron endpoints", required: true },
   { name: "DELIVERY_FAKE", purpose: "Simulate courier APIs (dev/staging only)" },
+  { name: "META_APP_ID", purpose: "WhatsApp: Meta app for 'Connect with Facebook' (Embedded Signup)" },
+  { name: "META_APP_SECRET", purpose: "WhatsApp: verifies Meta webhooks + exchanges signup codes" },
+  { name: "META_VERIFY_TOKEN", purpose: "WhatsApp: webhook verification token you paste into Meta" },
+  { name: "META_EMBEDDED_SIGNUP_CONFIG_ID", purpose: "WhatsApp: Embedded Signup (coexistence) configuration id" },
 ];
 
 export default async function PlatformSettings() {

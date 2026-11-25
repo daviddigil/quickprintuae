@@ -1,9 +1,12 @@
 import "server-only";
-import { and, desc, eq, gt, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { WhatsappAccount, WhatsappConversation } from "@/db/schema";
 import { runAgent, type HistoryMsg } from "./agent";
-import { markRead, sendText, withinServiceWindow } from "./graph";
+import { markRead, sendInteractiveButtons, sendText, withinServiceWindow } from "./graph";
+import { CONFIRM_BUTTONS } from "./cart-math";
+import { dbCartStore } from "./cart";
+import { handleButton } from "./buttons";
 import type { WaEvent } from "./parse";
 
 const HISTORY = 12;
@@ -30,13 +33,19 @@ async function history(convId: string): Promise<HistoryMsg[]> {
   const rows = await db.select().from(schema.whatsappMessages).where(eq(schema.whatsappMessages.conversationId, convId)).orderBy(desc(schema.whatsappMessages.createdAt)).limit(HISTORY);
   const msgs: HistoryMsg[] = [];
   for (const r of rows.reverse()) {
-    if (!r.body) continue;
+    if (!r.body || r.status === "skipped" || r.status === "failed") continue;
     const role = r.direction === "in" ? "user" : "assistant";
     const last = msgs[msgs.length - 1];
     if (last && last.role === role) last.content += `\n${r.body}`; else msgs.push({ role, content: r.body });
   }
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
   return msgs;
+}
+
+/** Flag the chat for the owner ("Needs you" in the admin) and leave an audit trail. No request context here, so insert directly. */
+async function flagNeedsHuman(tenantId: string, convId: string, reason: string) {
+  await db.update(schema.whatsappConversations).set({ needsHuman: true, needsHumanReason: reason }).where(eq(schema.whatsappConversations.id, convId));
+  await db.insert(schema.auditLogs).values({ tenantId, action: "whatsapp.needs_human", meta: { conversationId: convId, reason } });
 }
 
 async function handleInbound(e: Extract<WaEvent, { kind: "inbound" }>) {
@@ -52,21 +61,34 @@ async function handleInbound(e: Extract<WaEvent, { kind: "inbound" }>) {
   if (!aiActive(account, conv)) return;
   if (!withinServiceWindow(conv)) return;
 
-  // per-conversation rate limit on AI replies
-  const since = new Date(Date.now() - 10 * 60_000);
-  const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(schema.whatsappMessages)
-    .where(and(eq(schema.whatsappMessages.conversationId, conv.id), eq(schema.whatsappMessages.source, "ai"), gt(schema.whatsappMessages.createdAt, since)));
-  if (n >= AI_PER_10_MIN) return;
+  // per-conversation rate limit on AI replies: ONE atomic UPDATE reserves a slot, so concurrent messages can never overshoot the cap
+  const slot = await db.execute(sql`
+    update whatsapp_conversations set
+      ai_window_count = case when ai_window_start is null or ai_window_start < now() - interval '10 minutes' then 1 else ai_window_count + 1 end,
+      ai_window_start = case when ai_window_start is null or ai_window_start < now() - interval '10 minutes' then now() else ai_window_start end
+    where id = ${conv.id} and (ai_window_start is null or ai_window_start < now() - interval '10 minutes' or ai_window_count < ${AI_PER_10_MIN})
+    returning id`);
+  if (!(slot as unknown as unknown[]).length) return;
 
   const tenant = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, account.tenantId) });
   if (!tenant || ["suspended", "cancelled"].includes(tenant.status)) return;
-  const result = await runAgent(tenant, await history(conv.id), { greeting: account.greeting, firstMessage: !existed });
+  const button = e.buttonId ? await handleButton(tenant, dbCartStore(conv.id), e.buttonId) : null;
+  const result = button ?? await runAgent(tenant, await history(conv.id), { cart: dbCartStore(conv.id), greeting: account.greeting, firstMessage: !existed });
   const fresh = (await db.query.whatsappConversations.findFirst({ where: eq(schema.whatsappConversations.id, conv.id) })) ?? conv;
   // a human may have replied from the WhatsApp Business app while the model was thinking
   if (!aiActive(account, fresh)) return;
-  await sendText(account, fresh, result.reply, "ai");
+  try {
+    await sendText(account, fresh, result.reply, "ai");
+    if (result.offerButtons && !result.handoff) await sendInteractiveButtons(account, fresh, "Ready to order?", CONFIRM_BUTTONS, "ai");
+  } catch (err) {
+    console.error("whatsapp send failed", (err as Error).message);
+    await flagNeedsHuman(account.tenantId, conv.id, "send_failed");
+    return;
+  }
   if (result.links.length) await db.update(schema.whatsappConversations).set({ refs: { ...(fresh.refs ?? {}), cartLinks: [...(fresh.refs?.cartLinks ?? []), ...result.links].slice(-20) } }).where(eq(schema.whatsappConversations.id, conv.id));
   if (result.handoff) await db.update(schema.whatsappConversations).set({ aiPausedUntil: pauseUntil(account) }).where(eq(schema.whatsappConversations.id, conv.id));
+  const reason = result.needsHuman ?? (result.handoff ? "handoff" : null);
+  if (reason) await flagNeedsHuman(account.tenantId, conv.id, reason);
 }
 
 /** Owner replied from the WhatsApp Business app (coexistence echo): record it and hand the chat to the human. */
@@ -74,7 +96,7 @@ async function handleEcho(e: Extract<WaEvent, { kind: "echo" }>) {
   const account = await accountFor(e.phoneNumberId);
   if (!account) return;
   const ts = new Date(e.timestamp * 1000);
-  const conv = await upsertConversation(account, e.to, undefined, { lastMessageAt: ts, aiPausedUntil: pauseUntil(account) });
+  const conv = await upsertConversation(account, e.to, undefined, { lastMessageAt: ts, aiPausedUntil: pauseUntil(account), needsHuman: false, needsHumanReason: null });
   await db.insert(schema.whatsappMessages).values({ conversationId: conv.id, waMessageId: e.wamid, direction: "out", source: "business_app", type: e.type, body: e.text, raw: e.raw as object }).onConflictDoNothing();
 }
 
@@ -92,4 +114,3 @@ export async function processEvents(events: WaEvent[]) {
     } catch (err) { console.error("whatsapp event failed", e.kind, err); }
   }
 }
-

@@ -12,6 +12,7 @@ export async function PATCH(req: Request) {
   if (!g.ok) return g.res;
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Invalid settings" }, { status: 400 });
+  if (!Object.keys(parsed.data).length) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   const [row] = await db.update(schema.whatsappAccounts).set(parsed.data).where(eq(schema.whatsappAccounts.tenantId, g.tenant.id)).returning();
   if (!row) return NextResponse.json({ error: "Connect WhatsApp first" }, { status: 404 });
   await audit("whatsapp.settings", parsed.data, g.tenant.id);

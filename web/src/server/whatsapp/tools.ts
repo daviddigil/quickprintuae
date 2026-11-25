@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import type { Product, Tenant } from "@/db/schema";
 import { computeLinePrice, PricingError, round2 } from "@/lib/pricing";
 import { env } from "@/lib/env";
+import { cfgLink } from "./cart-math";
 
 /** All tools are scoped to one tenant and compute money with the same engine as checkout — the model never invents prices. */
 export async function activeProducts(tenantId: string): Promise<Product[]> {
@@ -42,8 +43,7 @@ export async function quotePrice(tenant: Tenant, a: QuoteArgs) {
 
 /** Link format matches the storefront's `?cfg=` prefill (base64url JSON {selections, quantity, pages}). */
 export function buildCfgLink(tenantSlug: string, productSlug: string, a: { selections?: Record<string, string>; quantity: number; pages?: number }) {
-  const cfg = Buffer.from(JSON.stringify({ selections: a.selections ?? {}, quantity: a.quantity, pages: a.pages ?? 1 })).toString("base64url");
-  return `${env.appUrl}/s/${tenantSlug}/p/${productSlug}?cfg=${cfg}`;
+  return cfgLink(env.appUrl, tenantSlug, { slug: productSlug, selections: a.selections ?? {}, quantity: a.quantity, pages: a.pages ?? 1 });
 }
 
 export async function sendCheckoutLink(tenant: Tenant, a: QuoteArgs) {

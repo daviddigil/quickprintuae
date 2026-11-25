@@ -1,0 +1,2 @@
+ALTER TABLE "whatsapp_conversations" ADD COLUMN "ai_window_start" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "whatsapp_conversations" ADD COLUMN "ai_window_count" integer DEFAULT 0 NOT NULL;

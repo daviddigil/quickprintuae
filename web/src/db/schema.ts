@@ -2,6 +2,7 @@ import {
   pgTable, text, integer, boolean, timestamp, jsonb, numeric, uuid, pgEnum, uniqueIndex, index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { WaCartItem } from "@/server/whatsapp/cart-math";
 import type { ProductConfig, TenantSettings, Selections, CardDesign, Address } from "@/lib/types";
 
 /* ---------- enums ---------- */
@@ -315,6 +316,12 @@ export const whatsappAccounts = pgTable("whatsapp_accounts", {
   greeting: text("greeting").notNull().default(""),
   handoffMinutes: integer("handoff_minutes").notNull().default(720),
   connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  /** embedded (Meta Embedded Signup, platform app) | manual (shop's own Meta app + system-user token) */
+  connectionMethod: text("connection_method").notNull().default("embedded"),
+  /** manual connect only: the shop's own app secret (encrypted) used to verify ITS webhooks, and the verify token it pastes into Meta */
+  appSecretEnc: text("app_secret_enc"),
+  verifyToken: text("verify_token"),
+  lastWebhookAt: timestamp("last_webhook_at", { withTimezone: true }),
 });
 
 export const whatsappConversations = pgTable("whatsapp_conversations", {
@@ -324,10 +331,18 @@ export const whatsappConversations = pgTable("whatsapp_conversations", {
   customerWaId: text("customer_wa_id").notNull(),
   customerName: text("customer_name"),
   aiPausedUntil: timestamp("ai_paused_until", { withTimezone: true }),
+  /** rate limit: AI turns used in the current 10-minute window (reserved atomically before the AI runs) */
+  aiWindowStart: timestamp("ai_window_start", { withTimezone: true }),
+  aiWindowCount: integer("ai_window_count").notNull().default(0),
   lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
   /** last customer message time, drives the 24h customer-service window */
   lastCustomerMessageAt: timestamp("last_customer_message_at", { withTimezone: true }),
   refs: jsonb("refs").$type<{ cartLinks?: string[]; orderIds?: string[] }>().notNull().default({}),
+  /** chat cart: items the customer has asked for in this conversation (prices re-computed server-side) */
+  cart: jsonb("cart").$type<WaCartItem[]>().notNull().default([]),
+  /** set when the AI failed/declined or the customer asked for a person: shows "Needs you" in the admin */
+  needsHuman: boolean("needs_human").notNull().default(false),
+  needsHumanReason: text("needs_human_reason"),
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex("wa_conv_account_customer_idx").on(t.accountId, t.customerWaId),

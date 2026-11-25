@@ -167,3 +167,8 @@ Note: signup is rate-limited (5/hour/IP, in memory) — restart the server betwe
 
 Owners upload their own offer images (JPG/PNG/WebP up to 5 MB, 1920×640 recommended) or create them with AI, add a headline, button label and link, set optional **start/end dates** (UAE time) and reorder up to 8 slides. Live slides appear as an auto-playing slider (dots, arrows, swipe) at the top of the storefront home; with no live slides the normal headline hero shows.
 Security: file type is checked from the file bytes (SVG refused), links must be same-site paths or https, everything is tenant-scoped. Test: `node e2e/hero-slider.mjs`.
+
+## WhatsApp AI chat cart (live)
+
+Shops connect their existing WhatsApp Business number (**coexistence**: the owner keeps using the phone app) from `/admin/whatsapp` — via Facebook (Embedded Signup) or "Manual connect" with their own Meta app. Customers chat, the AI (Claude, or a built-in rule-based assistant without `ANTHROPIC_API_KEY`) quotes with the real pricing engine, builds a **conversational cart** and sends ONE itemised message with prefilled checkout links; files, slot and payment stay on the storefront. When the owner replies from the phone the AI pauses. **Try the AI without any WhatsApp number** with the "Try the AI (test chat)" box on that page.
+Real numbers need a Meta app + review (checklist in `docs/WHATSAPP.md`). Verified against local mock Meta + Anthropic servers: `node e2e/mock-meta.mjs`, `node e2e/mock-anthropic.mjs`, then `node e2e/whatsapp-live.mjs` (see docs for the three app instances).

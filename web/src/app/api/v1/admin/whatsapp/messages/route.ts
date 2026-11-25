@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   if (!conv || !account) return NextResponse.json({ error: "Not found" }, { status: 404 });
   try {
     await sendText(account, conv, parsed.data.text, "admin");
-    await db.update(schema.whatsappConversations).set({ aiPausedUntil: pauseUntil(account) }).where(eq(schema.whatsappConversations.id, conv.id));
+    await db.update(schema.whatsappConversations).set({ aiPausedUntil: pauseUntil(account), needsHuman: false, needsHumanReason: null }).where(eq(schema.whatsappConversations.id, conv.id));
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 422 });

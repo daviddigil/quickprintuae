@@ -1,6 +1,6 @@
 /** Pure parsing of Meta webhook payloads into normalized events (no DB, easy to test). */
 export type WaEvent =
-  | { kind: "inbound"; phoneNumberId: string; from: string; name?: string; wamid: string; type: string; text: string; timestamp: number; raw: unknown }
+  | { kind: "inbound"; phoneNumberId: string; from: string; name?: string; wamid: string; type: string; text: string; /** id of the interactive reply button / list row the customer tapped */ buttonId?: string; timestamp: number; raw: unknown }
   | { kind: "echo"; phoneNumberId: string; to: string; wamid: string; type: string; text: string; timestamp: number; raw: unknown }
   | { kind: "status"; phoneNumberId: string; wamid: string; status: string; timestamp: number };
 
@@ -28,7 +28,8 @@ export function parseWebhook(payload: unknown): WaEvent[] {
     if (ch.field === "messages") {
       for (const m of v.messages ?? []) {
         if (!m.id || !m.from) continue;
-        out.push({ kind: "inbound", phoneNumberId, from: m.from, name: v.contacts?.find((c) => c.wa_id === m.from)?.profile?.name, wamid: m.id, type: m.type ?? "text", text: bodyOf(m), timestamp: Number(m.timestamp) || Math.floor(Date.now() / 1000), raw: m });
+        const buttonId = m.interactive?.button_reply?.id ?? m.interactive?.list_reply?.id;
+        out.push({ kind: "inbound", phoneNumberId, from: m.from, name: v.contacts?.find((c) => c.wa_id === m.from)?.profile?.name, wamid: m.id, type: m.type ?? "text", text: bodyOf(m), ...(buttonId ? { buttonId } : {}), timestamp: Number(m.timestamp) || Math.floor(Date.now() / 1000), raw: m });
       }
       for (const st of v.statuses ?? []) out.push({ kind: "status", phoneNumberId, wamid: st.id, status: st.status, timestamp: Number(st.timestamp) || 0 });
     }
