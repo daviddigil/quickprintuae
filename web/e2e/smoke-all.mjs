@@ -83,7 +83,7 @@ const publicPages = ["/", "/pricing", "/signup", "/login", "/s/demo", "/s/demo/c
 if (order) publicPages.push(`/s/demo/orders/${order.id}?t=${token(order.id)}`);
 if (wiOrder) publicPages.push(`/s/demo/walk-in/status/${wiOrder.id}?t=${token(wiOrder.id)}`);
 const adminPages = ["/admin", "/admin/orders", "/admin/products", "/admin/fulfillment", "/admin/payments", "/admin/banners", "/admin/whatsapp", "/admin/walk-in", "/admin/walk-in/poster", "/admin/settings", "/admin/customers", "/admin/staff", "/admin/billing", "/admin/orders?status=paid", "/admin/orders?source=walk_in", "/admin/customers?q=a", product && `/admin/products/${product.id}`, order && `/admin/orders/${order.id}`, order && `/admin/orders/${order.id}/invoice`, order && `/admin/orders/${order.id}/invoice?ticket=1`].filter(Boolean);
-const saPages = ["/superadmin", "/superadmin/tenants", "/superadmin/plans", "/superadmin/invoices", "/superadmin/audit", "/superadmin/settings", ...tenants.map((t) => `/superadmin/tenants/${t.id}`)];
+const saPages = ["/superadmin", "/superadmin/tenants", "/superadmin/plans", "/superadmin/invoices", "/superadmin/commissions", "/superadmin/audit", "/superadmin/settings", ...tenants.map((t) => `/superadmin/tenants/${t.id}`)];
 
 /* ---------- 0. SELF-SERVE (first: signup is rate-limited per IP and the API fuzz below also posts to it): brand-new shop signs up through the UI, then everything is crawled for that fresh tenant ---------- */
 const stamp = Date.now().toString(36);

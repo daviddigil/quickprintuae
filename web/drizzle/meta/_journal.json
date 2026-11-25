@@ -64,6 +64,13 @@
       "when": 1795602006260,
       "tag": "0008_worthless_invisible_woman",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795604210023,
+      "tag": "0009_lively_stingray",
+      "breakpoints": true
     }
   ]
 }

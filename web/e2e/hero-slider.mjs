@@ -66,7 +66,7 @@ const count = () => shop.locator('[data-testid="hero-slider"] [role="group"]').c
 assert((await count()) === 1, "only the live slide is on the storefront (scheduled and expired are hidden); got " + (await count()));
 assert((await shop.getByText("Eid Mubarak — 20% off").count()) === 1 && (await shop.getByText("Shop flyers").count()) >= 1, "headline and button show over the image");
 assert((await shop.getByText("Old summer offer").count()) === 0 && (await shop.getByText("New brochures").count()) === 0, "expired/scheduled titles absent");
-assert((await shop.getByText("Print anything").count()) === 0, "text hero replaced by the slider");
+assert((await shop.locator("h1:not(.sr-only)").count()) === 0 && (await shop.locator("h1.sr-only").count()) === 1, "visible text hero replaced by the slider; one screen-reader/SEO h1 remains");
 step("storefront shows only the live slide (scheduled + expired hidden), with headline and button");
 const imgOk = await shop.locator('[data-testid="hero-slider"] img').first().evaluate((i) => i.complete && i.naturalWidth === 1920);
 assert(imgOk, "uploaded image served at full size"); step("uploaded image is served correctly");
@@ -93,7 +93,7 @@ assert(/New brochures/.test(firstAlt), "reordering changes which slide comes fir
 await owner.reload({ waitUntil: "networkidle" });
 for (let k = await owner.getByTestId("banner-card").count(); k > 0; k--) { owner.once("dialog", (d) => d.accept()); await owner.getByRole("button", { name: "Delete" }).first().click(); await owner.waitForFunction((n) => document.querySelectorAll('[data-testid="banner-card"]').length === n - 1, k); }
 await shop.reload({ waitUntil: "networkidle" });
-assert((await shop.getByTestId("hero-slider").count()) === 0 && (await shop.getByText("Print anything").count()) > 0, "no slides -> normal text hero"); step("with no slides the storefront shows the normal headline hero");
+assert((await shop.getByTestId("hero-slider").count()) === 0 && (await shop.locator("h1:not(.sr-only)").count()) === 1, "no slides -> normal text hero"); step("with no slides the storefront shows the normal headline hero");
 
 // ---- Starter plan now includes walk-in ----
 const starter = (await sql`select id from plans where code='starter'`)[0];

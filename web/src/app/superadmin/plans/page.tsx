@@ -1,3 +1,4 @@
+import { describeRule, resolveRule } from "@/lib/commission";
 import { asc } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Plan } from "@/db/schema";
@@ -16,7 +17,10 @@ function PlanForm({ plan }: { plan?: Plan }) {
       <Field label="Name"><Input name="name" defaultValue={plan?.name} required /></Field>
       <Field label="AED / month"><Input name="priceMonthly" type="number" step="0.01" defaultValue={plan?.priceMonthly ?? 0} /></Field>
       <Field label="AED / year"><Input name="priceYearly" type="number" step="0.01" defaultValue={plan?.priceYearly ?? 0} /></Field>
-      <Field label="Order fee %"><Input name="orderFeePct" type="number" step="0.01" defaultValue={plan?.orderFeePct ?? 0} /></Field>
+      <Field label="Commission %" hint="(of order value, ex VAT)"><Input name="orderFeePct" type="number" step="0.01" defaultValue={plan?.orderFeePct ?? 0} /></Field>
+      <Field label="Per print job (AED)" hint="(optional flat fee)"><Input name="perJobFee" type="number" step="0.01" min="0" defaultValue={plan?.perJobFee ?? 0} /></Field>
+      <Field label="Min per order (AED)"><Input name="minOrderFee" type="number" step="0.01" min="0" defaultValue={plan?.minOrderFee ?? 0} /></Field>
+      <Field label="Max per order (AED)" hint="(blank = no cap)"><Input name="maxOrderFee" type="number" step="0.01" min="0" defaultValue={plan?.maxOrderFee ?? ""} /></Field>
       <Field label="Max orders / mo" hint="(blank = ∞)"><Input name="maxOrdersPerMonth" type="number" defaultValue={plan?.maxOrdersPerMonth ?? ""} /></Field>
       <Field label="Max staff" hint="(blank = ∞)"><Input name="maxStaff" type="number" defaultValue={plan?.maxStaff ?? ""} /></Field>
       <Field label="Sort"><Input name="sortOrder" type="number" defaultValue={plan?.sortOrder ?? 0} /></Field>
@@ -51,7 +55,7 @@ export default async function PlansPage({ searchParams }: { searchParams: Promis
       <div className="space-y-6">
         {plans.map((p) => (
           <Card key={p.id}>
-            <CardHeader title={<span className="flex items-center gap-2">{p.name} {!p.active && <Badge>inactive</Badge>}{p.flags?.map((f) => <Badge key={f} tone="purple">{flagLabel(f)}</Badge>)}</span>} subtitle={`AED ${p.priceMonthly}/mo · ${p.orderFeePct}% per order`} />
+            <CardHeader title={<span className="flex items-center gap-2">{p.name} {!p.active && <Badge>inactive</Badge>}{p.flags?.map((f) => <Badge key={f} tone="purple">{flagLabel(f)}</Badge>)}</span>} subtitle={`AED ${p.priceMonthly}/mo · ${describeRule(resolveRule(p))}`} />
             <PlanForm plan={p} />
           </Card>
         ))}

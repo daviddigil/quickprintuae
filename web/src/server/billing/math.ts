@@ -7,15 +7,19 @@ export interface InvoiceMathInput {
   billingCycle: "monthly" | "yearly" | string;
   orderFeePct: number;
   gmv: number;
+  /** precomputed commission (from the per-order ledger); overrides orderFeePct x gmv when given */
+  orderFeeAmount?: number;
+  /** commission-only shops: no subscription charge */
+  subscriptionWaived?: boolean;
   /** for yearly plans: bill the full year on the anniversary month, nothing otherwise */
   isYearlyBillingMonth?: boolean;
   vatRate?: number;
 }
 
 export function computeSaasInvoice(i: InvoiceMathInput) {
-  const subscription =
+  const subscription = i.subscriptionWaived ? 0 :
     i.billingCycle === "yearly" ? (i.isYearlyBillingMonth ? i.priceYearly : 0) : i.priceMonthly;
-  const orderFee = r2((i.gmv * i.orderFeePct) / 100);
+  const orderFee = i.orderFeeAmount !== undefined ? r2(i.orderFeeAmount) : r2((i.gmv * i.orderFeePct) / 100);
   const net = r2(subscription + orderFee);
   const vat = r2((net * (i.vatRate ?? 5)) / 100);
   return { subscription: r2(subscription), orderFee, vat, total: r2(net + vat) };

@@ -10,7 +10,9 @@ import { computeSaasInvoice, invoiceNumber, periodBounds, r2 } from "./math";
 export * from "./math";
 export { PLAN_FLAGS, type PlanFlag } from "./flags";
 
-const PAID_STATUSES = ["paid", "in_production", "ready", "out_for_delivery", "delivered", "picked_up"] as const;
+import { PAID_STATUSES } from "./paid-statuses";
+import { commissionsToInvoice, ensureCommissionsForPeriod } from "@/server/commission";
+import { resolveRule } from "@/lib/commission";
 
 export function platformStripe() {
   return env.platformStripeKey ? new Stripe(env.platformStripeKey) : null;
@@ -64,9 +66,10 @@ export async function assertFeature(tenant: Tenant, flag: PlanFlag) {
 }
 
 /** Idempotent per tenant + period. Bills the period containing `date` (normally run on the 1st for the previous month). */
-export async function generateInvoicesForPeriod(date: Date) {
+export async function generateInvoicesForPeriod(date: Date, opts: { tenantId?: string } = {}) {
   const { start, end } = periodBounds(date);
-  const tenants = await db.query.tenants.findMany({ where: inArray(schema.tenants.status, ["active", "past_due"]) });
+  const statusOk = inArray(schema.tenants.status, ["active", "past_due"]);
+  const tenants = await db.query.tenants.findMany({ where: opts.tenantId ? and(statusOk, eq(schema.tenants.id, opts.tenantId)) : statusOk });
   const plans = await db.query.plans.findMany();
   const created: string[] = [];
   for (const t of tenants) {
@@ -78,16 +81,26 @@ export async function generateInvoicesForPeriod(date: Date) {
     if (existing) continue;
     const { gmv } = await tenantGmv(t.id, start, end);
     const anchor = t.trialEndsAt ?? t.createdAt;
+    // commission comes from the per-order ledger (each paid order was priced with the rule in force when it was paid)
+    await ensureCommissionsForPeriod(t.id, start, end);
+    const led = await commissionsToInvoice(t.id, end);
+    const rule = resolveRule(plan, t.commissionOverride);
     const m = computeSaasInvoice({
       priceMonthly: plan.priceMonthly, priceYearly: plan.priceYearly, billingCycle: t.billingCycle,
-      orderFeePct: plan.orderFeePct, gmv, isYearlyBillingMonth: anchor.getUTCMonth() === start.getUTCMonth(),
+      orderFeePct: plan.orderFeePct, gmv, orderFeeAmount: r2(led.accrued - led.credits), subscriptionWaived: rule.subscriptionWaived,
+      isYearlyBillingMonth: anchor.getUTCMonth() === start.getUTCMonth(),
     });
     if (m.total <= 0) continue;
     const [{ n }] = await db.select({ n: count() }).from(schema.saasInvoices).where(eq(schema.saasInvoices.periodStart, start));
-    const [inv] = await db.insert(schema.saasInvoices).values({
-      tenantId: t.id, number: invoiceNumber(start, Number(n) + 1), periodStart: start, periodEnd: end,
-      subscriptionAmount: m.subscription, orderFeeAmount: m.orderFee, gmv, vat: m.vat, total: m.total, status: "open",
-    }).returning();
+    const inv = await db.transaction(async (tx) => {
+      const [row] = await tx.insert(schema.saasInvoices).values({
+        tenantId: t.id, number: invoiceNumber(start, Number(n) + 1), periodStart: start, periodEnd: end,
+        subscriptionAmount: m.subscription, orderFeeAmount: m.orderFee, gmv, vat: m.vat, total: m.total, status: "open",
+      }).returning();
+      if (led.accruedIds.length) await tx.update(schema.orderCommissions).set({ status: "invoiced", invoiceId: row.id, updatedAt: new Date() }).where(inArray(schema.orderCommissions.id, led.accruedIds));
+      if (led.creditIds.length) await tx.update(schema.orderCommissions).set({ creditedInvoiceId: row.id, updatedAt: new Date() }).where(inArray(schema.orderCommissions.id, led.creditIds));
+      return row;
+    });
     created.push(inv.id);
   }
   return created;
@@ -196,14 +209,11 @@ export async function platformMetrics() {
     if (!plan) continue;
     if (t.status === "active" || t.status === "past_due") mrr += t.billingCycle === "yearly" ? plan.priceYearly / 12 : plan.priceMonthly;
   }
-  const perTenant = await db.select({ tenantId: schema.orders.tenantId, gmv: sum(schema.orders.total) }).from(schema.orders)
-    .where(and(inArray(schema.orders.status, [...PAID_STATUSES]), gte(schema.orders.paidAt, start), lt(schema.orders.paidAt, end)))
-    .groupBy(schema.orders.tenantId);
-  for (const row of perTenant) {
-    const t = tenants.find((x) => x.id === row.tenantId);
-    const plan = plans.find((p) => p.id === t?.planId);
-    if (plan) feesThisMonth += (Number(row.gmv) * plan.orderFeePct) / 100;
-  }
+  // commission earned this month from the per-order ledger (missing rows for legacy orders are filled in first)
+  for (const t of tenants) await ensureCommissionsForPeriod(t.id, start, end);
+  const feeRows = await db.execute(sql`select coalesce(sum(c.fee), 0)::float8 as fee from order_commissions c join orders o on o.id = c.order_id
+    where c.status in ('accrued', 'invoiced') and o.paid_at >= ${start.toISOString()}::timestamptz and o.paid_at < ${end.toISOString()}::timestamptz`);
+  feesThisMonth = Number((feeRows as unknown as { fee: number }[])[0]?.fee ?? 0);
   const since = new Date(Date.now() - 12 * 7 * 86400_000);
   const signups = await db.select({ week: sql<string>`to_char(date_trunc('week', ${schema.tenants.createdAt}), 'YYYY-MM-DD')`, n: count() })
     .from(schema.tenants).where(gte(schema.tenants.createdAt, since))

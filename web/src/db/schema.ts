@@ -4,6 +4,7 @@ import {
 import { sql } from "drizzle-orm";
 import type { WaCartItem } from "@/server/whatsapp/cart-math";
 import type { ProductConfig, TenantSettings, Selections, CardDesign, Address } from "@/lib/types";
+import type { CommissionOverride } from "@/lib/commission";
 
 /* ---------- enums ---------- */
 export const userRole = pgEnum("user_role", ["superadmin", "owner", "staff", "customer"]);
@@ -36,6 +37,10 @@ export const plans = pgTable("plans", {
   priceMonthly: money("price_monthly").notNull().default(0), // AED
   priceYearly: money("price_yearly").notNull().default(0),
   orderFeePct: numeric("order_fee_pct", { precision: 5, scale: 2, mode: "number" }).notNull().default(0),
+  /** commission: optional flat fee per print job, and min/max fee per order (null max = no cap) */
+  perJobFee: numeric("per_job_fee", { precision: 8, scale: 2, mode: "number" }).notNull().default(0),
+  minOrderFee: numeric("min_order_fee", { precision: 8, scale: 2, mode: "number" }).notNull().default(0),
+  maxOrderFee: numeric("max_order_fee", { precision: 8, scale: 2, mode: "number" }),
   maxOrdersPerMonth: integer("max_orders_per_month"), // null = unlimited
   maxStaff: integer("max_staff"),
   features: jsonb("features").$type<string[]>().notNull().default([]),
@@ -77,6 +82,8 @@ export const tenants = pgTable("tenants", {
   payoutIbanLast4: text("payout_iban_last4"),
   /** gateway-specific subscription refs for the shop's QuickPrint plan, e.g. { subscriptionId, subscriberId, cardLast4 } */
   billingRef: jsonb("billing_ref").$type<Record<string, string>>().notNull().default({}),
+  /** superadmin-set commission terms for this shop; null = follow the plan */
+  commissionOverride: jsonb("commission_override").$type<CommissionOverride | null>(),
   autoRenew: boolean("auto_renew").notNull().default(true),
   settings: jsonb("settings").$type<TenantSettings>().notNull().default({} as TenantSettings),
   createdAt: createdAt(),
@@ -438,6 +445,33 @@ export const cardDesigns = pgTable("card_designs", {
 });
 
 /* ---------- SaaS billing ---------- */
+/** One row per paid order: the commission QuickPrint earns, with the rule that produced it (immutable audit trail). */
+export const orderCommissions = pgTable("order_commissions", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }).unique(),
+  /** order value excluding VAT and delivery */
+  basis: money("basis").notNull(),
+  jobs: integer("jobs").notNull().default(1),
+  pct: numeric("pct", { precision: 6, scale: 3, mode: "number" }).notNull().default(0),
+  perJobFee: numeric("per_job_fee", { precision: 8, scale: 2, mode: "number" }).notNull().default(0),
+  pctFee: money("pct_fee").notNull().default(0),
+  jobFee: money("job_fee").notNull().default(0),
+  fee: money("fee").notNull().default(0),
+  minApplied: boolean("min_applied").notNull().default(false),
+  maxApplied: boolean("max_applied").notNull().default(false),
+  /** plan | custom | none — and the plan code at the time */
+  ruleSource: text("rule_source").notNull().default("plan"),
+  planCode: text("plan_code"),
+  /** accrued (earned, not yet billed) | invoiced | refunded (order refunded/cancelled after payment) | waived */
+  status: text("status").notNull().default("accrued"),
+  invoiceId: uuid("invoice_id").references(() => saasInvoices.id, { onDelete: "set null" }),
+  /** a refunded commission that was already invoiced is credited on the next invoice */
+  creditedInvoiceId: uuid("credited_invoice_id").references(() => saasInvoices.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("order_commissions_tenant_idx").on(t.tenantId, t.status, t.createdAt)]);
+
 export const saasInvoices = pgTable("saas_invoices", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
@@ -477,6 +511,7 @@ export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
 export type Banner = typeof banners.$inferSelect;
+export type OrderCommission = typeof orderCommissions.$inferSelect;
 export type PlatformGateway = typeof platformGateways.$inferSelect;
 export type WhatsappActivationRequest = typeof whatsappActivationRequests.$inferSelect;
 export type OrderSettlement = typeof orderSettlements.$inferSelect;

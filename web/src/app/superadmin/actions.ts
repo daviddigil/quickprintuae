@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { requireSuperadmin } from "@/lib/auth";
@@ -78,6 +78,9 @@ export async function savePlan(fd: FormData) {
     priceMonthly: num(fd, "priceMonthly") ?? 0,
     priceYearly: num(fd, "priceYearly") ?? 0,
     orderFeePct: num(fd, "orderFeePct") ?? 0,
+    perJobFee: num(fd, "perJobFee") ?? 0,
+    minOrderFee: num(fd, "minOrderFee") ?? 0,
+    maxOrderFee: num(fd, "maxOrderFee"),
     maxOrdersPerMonth: num(fd, "maxOrdersPerMonth"),
     maxStaff: num(fd, "maxStaff"),
     sortOrder: num(fd, "sortOrder") ?? 0,
@@ -92,6 +95,34 @@ export async function savePlan(fd: FormData) {
   await audit(id ? "plan.updated" : "plan.created", { code: values.code, flags: values.flags }, null);
   revalidatePath("/superadmin/plans");
   redirect("/superadmin/plans?saved=1");
+}
+
+const COMMISSION_MODES = ["plan", "custom", "commission_only", "subscription_only", "none"] as const;
+
+/** Per-shop commission & billing terms (superadmin only). Blank number = use the plan's value; "No cap" removes the per-order maximum. */
+export async function saveCommissionTerms(fd: FormData) {
+  const { user } = await requireSuperadmin();
+  const tenantId = str(fd, "tenantId");
+  const back = (q: string): never => redirect(`/superadmin/tenants/${tenantId}?${q}`);
+  const mode = str(fd, "mode") as (typeof COMMISSION_MODES)[number];
+  if (!COMMISSION_MODES.includes(mode)) back("error=commission_mode");
+  const tenant = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, tenantId) });
+  if (!tenant) notFound();
+  const pct = num(fd, "pct"), perJobFee = num(fd, "perJobFee"), minOrderFee = num(fd, "minOrderFee"), maxOrderFee = num(fd, "maxOrderFee");
+  const inRange = (v: number | null, lo: number, hi: number) => v === null || (v >= lo && v <= hi);
+  if (!inRange(pct, 0, 30) || !inRange(perJobFee, 0, 100) || !inRange(minOrderFee, 0, 1000) || !inRange(maxOrderFee, 0, 10000)) back("error=commission_range");
+  if (minOrderFee !== null && maxOrderFee !== null && maxOrderFee < minOrderFee) back("error=commission_minmax");
+  const noCap = fd.get("noCap") === "on";
+  const override = mode === "plan" ? null : {
+    mode,
+    ...(pct !== null ? { pct } : {}), ...(perJobFee !== null ? { perJobFee } : {}), ...(minOrderFee !== null ? { minOrderFee } : {}),
+    ...(noCap ? { maxOrderFee: null } : maxOrderFee !== null ? { maxOrderFee } : {}),
+    note: str(fd, "note").slice(0, 300), updatedAt: new Date().toISOString(), updatedBy: user.id,
+  };
+  await db.update(schema.tenants).set({ commissionOverride: override }).where(eq(schema.tenants.id, tenantId));
+  await audit("commission.terms", { tenantId, before: tenant.commissionOverride ?? null, after: override }, tenantId);
+  revalidatePath(`/superadmin/tenants/${tenantId}`); revalidatePath("/superadmin/commissions");
+  back("saved=commission");
 }
 
 export async function invoiceAction(fd: FormData) {

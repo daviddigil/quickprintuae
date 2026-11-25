@@ -7,6 +7,8 @@ import { PageTitle, TENANT_STATUS_TONE, fmtDate, fmtDateTime } from "@/component
 import { formatAED } from "@/lib/pricing";
 import { getPlanUsage, hasFeature, tenantWalkInStats } from "@/server/billing";
 import { agentOnline } from "@/server/walk-in/agents";
+import { CommissionTerms } from "@/components/superadmin/CommissionTerms";
+import { describeRule, resolveRule } from "@/lib/commission";
 import { walkInSettings } from "@/server/walk-in/settings";
 import { deleteTenant, disableWalkIn, extendTrial, setTenantStatus, updateTenantDomain, updateTenantPlan } from "../../actions";
 
@@ -109,6 +111,10 @@ export default async function TenantDetail({ params, searchParams }: { params: P
           </div>
         </Card>
 
+        <Card className="lg:col-span-2" data-testid="commission-card">
+          <CardHeader title="Commission & billing terms" subtitle={`${describeRule(resolveRule(plans.find((p) => p.id === t.planId) ?? null, t.commissionOverride))}${t.commissionOverride && t.commissionOverride.mode !== "plan" ? " (custom for this shop)" : " (from plan)"}`} />
+          <CommissionTerms tenantId={t.id} plan={plans.find((p) => p.id === t.planId) ?? null} planName={plans.find((p) => p.id === t.planId)?.name ?? ""} override={t.commissionOverride ?? null} />
+        </Card>
         <Card>
           <CardHeader title="Custom domain" subtitle="Customer CNAMEs their domain to the platform; TLS is issued on demand." />
           <form action={updateTenantDomain} className="flex items-end gap-2 px-5 py-4">
