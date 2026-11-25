@@ -71,7 +71,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                 <p className="font-semibold">{p.name}</p>
                 <p className="mt-1 text-on-surface-variant">{p.billingModel === "commission" ? `No monthly fee + ${p.orderFeePct}% per order` : `${formatAED(p.priceMonthly)} / month, no commission`}</p>
                 <p className="mt-1 text-xs text-on-surface-variant">{p.billingModel === "commission" ? "Pay only when you sell" : "Predictable cost"}</p>
-                {cur ? <Badge tone="green">Current plan</Badge> : <button className="mt-3 rounded-lg bg-inverse-surface px-3 py-1.5 text-xs font-medium text-white">Switch</button>}
+                {cur ? <Badge tone="green">Current plan</Badge> : <button className="mt-3 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-on-primary">Switch</button>}
               </form>
             );
           })}

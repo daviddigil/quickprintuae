@@ -76,7 +76,7 @@ export default async function Dashboard() {
           <div className="flex h-52 items-end gap-1.5 px-5 pb-2 pt-6">
             {days.map((d) => (
               <div key={d.day} className="group relative flex h-full flex-1 flex-col justify-end">
-                <div className="rounded-t bg-inverse-surface/80 transition group-hover:bg-primary" style={{ height: `${Math.max(2, (d.revenue / max) * 100)}%` }} />
+                <div className="rounded-t bg-primary/70 transition group-hover:bg-primary" style={{ height: `${Math.max(2, (d.revenue / max) * 100)}%` }} />
                 <span className="pointer-events-none absolute -top-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-inverse-surface px-1.5 py-0.5 text-[10px] text-white group-hover:block">{formatAED(d.revenue)}</span>
               </div>
             ))}
