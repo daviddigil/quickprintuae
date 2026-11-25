@@ -9,6 +9,7 @@
 //   SA_PASSWORD = the seeded superadmin password (default change-me-now). All apps share one database.
 import { chromium, request as pwRequest } from "playwright";
 import postgres from "postgres";
+import bcrypt from "bcryptjs";
 import { mkdtempSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
@@ -19,7 +20,9 @@ const B = process.env.BASE_B ?? "http://localhost:3124";
 const C = process.env.BASE_C ?? "http://localhost:3125";
 const GRAPH = "http://localhost:4999", ANTH = "http://localhost:4998";
 const PLATFORM_SECRET = "testappsecret123", VERIFY = "verifytok123";
-const SA_PASSWORD = process.env.SA_PASSWORD ?? "change-me-now";
+// A dedicated throw-away superadmin, so the run never depends on (or changes) the real platform admin password.
+const SA_EMAIL = "wa-e2e-superadmin@quickprint.test";
+const SA_PASSWORD = "wa-e2e-superadmin-pw-1";
 const ENV_SECRET = "envsecret-fallback-123";
 const OUT = process.env.OUT ?? mkdtempSync(path.join(tmpdir(), "wa-"));
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
@@ -68,8 +71,10 @@ async function cleanup() {
   await sql`delete from tenants where slug like 'wa-iso-%'`;
   await sql`delete from whatsapp_activation_requests where tenant_id = ${demo.id}`;
   await sql`delete from platform_gateways where provider = 'meta_whatsapp'`;
+  await sql`delete from users where email = ${SA_EMAIL} and tenant_id is null`;
 }
 await cleanup();
+await sql`insert into users (role, email, name, password_hash) values ('superadmin', ${SA_EMAIL}, 'WA e2e superadmin', ${await bcrypt.hash(SA_PASSWORD, 10)})`;
 await fetch(GRAPH + "/__reset", { method: "POST" }); await fetch(ANTH + "/__reset", { method: "POST" });
 await sleep(10500); // the apps cache the platform config for 10s: let any value from a previous run expire
 
@@ -153,7 +158,7 @@ await step("[pending] phone layout (390px): no horizontal scroll, button and she
 });
 
 /* =====================================================  PHASE 1 — the superadmin pastes the Tech Provider credentials  ===================================================== */
-const SA = await api(A, { email: "admin@quickprint.ae", password: SA_PASSWORD });
+const SA = await api(A, { email: SA_EMAIL, password: SA_PASSWORD });
 
 await step("superadmin API access control: anonymous 401, shop owner 403 (read/save/test/requests/remove), superadmin 200; nothing secret returned", async () => {
   for (const [m, p] of [["get", "/api/v1/superadmin/whatsapp"], ["put", "/api/v1/superadmin/whatsapp"], ["delete", "/api/v1/superadmin/whatsapp"], ["post", "/api/v1/superadmin/whatsapp/test"], ["patch", "/api/v1/superadmin/whatsapp/requests"]]) {
@@ -175,7 +180,7 @@ await step("superadmin validation + 'Test credentials' against the mock Graph: b
   const log = await g("/__log"); ok(log.some((e) => e.path.endsWith("/1234567890") && e.query.access_token === `1234567890|${PLATFORM_SECRET}`), "Graph asked with appId|secret");
 });
 
-const pageSA = await uiLogin(A, "admin@quickprint.ae", SA_PASSWORD);
+const pageSA = await uiLogin(A, SA_EMAIL, SA_PASSWORD);
 await step("superadmin UI: Settings → WhatsApp Tech Provider; paste credentials, Test passes, Save flips the banner to LIVE; secret is write-only and encrypted at rest", async () => {
   await pageSA.goto(`${A}/superadmin/settings`, { waitUntil: "networkidle" }); await pageSA.getByTestId("sa-wa-link").click(); await pageSA.waitForURL(/settings\/whatsapp/);
   await pageSA.getByTestId("sa-wa-state").waitFor(); ok(/not active yet/.test(await pageSA.getByTestId("sa-wa-state").innerText()), "starts as 'not active yet'");
@@ -188,7 +193,7 @@ await step("superadmin UI: Settings → WhatsApp Tech Provider; paste credential
   await pageSA.reload({ waitUntil: "networkidle" });
   eq(await pageSA.getByTestId("sa-wa-secret").inputValue(), "", "secret field is empty after reload"); eq(await pageSA.getByTestId("sa-wa-verify").inputValue(), "", "verify token field is empty after reload");
   const html = await pageSA.content(); ok(!html.includes(PLATFORM_SECRET), "the secret is nowhere in the page"); ok(/saved ••••e123/.test(await pageSA.locator("body").innerText()) || /••••/.test(await pageSA.locator("body").innerText()), "only a masked hint is shown");
-  eq(await pageSA.getByTestId("sa-wa-checklist").locator("svg.text-emerald-600").count(), 4, "all four readiness checks green");
+  eq(await pageSA.getByTestId("sa-wa-checklist").locator("li[data-ok=true]").count(), 4, "all four readiness checks green");
   const [row] = await sql`select api_key_enc, webhook_secret_enc, config from platform_gateways where provider='meta_whatsapp'`;
   ok(row.api_key_enc.startsWith("v1:") && !row.api_key_enc.includes(PLATFORM_SECRET), "app secret encrypted"); ok(row.webhook_secret_enc.startsWith("v1:") && !row.webhook_secret_enc.includes(VERIFY), "verify token encrypted");
   eq(row.config.appId, "1234567890", "public ids in config"); ok(!JSON.stringify(row.config).includes(PLATFORM_SECRET), "no secret in config jsonb");

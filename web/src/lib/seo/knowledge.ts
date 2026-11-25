@@ -3,14 +3,14 @@ import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { DEFAULT_PRODUCTS } from "@/lib/catalog-defaults";
 import { displayFeatures } from "@/server/billing/flags";
-import type { PlanLd } from "./jsonld";
+import { planTerms, type PlanLd } from "./jsonld";
 import { SITE, abs, siteUrl } from "./site";
 import { MARKETING_PATHS } from "./paths";
 
 export async function getSeoPlans(): Promise<PlanLd[]> {
   try {
     const rows = await db.query.plans.findMany({ where: eq(schema.plans.active, true), orderBy: asc(schema.plans.sortOrder) });
-    return rows.map((p) => ({ code: p.code, name: p.name, priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, orderFeePct: p.orderFeePct, maxOrdersPerMonth: p.maxOrdersPerMonth, maxStaff: p.maxStaff, features: displayFeatures(p.features, p.flags) }));
+    return rows.map((p) => ({ code: p.code, name: p.name, priceMonthly: p.priceMonthly, priceYearly: p.priceYearly, orderFeePct: p.orderFeePct, maxOrdersPerMonth: p.maxOrdersPerMonth, maxStaff: p.maxStaff, features: displayFeatures(p.features, p.flags), billingModel: p.billingModel, perJobFee: p.perJobFee, minOrderFee: p.minOrderFee, maxOrderFee: p.maxOrderFee }));
   } catch { return []; }
 }
 
@@ -18,7 +18,9 @@ export async function getSeoPlans(): Promise<PlanLd[]> {
 export const PLATFORM_FAQ: { q: string; a: string }[] = [
   { q: "What is QuickPrint?", a: "QuickPrint is a software-as-a-service platform, built by Nexsofture Tech, that lets print shops in the UAE run their own online store, take prepaid orders for documents, photos, business cards, flyers and more, and manage production, pickup and delivery from one dashboard." },
   { q: "Who is QuickPrint for?", a: "Print shops, typing centres, photo studios and copy shops in the UAE that want online orders without building a website. Their customers (individuals and businesses) order from the shop's own branded storefront." },
-  { q: "How much does QuickPrint cost?", a: "Plans are priced in AED per month plus a small percentage order fee on paid orders. Prices exclude 5% UAE VAT. Every plan starts with a 14-day free trial and no card is needed. See the pricing section for current prices." },
+  { q: "How much does QuickPrint cost?", a: "Shops choose one of two billing models. Subscription plans (Starter, Growth, Enterprise) charge a fixed monthly fee in AED with no per-order commission. The Pay per order plan has no monthly fee (AED 0) and charges a 3% commission on each paid order. Prices exclude 5% UAE VAT, and every plan starts with a 14-day free trial with no card needed." },
+  { q: "Is there a commission on orders?", a: "Not on subscription plans. Only the Pay per order plan charges a commission (3% of each paid order, settled on the shop's monthly invoice), and it has no monthly fee. Refunded orders are credited back." },
+  { q: "What is billed pay-as-you-go?", a: "Metered usage that costs QuickPrint money to deliver: WhatsApp/Meta messages sent by the shop and AI usage (chat replies, AI business-card and banner designs). It is billed on the monthly invoice at the platform rate card, after any allowance included in the plan. Storefront, orders and the walk-in queue are not metered." },
   { q: "How do shops get paid?", a: "Shops connect their own Stripe or Mamo Pay account and customers pay them directly. Orders are prepaid online; cash on delivery is not supported." },
   { q: "Does QuickPrint support UAE VAT?", a: "Yes. Prices can be shown excluding or including 5% VAT, and shops can issue tax invoices that show their Tax Registration Number (TRN)." },
   { q: "Can customers choose pickup or delivery?", a: "Yes. Customers pick up from a branch or choose a scheduled delivery slot. Shops deliver with their own drivers or book couriers such as Jeebly, Quiqup, Careem Box or Aramex." },
@@ -33,7 +35,7 @@ const group = (key: string, kind: string) => DEFAULT_PRODUCTS.find((p) => p.kind
 const fmt = (n: number) => (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2));
 
 export function planLines(plans: PlanLd[]) {
-  return plans.map((p) => `- **${p.name}**: AED ${fmt(p.priceMonthly)} per month (AED ${fmt(p.priceYearly)} per year) + ${p.orderFeePct}% order fee on paid orders. ${p.maxOrdersPerMonth ? `Up to ${fmt(p.maxOrdersPerMonth)} orders per month` : "Unlimited orders"}, ${p.maxStaff ? `${p.maxStaff} staff accounts` : "unlimited staff accounts"}.`);
+  return plans.map((p) => `- **${p.name}**: ${planTerms(p)}.`);
 }
 
 export const FEATURES: { name: string; text: string }[] = [
@@ -47,6 +49,7 @@ export const FEATURES: { name: string; text: string }[] = [
   { name: "Confidential document printing", text: "Encrypted uploads, restricted access, sealed handling options and automatic file deletion." },
   { name: "Walk-in QR print queue", text: "Walk-in customers scan a QR, upload documents, pay on their phone and join a priority queue that prints automatically; walk-ins are saved by phone number." },
   { name: "WhatsApp AI chat cart", text: "AI replies on the shop's WhatsApp Business number, builds a cart from the chat and sends prefilled checkout links, with human takeover at any time." },
+  { name: "Billing: subscription or pay per order", text: "Shops pick a fixed monthly subscription with no per-order commission, or the Pay per order plan with AED 0 per month and a commission on each paid order. WhatsApp/Meta messages and AI usage are metered and billed pay-as-you-go on top; shops see usage and commissions on their billing page." },
   { name: "Hero slider for offers", text: "Shops upload offer images with start and end dates and show them as a slider on the storefront." },
   { name: "Payments", text: "Stripe (cards, Apple Pay, Google Pay) and Mamo Pay. All orders are prepaid; there is no cash on delivery." },
   { name: "Pickup and scheduled delivery", text: "Pickup branches, delivery fees per emirate, time slots, in-house drivers and courier connectors (Jeebly, Quiqup, Careem Box, Aramex)." },
@@ -58,18 +61,19 @@ export const FEATURES: { name: string; text: string }[] = [
 export async function buildLlmsTxt(): Promise<string> {
   const plans = await getSeoPlans();
   const origin = siteUrl();
-  const from = plans.length ? Math.min(...plans.map((p) => p.priceMonthly)) : null;
+  const subs = plans.filter((p) => p.billingModel !== "commission");
+  const from = subs.length ? Math.min(...subs.map((p) => p.priceMonthly)) : null;
   const lines: string[] = [
     `# ${SITE.name}`, "",
     `> ${SITE.name} (by ${SITE.legalName}) is a print-on-demand SaaS for print shops in the UAE. A shop launches its own online printing store in minutes and takes prepaid orders for documents, photos, business cards, flyers and more, with pickup or scheduled delivery, UAE VAT invoices, Stripe and Mamo Pay payments, a walk-in QR print queue and WhatsApp AI ordering.`, "",
     "Quick facts:",
     `- Audience: print shops, typing centres and photo studios in the UAE (customers are individuals and businesses ordering from each shop's storefront).`,
-    `- Pricing: ${from != null ? `from AED ${fmt(from)} per month` : "monthly plans in AED"} + order fee; prices exclude 5% VAT; 14-day free trial, no card.`,
+    `- Pricing: subscription plans ${from != null ? `from AED ${fmt(from)} per month` : "in AED"} with no per-order commission, or a Pay per order plan (AED 0 per month, ${plans.find((p) => p.billingModel === "commission")?.orderFeePct ?? 3}% commission per paid order); WhatsApp/Meta messages and AI usage are billed pay-as-you-go; prices exclude 5% VAT; 14-day free trial, no card.`,
     "- Payments: Stripe and Mamo Pay into the shop's own account. No cash on delivery.",
     "- Delivery: pickup, scheduled delivery, in-house drivers, Jeebly, Quiqup, Careem Box, Aramex.", "",
     "## Product",
     `- [${SITE.name} overview](${origin}/): what the platform does and who it is for`,
-    `- [Pricing](${abs("/pricing")}): plans in AED with limits and order fees`,
+    `- [Pricing](${abs("/pricing")}): subscription and pay-per-order plans in AED, with limits and usage billing`,
     `- [Start a free trial](${abs("/signup")}): create a print shop store in about two minutes`, "",
     "## Knowledge for AI assistants",
     `- [Full knowledge file](${abs("/llms-full.txt")}): complete product, pricing, supported products and FAQ in plain text`,
@@ -103,6 +107,7 @@ export async function buildLlmsFull(): Promise<string> {
     "## What is QuickPrint?", "", PLATFORM_FAQ[0].a, "",
     "## Who is it for?", "", PLATFORM_FAQ[1].a, "",
     "## Pricing (AED, excluding 5% VAT)", "",
+    "Two billing models: **subscription** (fixed monthly fee, no per-order commission) or **pay per order** (no monthly fee, commission on each paid order). WhatsApp/Meta messages and AI usage are metered and billed pay-as-you-go on top, after any included allowance.", "",
     ...(plans.length ? planLines(plans) : ["- See the pricing page for current plans."]), "",
     `Pricing page: ${abs("/pricing")}`, "",
     "## Features", "",

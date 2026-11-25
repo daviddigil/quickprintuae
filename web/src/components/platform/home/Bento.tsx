@@ -88,7 +88,7 @@ export function Bento() {
             <div className="mt-5 flex items-center gap-1.5" aria-hidden><i className="h-2 w-6 rounded-full bg-primary" /><i className="size-2 rounded-full bg-outline-variant" /><i className="size-2 rounded-full bg-outline-variant" /></div>
           </SpotlightCard>
         </div>
-        <p className="mt-8 text-sm text-on-surface-variant">Want to see it in use? <Link href="/s/demo" className="font-semibold text-primary underline underline-offset-2">Open the demo store</Link>.</p>
+        <p className="mt-8 text-sm text-on-surface-variant">Want to see it in use? <Link href="/s/demo" className="inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-2">Open the demo store</Link>.</p>
       </div>
     </section>
   );

@@ -41,14 +41,31 @@ export function websiteLd(): LdNode {
   });
 }
 
-export interface PlanLd { code: string; name: string; priceMonthly: number; priceYearly: number; orderFeePct: number; maxOrdersPerMonth: number | null; maxStaff: number | null; features: string[] }
+export interface PlanLd {
+  code: string; name: string; priceMonthly: number; priceYearly: number; orderFeePct: number; maxOrdersPerMonth: number | null; maxStaff: number | null; features: string[];
+  /** 'subscription' = monthly fee, no commission; 'commission' = no monthly fee, % per paid order */
+  billingModel?: string; perJobFee?: number; minOrderFee?: number; maxOrderFee?: number | null;
+}
+export const isCommissionPlan = (p: Pick<PlanLd, "billingModel">) => p.billingModel === "commission";
+/** One-sentence, quotable description of how a plan is billed (shared by JSON-LD, llms.txt, llms-full.txt). */
+export function planTerms(p: PlanLd) {
+  const limits = `${p.maxOrdersPerMonth ? `up to ${p.maxOrdersPerMonth.toLocaleString("en-US")} orders per month` : "unlimited orders"}, ${p.maxStaff ? `${p.maxStaff} staff accounts` : "unlimited staff accounts"}`;
+  if (isCommissionPlan(p)) {
+    const extras = [p.perJobFee ? `AED ${p.perJobFee} per print job` : "", p.minOrderFee ? `minimum AED ${p.minOrderFee} per order` : "", p.maxOrderFee ? `capped at AED ${p.maxOrderFee} per order` : ""].filter(Boolean);
+    return `AED 0 per month; ${p.orderFeePct}% commission on each paid order${extras.length ? ` (${extras.join(", ")})` : ""}; ${limits}`;
+  }
+  return `AED ${p.priceMonthly.toLocaleString("en-US")} per month or AED ${p.priceYearly.toLocaleString("en-US")} per year, no per-order commission; ${limits}`;
+}
 
 export function softwareApplicationLd(plans: PlanLd[]): LdNode {
   const offers = plans.map((p) => compact({
     "@type": "Offer", name: `${p.name} plan`, url: abs("/pricing"), price: p.priceMonthly, priceCurrency: SITE.currency,
     availability: "https://schema.org/InStock", seller: { "@id": ids.org() },
-    description: `${p.name}: AED ${p.priceMonthly}/month or AED ${p.priceYearly}/year + ${p.orderFeePct}% order fee. ${p.maxOrdersPerMonth ? `Up to ${p.maxOrdersPerMonth} orders/month` : "Unlimited orders"}, ${p.maxStaff ? `${p.maxStaff} staff` : "unlimited staff"}. Excludes 5% VAT.`,
-    priceSpecification: [
+    description: `${p.name}: ${planTerms(p)}. Excludes 5% VAT. WhatsApp/Meta messages and AI usage are billed pay-as-you-go on top (per the platform rate card), after any included allowance.`,
+    // commission plans: AED 0 subscription (the % commission is stated in `description`; schema.org has no percent price type)
+    priceSpecification: isCommissionPlan(p) ? [
+      { "@type": "UnitPriceSpecification", price: 0, priceCurrency: SITE.currency, unitCode: "MON", referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" }, valueAddedTaxIncluded: false },
+    ] : [
       { "@type": "UnitPriceSpecification", price: p.priceMonthly, priceCurrency: SITE.currency, unitCode: "MON", referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" }, valueAddedTaxIncluded: false },
       { "@type": "UnitPriceSpecification", price: p.priceYearly, priceCurrency: SITE.currency, unitCode: "ANN", referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "ANN" }, valueAddedTaxIncluded: false },
     ],

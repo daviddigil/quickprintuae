@@ -7,7 +7,23 @@ const no = <span className="text-outline" aria-label="Not included">&ndash;</spa
 /** Side-by-side comparison built from the plans table. Feature rows are the union of every plan's feature list. */
 export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
   if (!plans.length) return null;
-  const features = Array.from(new Set(plans.flatMap((p) => p.features.filter((f) => !/^Everything in /i.test(f)))));
+  // "Everything in Growth" means the plan includes Growth's features too, so resolve that into a full set per plan.
+  const own = (p: PublicPlan) => p.features.filter((f) => !/^Everything in |^No monthly fee|^Commission only|pay as you go$/i.test(f));
+  const resolved = new Map<string, Set<string>>();
+  const resolve = (p: PublicPlan, seen = new Set<string>()): Set<string> => {
+    if (resolved.has(p.code)) return resolved.get(p.code)!;
+    const set = new Set(own(p));
+    seen.add(p.code);
+    for (const f of p.features) {
+      const m = /^Everything in (.+)$/i.exec(f);
+      const base = m && plans.find((q) => q.name.toLowerCase() === m[1].toLowerCase());
+      if (base && !seen.has(base.code)) resolve(base, seen).forEach((x) => set.add(x));
+    }
+    resolved.set(p.code, set);
+    return set;
+  };
+  plans.forEach((p) => resolve(p));
+  const features = Array.from(new Set(plans.flatMap((p) => [...resolved.get(p.code)!])));
   const row = (label: string, cells: (p: PublicPlan) => React.ReactNode) => (
     <tr key={label} className="border-t border-outline-variant/60">
       <th scope="row" className="py-3 pe-4 text-start font-medium text-on-surface">{label}</th>
@@ -16,7 +32,7 @@ export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
   );
   return (
     <div className="overflow-x-auto rounded-shape-xl border border-outline-variant bg-surface-lowest">
-      <table className="w-full min-w-[34rem] text-sm">
+      <table className="w-full min-w-[36rem] text-sm">
         <caption className="sr-only">Compare QuickPrint plans</caption>
         <thead>
           <tr className="bg-surface-low">
@@ -26,11 +42,11 @@ export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
         </thead>
         <tbody className="[&_th:first-child]:ps-4">
           {row("Monthly price", (p) => aed(p.priceMonthly))}
-          {row("Yearly price", (p) => aed(p.priceYearly))}
-          {row("Fee on paid orders", (p) => `${p.orderFeePct}%`)}
+          {row("Yearly price", (p) => (p.billingModel === "commission" ? "None" : aed(p.priceYearly)))}
+          {row("Fee on paid orders", (p) => (p.billingModel === "commission" ? `${p.orderFeePct}%` : "None"))}
           {row("Orders per month", (p) => (p.maxOrdersPerMonth == null ? "Unlimited" : p.maxOrdersPerMonth.toLocaleString("en-AE")))}
           {row("Team members", (p) => (p.maxStaff == null ? "Unlimited" : p.maxStaff.toLocaleString("en-AE")))}
-          {features.map((f) => row(f, (p) => (p.features.includes(f) || p.features.some((x) => /^Everything in /i.test(x)) && plans.indexOf(p) > 0 && plans.slice(0, plans.indexOf(p)).some((q) => q.features.includes(f)) ? yes : no)))}
+          {features.map((f) => row(f, (p) => (resolved.get(p.code)!.has(f) ? yes : no)))}
         </tbody>
       </table>
     </div>

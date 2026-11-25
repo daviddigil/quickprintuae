@@ -29,8 +29,8 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         <div className="w-full max-w-lg">
           <div className="mb-6 lg:hidden"><Logo /></div>
           <h2 className="text-2xl font-bold">Create your print shop</h2>
-          <p className="mb-6 text-sm text-on-surface-variant">Takes about 2 minutes.</p>
-          <SignupForm plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.priceMonthly }))} defaultPlan={plan} />
+          <p className="mb-6 text-sm text-on-surface-variant">Two short sections. About 2 minutes.</p>
+          <SignupForm plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.priceMonthly, feePct: p.orderFeePct, commission: p.billingModel === "commission" }))} defaultPlan={plan} />
           <PoweredBy className="mt-8" />
         </div>
       </section>

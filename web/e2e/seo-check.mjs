@@ -28,7 +28,8 @@ const hostGet = (host, path) => new Promise((resolve, reject) => {
 });
 const pathOf = (u) => { const x = new URL(u); return x.pathname + x.search; };
 const metaOf = (h, re) => (h.match(re) ?? [])[1];
-const title = (h) => metaOf(h, /<title>([\s\S]*?)<\/title>/);
+const decode = (x = "") => x.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, "&");
+const title = (h) => decode(metaOf(h, /<title>([\s\S]*?)<\/title>/));
 const desc = (h) => metaOf(h, /<meta name="description" content="([^"]*)"/);
 const canonical = (h) => metaOf(h, /<link rel="canonical" href="([^"]*)"/);
 const h1s = (h) => (h.match(/<h1[\s>]/g) ?? []).length;
@@ -62,7 +63,7 @@ await check("llms.txt: llmstxt.org structure (H1, blockquote summary, H2 section
 await check("llms-full.txt: answer-first knowledge (quick facts, AED pricing, products, FAQ)", async () => {
   const { r, t } = await text("/llms-full.txt"); eq(r.status, 200, "status"); truthy(t.length > 4000, "substantial");
   for (const s of ["## Quick facts", "## Pricing (AED", "## Features", "## Frequently asked questions", "No cash on delivery".toLowerCase() === "" ? "" : "cash on delivery", "Photo print sizes", "5% VAT", "Mamo Pay", "WhatsApp"]) truthy(!s || t.includes(s), "missing: " + s);
-  truthy(/\*\*Starter\*\*: AED \d/.test(t), "plans rendered from the database");
+  truthy(/\*\*Starter\*\*: AED \d/.test(t) && /Pay per order\*\*: AED 0 per month; \d+(\.\d+)?% commission/.test(t), "plans (subscription + pay per order) rendered from the database"); truthy(/pay-as-you-go/i.test(t) && /walk-in/i.test(t), "usage billing + walk-in covered");
 });
 await check("manifest, OG image, icons, security.txt", async () => {
   const m = await (await get("/manifest.webmanifest")).json(); truthy(m.name && m.short_name && m.icons?.length && m.theme_color && m.start_url, "manifest fields");
@@ -93,7 +94,7 @@ for (const url of [...new Set(sitemapUrls.filter((u) => !/\/s\//.test(u)))]) {
       const nodes = ldNodes(h);
       const org = nodes.find((n) => types(n).includes("Organization")), site = nodes.find((n) => types(n).includes("WebSite")), app = nodes.find((n) => types(n).includes("SoftwareApplication"));
       truthy(org?.name && org.url && org.logo?.url && org.areaServed, "Organization fields"); truthy(site?.publisher?.["@id"] === org["@id"], "WebSite.publisher → Organization");
-      truthy(app?.applicationCategory === "BusinessApplication" && app.offers?.length >= 1 && app.offers.every((o) => o.priceCurrency === "AED" && o.priceSpecification?.length === 2), "SoftwareApplication offers in AED (monthly + yearly)");
+      truthy(app?.applicationCategory === "BusinessApplication" && app.offers?.length >= 1 && app.offers.every((o) => o.priceCurrency === "AED" && o.priceSpecification?.length >= 1), "SoftwareApplication offers in AED"); truthy(app.offers.some((o) => /no per-order commission/.test(o.description)) && app.offers.some((o) => /commission on each paid order/.test(o.description)), "offers describe subscription (no commission) and pay-per-order (commission) plans");
     }
   });
 }
@@ -126,7 +127,7 @@ try {
   const prod = (await sql`select slug, name from products where tenant_id=${tenantId} and kind='business_card' limit 1`)[0] ?? (await sql`select slug, name from products where tenant_id=${tenantId} limit 1`)[0];
   await check("product page: Product + AggregateOffer (AED), BreadcrumbList, canonical, unique title", async () => {
     const { r, t: h } = await text(`/s/${slug}/p/${prod.slug}`); eq(r.status, 200, "status");
-    eq(canonical(h), `${shopUrl}/p/${prod.slug}`, "canonical"); eq(h1s(h), 1, "h1"); const t = title(h) ?? ""; truthy(t.includes("Dubai") && t.length <= 80, `title "${t}"`); truthy((desc(h) ?? "").length >= 40 && (desc(h) ?? "").length <= 160, "description length");
+    eq(canonical(h), `${shopUrl}/p/${prod.slug}`, "canonical"); eq(h1s(h), 1, "h1"); const t = title(h) ?? ""; truthy(t.includes("Dubai") && t.endsWith(EVIL) && t.length - EVIL.length <= 60, `title "${t}"`); truthy((desc(h) ?? "").length >= 40 && (desc(h) ?? "").length <= 160, "description length");
     const nodes = ldNodes(h); const p = nodes.find((n) => types(n).includes("Product")); truthy(p, "Product node"); const o = p.offers; eq(o["@type"], "AggregateOffer", "offer type"); eq(o.priceCurrency, "AED", "currency"); truthy(typeof o.lowPrice === "number" && o.lowPrice > 0, "lowPrice number");
     truthy(nodes.some((n) => types(n).includes("BreadcrumbList")), "BreadcrumbList"); truthy(!("aggregateRating" in p) && !("review" in p), "no invented ratings");
   });

@@ -17,7 +17,7 @@ const rand = () => { const b = new Uint8Array(24); crypto.getRandomValues(b); re
 
 function Check({ ok, label, source, hint }: { ok: boolean; label: string; source?: string; hint: string }) {
   return (
-    <li className="flex items-start gap-3 px-5 py-3 text-sm">
+    <li data-ok={ok ? "true" : "false"} className="flex items-start gap-3 px-5 py-3 text-sm">
       {ok ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden /> : <Circle className="mt-0.5 h-5 w-5 shrink-0 text-outline" aria-hidden />}
       <div className="min-w-0 flex-1"><p className="font-medium">{label}</p><p className="text-xs text-on-surface-variant">{ok ? "Configured" : hint}</p></div>
       {ok && source && source !== "none" && <Badge tone={source === "db" ? "green" : "blue"}>{source === "db" ? "saved here" : "from server env"}</Badge>}

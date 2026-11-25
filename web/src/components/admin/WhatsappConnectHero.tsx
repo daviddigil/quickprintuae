@@ -80,7 +80,7 @@ export function WhatsappConnectHero({ platform, requested, onConnected, onReques
 
   const stepIdx = STEPS.findIndex((s) => s.phase === phase);
   return (
-    <section className="overflow-hidden rounded-3xl border border-success/50 bg-gradient-to-br from-emerald-50 via-white to-white p-6 shadow-sm sm:p-8" data-testid="wa-hero" aria-labelledby="wa-hero-title">
+    <section className="overflow-hidden rounded-3xl border border-success/50 bg-gradient-to-br from-success/10 via-surface to-surface p-6 shadow-sm sm:p-8" data-testid="wa-hero" aria-labelledby="wa-hero-title">
       <div className="flex flex-col gap-6 md:flex-row md:items-center">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#25D366] text-white shadow-md" aria-hidden><MessageCircle className="h-8 w-8" /></div>
         <div className="min-w-0 flex-1">
@@ -92,7 +92,7 @@ export function WhatsappConnectHero({ platform, requested, onConnected, onReques
           </ul>
         </div>
         <button type="button" onClick={start} disabled={busy} data-testid="connect-whatsapp" data-platform-ready={ready}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-7 py-4 text-base font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-[#1fb956] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:scale-[0.98] disabled:opacity-70 motion-reduce:transition-none">
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-7 py-4 text-base font-bold text-white shadow-lg shadow-success/25 transition hover:bg-[#1fb956] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success active:scale-[0.98] disabled:opacity-70 motion-reduce:transition-none">
           {busy ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden /> : <MessageCircle className="h-5 w-5" aria-hidden />}{busy ? "Connecting…" : "Connect WhatsApp"}
         </button>
       </div>
@@ -102,7 +102,7 @@ export function WhatsappConnectHero({ platform, requested, onConnected, onReques
           <ol className="space-y-2 rounded-2xl bg-white/80 p-4 text-sm" data-testid="wa-progress">
             {STEPS.map((s, i) => (
               <li key={s.phase} className={`flex items-center gap-3 ${i < stepIdx ? "text-success" : i === stepIdx ? "font-semibold text-on-surface" : "text-outline"}`}>
-                {i < stepIdx ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : i === stepIdx ? <span className="relative flex h-3 w-3" aria-hidden><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" /><span className="relative inline-flex h-3 w-3 rounded-full bg-success" /></span> : <span className="h-3 w-3 rounded-full border border-outline-variant" aria-hidden />}
+                {i < stepIdx ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : i === stepIdx ? <span className="relative flex h-3 w-3" aria-hidden><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60 motion-reduce:animate-none" /><span className="relative inline-flex h-3 w-3 rounded-full bg-success" /></span> : <span className="h-3 w-3 rounded-full border border-outline-variant" aria-hidden />}
                 {s.label}
               </li>
             ))}

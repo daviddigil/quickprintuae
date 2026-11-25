@@ -48,6 +48,15 @@ test("software application offers come from the plans", () => {
   assert.equal((breadcrumbLd([{ name: "a", url: "u" }]).itemListElement as { position: number }[])[0].position, 1);
 });
 
+test("commission plan: AED 0 subscription, commission in the terms; subscription plan: no commission", () => {
+  const sub = { code: "s", name: "Starter", priceMonthly: 199, priceYearly: 1990, orderFeePct: 0, maxOrdersPerMonth: null, maxStaff: 2, features: [], billingModel: "subscription" };
+  const payg = { code: "p", name: "Pay per order", priceMonthly: 0, priceYearly: 0, orderFeePct: 3, maxOrdersPerMonth: null, maxStaff: 1, features: [], billingModel: "commission" };
+  const offers = softwareApplicationLd([sub, payg]).offers as { price: number; description: string; priceSpecification: unknown[] }[];
+  assert.match(offers[0].description, /no per-order commission/); assert.equal(offers[0].priceSpecification.length, 2);
+  assert.equal(offers[1].price, 0); assert.match(offers[1].description, /3% commission on each paid order/); assert.equal(offers[1].priceSpecification.length, 1);
+  assert.match(offers[1].description, /pay-as-you-go/);
+});
+
 test("who is indexable: demo, suspended, cancelled and expired trials are not", () => {
   const now = new Date("2026-12-01T00:00:00Z"), past = new Date("2026-11-01T00:00:00Z"), future = new Date("2026-12-20T00:00:00Z");
   const t = (o: object) => ({ slug: "shop", status: "active" as const, trialEndsAt: null, currentPeriodEnd: null, ...o });
