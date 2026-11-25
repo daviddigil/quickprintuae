@@ -350,7 +350,7 @@ await step("tap [Confirm cart] => ONE message: itemised cart, VAT, total, one pr
   const body = m.body.text.body;
   ok(body.includes(`Subtotal: ${aed(subtotal)}`) && body.includes(`Total (estimate): ${aed(total)}`) && body.includes("VAT 5%"), "totals: " + body);
   const links = body.match(/http:\/\/localhost:\d+\/s\/demo\/p\/[a-z-]+\?cfg=[A-Za-z0-9_-]+/g); eq(links.length, 2, "one link per line");
-  for (const l of links) eq((await fetch(l.replace(/^http:\/\/localhost:3110/, A))).status, 200, "link opens: " + l);
+  for (const l of links) eq((await fetch(l.replace(/^http:\/\/localhost:\d+/, A))).status, 200, "link opens: " + l);
   await sleep(1500); eq((await texts(P1, CUST)).filter((e) => e.body.text.body.includes("Your cart — ")).length, cartMsgCount + 1, "exactly one cart message sent");
 });
 
