@@ -4,7 +4,7 @@
 # Edit files in ./web on your computer — the browser reloads automatically. App: http://localhost:5050
 # Prefer running `npm run dev` on your computer instead? Start only the database:
 #   docker compose -f docker-compose.dev.yml up -d db      then:  cd web && cp .env.example .env && npm install && npm run db:migrate && npm run db:seed && npm run dev
-#   (the database listens on localhost:5432 with user/password/db = qp/qp/quickprint, matching web/.env.example)
+#   (set DB_PORT=5434 before the command above, and use port 5434 in DATABASE_URL: postgres://qp:qp@localhost:5434/quickprint)
 services:
   db:
     image: postgres:16-alpine
@@ -14,7 +14,9 @@ services:
       POSTGRES_PASSWORD: qp
       POSTGRES_DB: quickprint
     ports:
-      - "127.0.0.1:5432:5432"
+      # Only needed if you run `npm run dev` on your computer instead of in Docker. Empty DB_PORT = Docker picks a free port,
+      # so this can never clash with another PostgreSQL on 5432/5433. Set DB_PORT=5434 to pin it.
+      - "127.0.0.1:${DB_PORT:-}:5432"
     volumes:
       - pgdata-dev:/var/lib/postgresql/data
     healthcheck:

@@ -25,7 +25,8 @@ docker compose -f docker-compose.dev.yml up
 - Open **http://localhost:5050** (port: `WEB_PORT=5060 docker compose -f docker-compose.dev.yml up`). Same logins as above.
 - Edit files in the `web/` folder with your editor — the browser reloads by itself.
 - Stop: `Ctrl+C`, then `docker compose -f docker-compose.dev.yml down` (add `-v` to also delete the dev database).
-- Prefer running `npm run dev` directly on your computer? Start only the database in Docker: `docker compose -f docker-compose.dev.yml up -d db`, then `cd web && cp .env.example .env && npm install && npm run db:migrate && npm run db:seed && npm run dev -- -p 5050` (the database is on `localhost:5432`, user/password/db `qp`/`qp`/`quickprint`, matching `.env.example`).
+- Prefer running `npm run dev` directly on your computer? Start only the database in Docker with a fixed port: `DB_PORT=5434 docker compose -f docker-compose.dev.yml up -d db` (PowerShell: `$env:DB_PORT="5434"` first), then `cd web`, `cp .env.example .env`, set `DATABASE_URL=postgres://qp:qp@localhost:5434/quickprint` in `.env`, and run `npm install && npm run db:migrate && npm run db:seed && npm run dev -- -p 5050`.
+- **Important:** the app only works when the **web** container (or `npm run dev`) is running. If Docker Desktop shows only a database container, the app is not started — run the `up` command above.
 - Payment and couriers are simulated in this mode.
 
 ---
