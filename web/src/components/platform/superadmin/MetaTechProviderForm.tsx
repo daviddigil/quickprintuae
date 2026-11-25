@@ -18,8 +18,8 @@ const rand = () => { const b = new Uint8Array(24); crypto.getRandomValues(b); re
 function Check({ ok, label, source, hint }: { ok: boolean; label: string; source?: string; hint: string }) {
   return (
     <li className="flex items-start gap-3 px-5 py-3 text-sm">
-      {ok ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden /> : <Circle className="mt-0.5 h-5 w-5 shrink-0 text-slate-300" aria-hidden />}
-      <div className="min-w-0 flex-1"><p className="font-medium">{label}</p><p className="text-xs text-slate-500">{ok ? "Configured" : hint}</p></div>
+      {ok ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden /> : <Circle className="mt-0.5 h-5 w-5 shrink-0 text-outline" aria-hidden />}
+      <div className="min-w-0 flex-1"><p className="font-medium">{label}</p><p className="text-xs text-on-surface-variant">{ok ? "Configured" : hint}</p></div>
       {ok && source && source !== "none" && <Badge tone={source === "db" ? "green" : "blue"}>{source === "db" ? "saved here" : "from server env"}</Badge>}
     </li>
   );
@@ -56,11 +56,11 @@ export function MetaTechProviderForm() {
   const mark = (r: Req) => run("mark" + r.tenantId, async () => { await api("/api/v1/superadmin/whatsapp/requests", "PATCH", { tenantId: r.tenantId, notified: !r.notifiedAt }); await load(); });
   const copy = (t: string) => navigator.clipboard?.writeText(t).then(() => setMsg({ tone: "blue", text: "Copied." })).catch(() => {});
 
-  if (!v) return <p className="text-sm text-slate-500" aria-busy="true">Loading…</p>;
+  if (!v) return <p className="text-sm text-on-surface-variant" aria-busy="true">Loading…</p>;
   const c = v.config;
   return (
     <div className="space-y-6">
-      <div role="status" aria-live="polite" className={`flex items-center gap-3 rounded-xl border px-5 py-4 ${c.embeddedSignupReady ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`} data-testid="sa-wa-state">
+      <div role="status" aria-live="polite" className={`flex items-center gap-3 rounded-xl border px-5 py-4 ${c.embeddedSignupReady ? "border-success/50 bg-success-container text-success" : "border-warning/50 bg-warning-container text-on-warning-container"}`} data-testid="sa-wa-state">
         <ShieldCheck className="h-6 w-6 shrink-0" aria-hidden />
         <div><p className="font-semibold">{c.embeddedSignupReady ? "One-click WhatsApp connect is LIVE" : "One-click WhatsApp connect is not active yet"}</p>
           <p className="text-sm opacity-90">{c.embeddedSignupReady ? "Shop owners see the Embedded Signup popup when they tap Connect WhatsApp." : "Owners can still tap the button: they see an “activation pending” message and can ask to be notified. Add your Tech Provider credentials below to switch it on."}</p></div>
@@ -70,7 +70,7 @@ export function MetaTechProviderForm() {
 
       <Card>
         <CardHeader title="Readiness" subtitle="Everything one-click connect needs, at a glance." />
-        <ul className="divide-y divide-slate-100" data-testid="sa-wa-checklist">
+        <ul className="divide-y divide-outline-variant" data-testid="sa-wa-checklist">
           <Check ok={!!c.appId} label="Meta App ID" source={c.sources.appId} hint="Meta for Developers → your app → App settings → Basic" />
           <Check ok={c.hasAppSecret} label="Meta App Secret" source={c.sources.appSecret} hint="Same page → App secret → Show. Verifies webhooks and exchanges sign-up codes." />
           <Check ok={c.hasVerifyToken} label="Webhook verify token" source={c.sources.verifyToken} hint="Any random string — press Generate. Paste the same value in the Meta webhook settings." />
@@ -95,29 +95,29 @@ export function MetaTechProviderForm() {
           <div className="flex flex-wrap gap-2 sm:col-span-2">
             <Button disabled={!!busy} data-testid="sa-wa-save">{busy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Save credentials</Button>
             <Button type="button" variant="secondary" disabled={!!busy} onClick={test} data-testid="sa-wa-test">{busy === "test" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Test credentials</Button>
-            {(c.sources.appId === "db" || c.sources.appSecret === "db") && <Button type="button" variant="ghost" className="text-red-600" disabled={!!busy} onClick={remove}>Remove saved credentials</Button>}
+            {(c.sources.appId === "db" || c.sources.appSecret === "db") && <Button type="button" variant="ghost" className="text-critical" disabled={!!busy} onClick={remove}>Remove saved credentials</Button>}
           </div>
-          {c.lastTestAt && <p className="text-xs text-slate-500 sm:col-span-2">Last test: {new Date(c.lastTestAt).toLocaleString("en-AE")} — {c.lastTestOk ? "passed" : "failed"}{c.lastTestMessage ? ` (${c.lastTestMessage})` : ""}</p>}
+          {c.lastTestAt && <p className="text-xs text-on-surface-variant sm:col-span-2">Last test: {new Date(c.lastTestAt).toLocaleString("en-AE")} — {c.lastTestOk ? "passed" : "failed"}{c.lastTestMessage ? ` (${c.lastTestMessage})` : ""}</p>}
         </form>
       </Card>
 
       <Card>
         <CardHeader title="Set up in your Meta app" subtitle="Paste these into Meta for Developers (WhatsApp → Configuration)." />
         <dl className="space-y-3 p-5 text-sm">
-          <div><dt className="text-slate-500">Webhook callback URL</dt><dd className="flex items-center gap-2"><code className="break-all rounded bg-slate-100 px-2 py-1 text-xs" data-testid="sa-wa-webhook">{v.webhookUrl}</code><button type="button" aria-label="Copy callback URL" className="text-slate-500 hover:text-slate-900" onClick={() => copy(v.webhookUrl)}><Copy className="h-4 w-4" /></button></dd></div>
-          <div><dt className="text-slate-500">Subscribe to these webhook fields</dt><dd className="flex flex-wrap gap-2">{v.subscribeFields.map((f) => <code key={f} className="rounded bg-slate-100 px-2 py-1 text-xs">{f}</code>)}<span className="text-xs text-slate-400">(smb_message_echoes lets the AI pause when an owner replies from the WhatsApp Business app)</span></dd></div>
-          <div><dt className="text-slate-500">Allowed domain / JS SDK origin / Valid OAuth redirect host</dt><dd><code className="rounded bg-slate-100 px-2 py-1 text-xs">{v.appDomain}</code></dd></div>
-          <p className="text-xs text-slate-500">Graph API host in use: <code>{c.graphHost}</code> · version <code>{c.graphVersion}</code></p>
+          <div><dt className="text-on-surface-variant">Webhook callback URL</dt><dd className="flex items-center gap-2"><code className="break-all rounded bg-surface-container px-2 py-1 text-xs" data-testid="sa-wa-webhook">{v.webhookUrl}</code><button type="button" aria-label="Copy callback URL" className="text-on-surface-variant hover:text-on-surface" onClick={() => copy(v.webhookUrl)}><Copy className="h-4 w-4" /></button></dd></div>
+          <div><dt className="text-on-surface-variant">Subscribe to these webhook fields</dt><dd className="flex flex-wrap gap-2">{v.subscribeFields.map((f) => <code key={f} className="rounded bg-surface-container px-2 py-1 text-xs">{f}</code>)}<span className="text-xs text-outline">(smb_message_echoes lets the AI pause when an owner replies from the WhatsApp Business app)</span></dd></div>
+          <div><dt className="text-on-surface-variant">Allowed domain / JS SDK origin / Valid OAuth redirect host</dt><dd><code className="rounded bg-surface-container px-2 py-1 text-xs">{v.appDomain}</code></dd></div>
+          <p className="text-xs text-on-surface-variant">Graph API host in use: <code>{c.graphHost}</code> · version <code>{c.graphVersion}</code></p>
         </dl>
       </Card>
 
       <Card>
         <CardHeader title={`Shops waiting for one-click connect (${v.waiting})`} subtitle="Owners who tapped “Notify me” while it was not active yet." />
-        {v.requests.length === 0 ? <p className="px-5 py-6 text-sm text-slate-500">No requests yet.</p> : (
-          <ul className="divide-y divide-slate-100" data-testid="sa-wa-requests">
+        {v.requests.length === 0 ? <p className="px-5 py-6 text-sm text-on-surface-variant">No requests yet.</p> : (
+          <ul className="divide-y divide-outline-variant" data-testid="sa-wa-requests">
             {v.requests.map((r) => (
               <li key={r.tenantId} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
-                <div><p className="font-medium">{r.shop} <span className="font-normal text-slate-400">/s/{r.slug}</span></p><p className="text-xs text-slate-500">Asked {new Date(r.createdAt).toLocaleDateString("en-AE")}</p></div>
+                <div><p className="font-medium">{r.shop} <span className="font-normal text-outline">/s/{r.slug}</span></p><p className="text-xs text-on-surface-variant">Asked {new Date(r.createdAt).toLocaleDateString("en-AE")}</p></div>
                 <div className="flex items-center gap-2">{r.notifiedAt ? <Badge tone="green">Notified</Badge> : <Badge tone="yellow">Waiting</Badge>}<Button variant="ghost" onClick={() => mark(r)} disabled={!!busy}>{r.notifiedAt ? "Undo" : "Mark notified"}</Button></div>
               </li>
             ))}

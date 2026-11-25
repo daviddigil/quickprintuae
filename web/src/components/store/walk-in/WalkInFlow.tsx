@@ -100,10 +100,10 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
   return (
     <div className="mx-auto max-w-md px-4 py-6" data-testid="walk-in-flow">
       <h1 className="text-2xl font-extrabold tracking-tight">Print now</h1>
-      <p className="text-sm text-slate-500">{shopName} · skip the queue: upload, pay, collect.</p>
+      <p className="text-sm text-on-surface-variant">{shopName} · skip the queue: upload, pay, collect.</p>
       <ol className="my-5 flex gap-2 text-xs font-semibold" aria-label="Steps">
         {["Your details", "Your files", "Pay"].map((l, i) => (
-          <li key={l} className={cn("flex-1 rounded-full px-2 py-1.5 text-center", step === i + 1 ? "btn-store" : step > i + 1 ? "bg-store-soft text-store" : "bg-slate-100 text-slate-500")}>{i + 1}. {l}</li>
+          <li key={l} className={cn("flex-1 rounded-full px-2 py-1.5 text-center", step === i + 1 ? "btn-store" : step > i + 1 ? "bg-store-soft text-store" : "bg-surface-container text-on-surface-variant")}>{i + 1}. {l}</li>
         ))}
       </ol>
       {error && <div className="mb-4"><Alert>{error}</Alert></div>}
@@ -125,11 +125,11 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
             onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
             onDrop={(e) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files.length) void upload(e.dataTransfer.files); }}
             onClick={() => input.current?.click()}
-            className={cn("flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center", drag ? "border-store bg-store-soft" : "border-slate-300 bg-white")}
+            className={cn("flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center", drag ? "border-store bg-store-soft" : "border-outline-variant bg-white")}
           >
             {uploading ? <Loader2 className="h-8 w-8 animate-spin text-store" /> : <Upload className="h-8 w-8 text-store" />}
             <p className="font-semibold">{uploading ? "Uploading…" : "Tap to choose your documents"}</p>
-            <p className="text-xs text-slate-500">PDF, Word, PowerPoint, Excel, JPG or PNG · up to {maxFiles} files · 50 MB each</p>
+            <p className="text-xs text-on-surface-variant">PDF, Word, PowerPoint, Excel, JPG or PNG · up to {maxFiles} files · 50 MB each</p>
             <input ref={input} type="file" multiple accept={ACCEPT} className="hidden" data-testid="file-input" onChange={(e) => { if (e.target.files?.length) void upload(e.target.files); e.target.value = ""; }} />
           </div>
 
@@ -138,56 +138,56 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
             return (
               <Card key={i.id} className="space-y-3 p-4" data-testid="file-card">
                 <div className="flex items-start gap-3">
-                  <FileText className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
+                  <FileText className="mt-0.5 h-5 w-5 shrink-0 text-outline" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{i.filename}</p>
                     {i.pageCount != null
-                      ? <p className="text-xs text-slate-500">{i.pageCount} page{i.pageCount > 1 ? "s" : ""}</p>
-                      : <div className="mt-1 flex items-center gap-2 text-xs text-amber-700">
+                      ? <p className="text-xs text-on-surface-variant">{i.pageCount} page{i.pageCount > 1 ? "s" : ""}</p>
+                      : <div className="mt-1 flex items-center gap-2 text-xs text-warning">
                           <label htmlFor={`pg-${i.id}`}>Pages:</label>
-                          <input id={`pg-${i.id}`} type="number" min={1} max={2000} value={i.pages} onChange={(e) => patch(i.id, { pages: Math.max(1, Math.min(2000, Number(e.target.value) || 1)) })} className="h-8 w-16 rounded border border-amber-300 px-2" data-testid="pages-input" />
+                          <input id={`pg-${i.id}`} type="number" min={1} max={2000} value={i.pages} onChange={(e) => patch(i.id, { pages: Math.max(1, Math.min(2000, Number(e.target.value) || 1)) })} className="h-8 w-16 rounded border border-warning/50 px-2" data-testid="pages-input" />
                           <span>unverified — the shop will check</span>
                         </div>}
                   </div>
-                  <button type="button" aria-label="Remove file" onClick={() => setItems((c) => c.filter((x) => x.id !== i.id))} className="rounded p-1 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+                  <button type="button" aria-label="Remove file" onClick={() => setItems((c) => c.filter((x) => x.id !== i.id))} className="rounded p-1 text-outline hover:bg-surface-container"><X className="h-5 w-5" /></button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><p className="mb-1 text-xs font-medium text-slate-600">Colour</p>{choiceSelect(colour, i.color, (v) => patch(i.id, { color: v }), [{ value: "bw", label: "Black & white" }, { value: "color", label: "Full colour" }])}</div>
-                  <div><p className="mb-1 text-xs font-medium text-slate-600">Sides</p>{choiceSelect(sides, i.sides, (v) => patch(i.id, { sides: v }), [{ value: "single", label: "Single-sided" }, { value: "double", label: "Double-sided" }])}</div>
-                  <div><p className="mb-1 text-xs font-medium text-slate-600">Paper</p>{choiceSelect(paper, i.paperSize, (v) => patch(i.id, { paperSize: v }), [{ value: "A4", label: "A4" }])}</div>
+                  <div><p className="mb-1 text-xs font-medium text-on-surface-variant">Colour</p>{choiceSelect(colour, i.color, (v) => patch(i.id, { color: v }), [{ value: "bw", label: "Black & white" }, { value: "color", label: "Full colour" }])}</div>
+                  <div><p className="mb-1 text-xs font-medium text-on-surface-variant">Sides</p>{choiceSelect(sides, i.sides, (v) => patch(i.id, { sides: v }), [{ value: "single", label: "Single-sided" }, { value: "double", label: "Double-sided" }])}</div>
+                  <div><p className="mb-1 text-xs font-medium text-on-surface-variant">Paper</p>{choiceSelect(paper, i.paperSize, (v) => patch(i.id, { paperSize: v }), [{ value: "A4", label: "A4" }])}</div>
                   <div>
-                    <p className="mb-1 text-xs font-medium text-slate-600">Copies</p>
-                    <div className="flex h-11 items-center justify-between rounded-lg border border-slate-300 bg-white">
+                    <p className="mb-1 text-xs font-medium text-on-surface-variant">Copies</p>
+                    <div className="flex h-11 items-center justify-between rounded-lg border border-outline-variant bg-white">
                       <button type="button" aria-label="Fewer copies" className="px-3 py-2" onClick={() => patch(i.id, { copies: Math.max(1, i.copies - 1) })}><Minus className="h-4 w-4" /></button>
                       <span className="font-semibold" data-testid="copies">{i.copies}</span>
                       <button type="button" aria-label="More copies" className="px-3 py-2" onClick={() => patch(i.id, { copies: Math.min(200, i.copies + 1) })}><Plus className="h-4 w-4" /></button>
                     </div>
                   </div>
                 </div>
-                <p className="text-right text-sm font-semibold" data-testid="file-price">{p.bad ? <span className="text-red-600">{p.bad}</span> : formatAED(p.total)}</p>
+                <p className="text-right text-sm font-semibold" data-testid="file-price">{p.bad ? <span className="text-critical">{p.bad}</span> : formatAED(p.total)}</p>
               </Card>
             );
           })}
 
           {items.length > 0 && (
             <div className="sticky bottom-0 -mx-4 border-t bg-white/95 p-4 backdrop-blur">
-              <div className="mb-2 flex justify-between text-sm"><span className="text-slate-600">Total incl. VAT {vatRate}%</span><b data-testid="total">{formatAED(totals.total)}</b></div>
+              <div className="mb-2 flex justify-between text-sm"><span className="text-on-surface-variant">Total incl. VAT {vatRate}%</span><b data-testid="total">{formatAED(totals.total)}</b></div>
               <Button variant="store" className="h-12 w-full text-base" disabled={!!uploading || priced.some((p) => p.bad)} onClick={() => { setError(null); setStep(3); }} data-testid="to-pay">Continue to payment</Button>
             </div>
           )}
-          <button type="button" className="text-sm text-slate-500 underline" onClick={() => setStep(1)}>← Change my details</button>
+          <button type="button" className="text-sm text-on-surface-variant underline" onClick={() => setStep(1)}>← Change my details</button>
         </div>
       )}
 
       {step === 3 && (
         <div className="space-y-4" data-testid="step-3">
-          <Card className="divide-y divide-slate-100">
+          <Card className="divide-y divide-outline-variant">
             {items.map((i, idx) => (
-              <div key={i.id} className="flex justify-between gap-3 p-3 text-sm"><span className="min-w-0 truncate">{i.filename} <span className="text-slate-400">× {i.copies}</span></span><span>{formatAED(priced[idx].total)}</span></div>
+              <div key={i.id} className="flex justify-between gap-3 p-3 text-sm"><span className="min-w-0 truncate">{i.filename} <span className="text-outline">× {i.copies}</span></span><span>{formatAED(priced[idx].total)}</span></div>
             ))}
             <div className="space-y-1 p-3 text-sm">
-              <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatAED(totals.subtotal)}</span></div>
-              <div className="flex justify-between text-slate-600"><span>VAT {vatRate}%</span><span>{formatAED(totals.vat)}</span></div>
+              <div className="flex justify-between text-on-surface-variant"><span>Subtotal</span><span>{formatAED(totals.subtotal)}</span></div>
+              <div className="flex justify-between text-on-surface-variant"><span>VAT {vatRate}%</span><span>{formatAED(totals.vat)}</span></div>
               <div className="flex justify-between text-base font-bold"><span>Total</span><span>{formatAED(totals.total)}</span></div>
             </div>
           </Card>
@@ -195,14 +195,14 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
             ? <Alert tone="yellow">Online payment isn&apos;t set up at this shop yet. Please ask the staff at the counter.</Alert>
             : <div className="space-y-2">
                 {providers.map((p) => (
-                  <label key={p} className={cn("flex items-center gap-3 rounded-xl border p-4", provider === p ? "border-store bg-store-soft" : "border-slate-200")}>
+                  <label key={p} className={cn("flex items-center gap-3 rounded-xl border p-4", provider === p ? "border-store bg-store-soft" : "border-outline-variant")}>
                     <input type="radio" name="provider" checked={provider === p} onChange={() => setProvider(p)} /><CreditCard className="h-5 w-5" /><span className="text-sm font-medium">{PROVIDER_LABEL[p]}</span>
                   </label>
                 ))}
-                <p className="text-xs text-slate-500">Online payment only — no cash. Printing starts as soon as you&apos;ve paid.</p>
+                <p className="text-xs text-on-surface-variant">Online payment only — no cash. Printing starts as soon as you&apos;ve paid.</p>
               </div>}
           <Button variant="store" className="h-12 w-full text-base" disabled={busy || !provider} onClick={pay} data-testid="pay">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}Pay {formatAED(totals.total)}</Button>
-          <button type="button" className="text-sm text-slate-500 underline" onClick={() => setStep(2)}>← Back to my files</button>
+          <button type="button" className="text-sm text-on-surface-variant underline" onClick={() => setStep(2)}>← Back to my files</button>
         </div>
       )}
     </div>

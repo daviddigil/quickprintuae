@@ -26,15 +26,15 @@ export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walk
   const items = NAV.filter((n) => (!n.ownerOnly || isOwner) && (!("walkIn" in n) || walkIn));
   return (
     <>
-      <div className="flex items-center justify-between border-b bg-white px-4 py-3 lg:hidden print:hidden">
+      <div className="flex items-center justify-between border-b border-outline-variant bg-surface-lowest px-4 py-3 lg:hidden print:hidden">
         <span className="font-bold">{shopName}</span>
         <button aria-label="Menu" onClick={() => setOpen(!open)}>{open ? <X size={22} /> : <Menu size={22} />}</button>
       </div>
-      <aside className={cn("w-full shrink-0 flex-col border-r bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 print:hidden", open ? "flex" : "hidden")}>
-        <div className="border-b px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Quick<span className="text-brand-600">Print</span> Admin</p>
+      <aside className={cn("w-full shrink-0 flex-col border-r border-outline-variant bg-surface-lowest lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 print:hidden", open ? "flex" : "hidden")}>
+        <div className="border-b border-outline-variant px-5 py-4">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-on-surface-variant"><span aria-hidden className="grid size-6 place-items-center rounded-lg text-[10px] font-extrabold text-white" style={{ background: "linear-gradient(135deg,#00ffcc,#ff007f 50%,#3300ff)" }}>QP</span>QuickPrint Admin</p>
           <p className="mt-1 truncate font-bold">{shopName}</p>
-          <p className="text-xs text-slate-500">{planLine}</p>
+          <p className="text-xs text-on-surface-variant">{planLine}</p>
         </div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
           {items.map((n) => {
@@ -42,15 +42,15 @@ export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walk
             const Icon = n.icon;
             return (
               <Link key={n.href} href={n.href} onClick={() => setOpen(false)}
-                className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium", active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100")}>
+                className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium", active ? "bg-primary-container font-semibold text-on-primary-container" : "text-on-surface-variant hover:bg-surface-container")}>
                 <Icon size={17} /> {n.label}
               </Link>
             );
           })}
         </nav>
-        <div className="space-y-1 border-t p-3 text-sm">
-          <a href={storeUrl} target="_blank" className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100"><ExternalLink size={16} /> View storefront</a>
-          <a href="/logout?next=/login" className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100"><LogOut size={16} /> Sign out ({userName})</a>
+        <div className="space-y-1 border-t border-outline-variant p-3 text-sm">
+          <a href={storeUrl} target="_blank" className="flex items-center gap-2 rounded-lg px-3 py-2 text-on-surface-variant hover:bg-surface-container"><ExternalLink size={16} /> View storefront</a>
+          <a href="/logout?next=/login" className="flex items-center gap-2 rounded-lg px-3 py-2 text-on-surface-variant hover:bg-surface-container"><LogOut size={16} /> Sign out ({userName})</a>
         </div>
       </aside>
     </>

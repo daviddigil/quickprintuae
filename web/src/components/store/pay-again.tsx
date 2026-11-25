@@ -20,7 +20,7 @@ export function PayAgain({ store, orderId, token, providers }: { store: string; 
           <Button key={p} variant="store" disabled={busy} onClick={() => pay(p)}>{busy ? "Opening…" : `Pay now${providers.length > 1 ? ` with ${p === "stripe" ? "card (Stripe)" : "Mamo Pay"}` : ""}`}</Button>
         ))}
       </div>
-      {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
+      {err && <p className="mt-2 text-sm text-critical">{err}</p>}
     </div>
   );
 }

@@ -23,10 +23,10 @@ export function AccountAuth({ store }: { store: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1 text-sm">
+    <div className="mx-auto max-w-sm rounded-xl border border-outline-variant bg-white p-6 shadow-sm">
+      <div className="mb-6 grid grid-cols-2 rounded-lg bg-surface-container p-1 text-sm">
         {(["login", "signup"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={cn("rounded-md py-1.5 font-medium", tab === t ? "bg-white shadow-sm" : "text-slate-600")}>{t === "login" ? "Sign in" : "Create account"}</button>
+          <button key={t} onClick={() => setTab(t)} className={cn("rounded-md py-1.5 font-medium", tab === t ? "bg-white shadow-sm" : "text-on-surface-variant")}>{t === "login" ? "Sign in" : "Create account"}</button>
         ))}
       </div>
       {tab === "login" ? <LoginForm store={store} next={next} /> : (
@@ -39,7 +39,7 @@ export function AccountAuth({ store }: { store: string }) {
           <Button variant="store" className="w-full" disabled={busy}>{busy ? "Creating…" : "Create account"}</Button>
         </form>
       )}
-      <p className="mt-4 text-center text-xs text-slate-500">You can also check out as a guest.</p>
+      <p className="mt-4 text-center text-xs text-on-surface-variant">You can also check out as a guest.</p>
     </div>
   );
 }

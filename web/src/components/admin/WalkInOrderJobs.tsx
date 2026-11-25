@@ -23,8 +23,8 @@ export function WalkInOrderJobs({ ticketNo, jobs }: { ticketNo: string | null; j
           <li key={j.id} className="space-y-2 px-5 py-3 text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <a className="font-medium text-brand-600 hover:underline" href={`/api/v1/admin/files/${j.fileId}`}>{j.filename}</a>
-                <p className="text-xs text-slate-500">{j.pages} pg × {j.copies} · {j.options.color === "color" ? "colour" : "B&W"} · {j.options.sides === "double" ? "2-sided" : "1-sided"} · {j.options.paperSize}{j.printerName ? ` · ${j.printerName}` : ""}</p>
+                <a className="font-medium text-primary hover:underline" href={`/api/v1/admin/files/${j.fileId}`}>{j.filename}</a>
+                <p className="text-xs text-on-surface-variant">{j.pages} pg × {j.copies} · {j.options.color === "color" ? "colour" : "B&W"} · {j.options.sides === "double" ? "2-sided" : "1-sided"} · {j.options.paperSize}{j.printerName ? ` · ${j.printerName}` : ""}</p>
               </div>
               <div className="flex items-center gap-2">
                 {!j.pagesVerified && <Badge tone="yellow">pages unverified</Badge>}
@@ -32,7 +32,7 @@ export function WalkInOrderJobs({ ticketNo, jobs }: { ticketNo: string | null; j
                 <Badge tone={TONE[j.status] ?? "gray"}>{j.status.replace(/_/g, " ")}</Badge>
               </div>
             </div>
-            {(j.error || j.attempts > 1) && <p className="text-xs text-red-600">{j.error ?? ""}{j.attempts > 1 ? ` · ${j.attempts} attempts` : ""}</p>}
+            {(j.error || j.attempts > 1) && <p className="text-xs text-critical">{j.error ?? ""}{j.attempts > 1 ? ` · ${j.attempts} attempts` : ""}</p>}
             <WalkInJobActions jobId={j.id} status={j.status} onDone={() => router.refresh()} />
           </li>
         ))}

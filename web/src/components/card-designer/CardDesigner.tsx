@@ -160,10 +160,10 @@ export function CardDesigner(p: CardDesignerProps) {
       <div className="min-w-0 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           {p.doubleSided !== false && (
-            <div className="inline-flex rounded-lg border border-slate-300 bg-white p-0.5 text-sm">
+            <div className="inline-flex rounded-lg border border-outline-variant bg-white p-0.5 text-sm">
               {(["front", "back"] as const).map((s) => (
                 <button key={s} type="button" onClick={() => { setSide(s); setSelected(null); }}
-                  className={`rounded-md px-3 py-1 font-medium capitalize ${side === s ? "bg-slate-900 text-white" : "text-slate-600"}`}>{s}</button>
+                  className={`rounded-md px-3 py-1 font-medium capitalize ${side === s ? "bg-inverse-surface text-white" : "text-on-surface-variant"}`}>{s}</button>
               ))}
             </div>
           )}
@@ -209,18 +209,18 @@ export function CardDesigner(p: CardDesignerProps) {
             {box && <rect x={box.x - 0.6} y={box.y - 0.6} width={box.w + 1.2} height={box.h + 1.2} fill="none" stroke="#2563eb" strokeWidth={0.3} pointerEvents="none" />}
           </svg>
         </div>
-        <p className="text-center text-xs text-slate-500">
-          {W} × {H} mm · <span className="text-rose-500">red</span> = bleed (backgrounds extend here) · <span className="text-sky-500">blue</span> = safe area (keep text inside) · drag to move, arrows to nudge, Delete to remove
+        <p className="text-center text-xs text-on-surface-variant">
+          {W} × {H} mm · <span className="text-secondary">red</span> = bleed (backgrounds extend here) · <span className="text-sky-500">blue</span> = safe area (keep text inside) · drag to move, arrows to nudge, Delete to remove
         </p>
       </div>
 
       {/* ---------- side panel ---------- */}
       <div className="space-y-3">
-        <div className="inline-flex w-full rounded-lg border border-slate-300 bg-white p-0.5 text-sm">
-          <button type="button" onClick={() => setTab("ai")} className={`flex-1 rounded-md px-3 py-1.5 font-medium ${tab === "ai" ? "bg-slate-900 text-white" : "text-slate-600"}`}>
+        <div className="inline-flex w-full rounded-lg border border-outline-variant bg-white p-0.5 text-sm">
+          <button type="button" onClick={() => setTab("ai")} className={`flex-1 rounded-md px-3 py-1.5 font-medium ${tab === "ai" ? "bg-inverse-surface text-white" : "text-on-surface-variant"}`}>
             {p.aiEnabled ? "✨ AI design" : "Templates"}
           </button>
-          <button type="button" onClick={() => setTab("edit")} className={`flex-1 rounded-md px-3 py-1.5 font-medium ${tab === "edit" ? "bg-slate-900 text-white" : "text-slate-600"}`}>Edit</button>
+          <button type="button" onClick={() => setTab("edit")} className={`flex-1 rounded-md px-3 py-1.5 font-medium ${tab === "edit" ? "bg-inverse-surface text-white" : "text-on-surface-variant"}`}>Edit</button>
         </div>
 
         {tab === "ai" ? (
@@ -228,11 +228,11 @@ export function CardDesigner(p: CardDesignerProps) {
             onQr={setQrValue}
             onPick={(d) => { commit(() => resize(d, W, H)); setSide("front"); setSelected(null); setTab("edit"); }} />
         ) : (
-          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">
+          <div className="space-y-3 rounded-xl border border-outline-variant bg-white p-4 text-sm">
             <Row label={`${side === "front" ? "Front" : "Back"} background`}>
               <ColorInput value={current.background} onChange={(v) => updateSide((s) => ({ ...s, background: v }))} />
             </Row>
-            {!sel && <p className="text-slate-500">Select an element on the card to edit it, or add one from the toolbar.</p>}
+            {!sel && <p className="text-on-surface-variant">Select an element on the card to edit it, or add one from the toolbar.</p>}
             {sel && (
               <>
                 <div className="flex items-center justify-between border-t pt-3">
@@ -248,16 +248,16 @@ export function CardDesigner(p: CardDesignerProps) {
               </>
             )}
             <div className="border-t pt-3">
-              <p className="mb-1 text-xs font-medium text-slate-500">Layers</p>
+              <p className="mb-1 text-xs font-medium text-on-surface-variant">Layers</p>
               <ul className="max-h-40 space-y-0.5 overflow-auto">
                 {[...current.elements].reverse().map((e) => (
                   <li key={e.id}>
-                    <button type="button" onClick={() => setSelected(e.id)} className={`w-full truncate rounded px-2 py-1 text-left text-xs ${e.id === selected ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50"}`}>
+                    <button type="button" onClick={() => setSelected(e.id)} className={`w-full truncate rounded px-2 py-1 text-left text-xs ${e.id === selected ? "bg-blue-50 text-blue-700" : "hover:bg-surface-low"}`}>
                       {e.type === "text" ? `T  ${e.text}` : e.type === "qr" ? "▦  QR code" : e.type === "image" ? "🖼  Logo" : e.type === "circle" ? "●  Circle" : e.type === "line" ? "—  Line" : "■  Box"}
                     </button>
                   </li>
                 ))}
-                {!current.elements.length && <li className="text-xs text-slate-400">Empty side</li>}
+                {!current.elements.length && <li className="text-xs text-outline">Empty side</li>}
               </ul>
             </div>
           </div>
@@ -314,11 +314,11 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
     }
   }
 
-  const inp = "w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-slate-500";
+  const inp = "w-full rounded-lg border border-outline-variant px-3 py-1.5 text-sm outline-none focus:border-outline";
   return (
-    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">
+    <div className="space-y-3 rounded-xl border border-outline-variant bg-white p-4 text-sm">
       <form onSubmit={generate} className="space-y-2">
-        <p className="text-slate-600">{aiEnabled ? "Tell us about you — AI creates 3 print-ready designs you can edit." : "Fill in your details and pick a template."}</p>
+        <p className="text-on-surface-variant">{aiEnabled ? "Tell us about you — AI creates 3 print-ready designs you can edit." : "Fill in your details and pick a template."}</p>
         <input className={inp} placeholder="Full name *" value={details.name} onChange={set("name")} required />
         <div className="grid grid-cols-2 gap-2">
           <input className={inp} placeholder="Job title" value={details.title} onChange={set("title")} />
@@ -333,42 +333,42 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
           <select className={inp} value={details.style} onChange={set("style")}>
             {["modern", "minimal", "bold", "elegant", "corporate", "creative", "luxury"].map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
           </select>
-          <button type="button" onClick={() => logoRef.current?.click()} className="truncate rounded-lg border border-dashed border-slate-300 px-2 py-1.5 text-slate-600 hover:bg-slate-50">
+          <button type="button" onClick={() => logoRef.current?.click()} className="truncate rounded-lg border border-dashed border-outline-variant px-2 py-1.5 text-on-surface-variant hover:bg-surface-low">
             {details.logo ? "✓ Logo added" : "Upload logo"}
           </button>
           <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden"
             onChange={async (ev) => { const f = ev.target.files?.[0]; if (!f) return; const src = await fileToDataUrl(f, 600); if (src.length < 400_000) setDetails((d) => ({ ...d, logo: src })); }} />
         </div>
-        <label className="flex items-center gap-2 text-slate-600">
+        <label className="flex items-center gap-2 text-on-surface-variant">
           <input type="checkbox" checked={useColors} onChange={(e) => setUseColors(e.target.checked)} /> Use my brand colours
           {useColors && <>
             <input type="color" value={colors[0]} onChange={(e) => setColors([e.target.value, colors[1]])} className="h-6 w-8 cursor-pointer" />
             <input type="color" value={colors[1]} onChange={(e) => setColors([colors[0], e.target.value])} className="h-6 w-8 cursor-pointer" />
           </>}
         </label>
-        {error && <p className="rounded bg-red-50 px-2 py-1 text-red-700">{error}</p>}
+        {error && <p className="rounded bg-critical-container px-2 py-1 text-critical">{error}</p>}
         <button disabled={loading} className="btn-store w-full rounded-lg px-4 py-2 font-semibold disabled:opacity-60">
           {loading ? "Designing… (10–30 s)" : aiEnabled ? "✨ Generate designs" : "Show templates"}
         </button>
       </form>
 
-      {note && <p className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">{note}</p>}
-      {loading && <div className="grid grid-cols-1 gap-2">{[0, 1, 2].map((i) => <div key={i} className="aspect-[85/55] animate-pulse rounded-md bg-slate-100" />)}</div>}
+      {note && <p className="rounded bg-warning-container px-2 py-1 text-xs text-on-warning-container">{note}</p>}
+      {loading && <div className="grid grid-cols-1 gap-2">{[0, 1, 2].map((i) => <div key={i} className="aspect-[85/55] animate-pulse rounded-md bg-surface-container" />)}</div>}
       {!loading && designs.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-500">Click a design to edit it</p>
+          <p className="text-xs font-medium text-on-surface-variant">Click a design to edit it</p>
           {designs.map((d, i) => (
-            <button key={i} type="button" onClick={() => onPick(d)} className="group block w-full rounded-lg border border-slate-200 p-2 text-left hover:border-slate-900">
+            <button key={i} type="button" onClick={() => onPick(d)} className="group block w-full rounded-lg border border-outline-variant p-2 text-left hover:border-on-surface">
               <div className="grid grid-cols-2 gap-2">
                 <CardPreview design={d} side="front" />
                 {d.back && <CardPreview design={d} side="back" />}
               </div>
-              <p className="mt-1 text-xs text-slate-600 group-hover:text-slate-900">{d.name ?? `Design ${i + 1}`}</p>
+              <p className="mt-1 text-xs text-on-surface-variant group-hover:text-on-surface">{d.name ?? `Design ${i + 1}`}</p>
             </button>
           ))}
         </div>
       )}
-      <button type="button" className="w-full text-xs text-slate-500 underline" onClick={() => onPick(blankDesign(W, H))}>Start from a blank card</button>
+      <button type="button" className="w-full text-xs text-on-surface-variant underline" onClick={() => onPick(blankDesign(W, H))}>Start from a blank card</button>
     </div>
   );
 }
@@ -382,12 +382,12 @@ function ElementProps({ el, W, H, onChange }: { el: CardElement; W: number; H: n
     case "text":
       return (
         <div className="space-y-2">
-          <textarea className="w-full rounded-lg border border-slate-300 px-2 py-1.5" rows={2} value={el.text} onChange={(e) => onChange({ text: e.target.value })} />
+          <textarea className="w-full rounded-lg border border-outline-variant px-2 py-1.5" rows={2} value={el.text} onChange={(e) => onChange({ text: e.target.value })} />
           <div className="grid grid-cols-2 gap-2">
-            <select className="rounded-lg border border-slate-300 px-2 py-1.5" value={el.fontFamily} onChange={(e) => onChange({ fontFamily: e.target.value })} style={{ fontFamily: el.fontFamily }}>
+            <select className="rounded-lg border border-outline-variant px-2 py-1.5" value={el.fontFamily} onChange={(e) => onChange({ fontFamily: e.target.value })} style={{ fontFamily: el.fontFamily }}>
               {CARD_FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
             </select>
-            <select className="rounded-lg border border-slate-300 px-2 py-1.5" value={el.fontWeight} onChange={(e) => onChange({ fontWeight: Number(e.target.value) as 400 })}>
+            <select className="rounded-lg border border-outline-variant px-2 py-1.5" value={el.fontWeight} onChange={(e) => onChange({ fontWeight: Number(e.target.value) as 400 })}>
               {[400, 500, 600, 700, 800].map((w) => <option key={w} value={w}>{({ 400: "Regular", 500: "Medium", 600: "Semibold", 700: "Bold", 800: "Extra bold" } as Record<number, string>)[w]}</option>)}
             </select>
           </div>
@@ -398,9 +398,9 @@ function ElementProps({ el, W, H, onChange }: { el: CardElement; W: number; H: n
           </div>
           <div className="flex gap-1">
             {(["left", "center", "right"] as const).map((a) => (
-              <button key={a} type="button" onClick={() => onChange({ align: a })} className={`flex-1 rounded border px-2 py-1 text-xs capitalize ${el.align === a ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300"}`}>{a}</button>
+              <button key={a} type="button" onClick={() => onChange({ align: a })} className={`flex-1 rounded border px-2 py-1 text-xs capitalize ${el.align === a ? "border-on-surface bg-inverse-surface text-white" : "border-outline-variant"}`}>{a}</button>
             ))}
-            <button type="button" onClick={() => onChange({ italic: !el.italic })} className={`rounded border px-2 py-1 text-xs italic ${el.italic ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300"}`}>I</button>
+            <button type="button" onClick={() => onChange({ italic: !el.italic })} className={`rounded border px-2 py-1 text-xs italic ${el.italic ? "border-on-surface bg-inverse-surface text-white" : "border-outline-variant"}`}>I</button>
           </div>
           <div className="grid grid-cols-3 gap-2">{n("x", el.x, 0, W)}{n("y", el.y, 0, H)}{n("w", el.w, 5, W)}</div>
         </div>
@@ -421,7 +421,7 @@ function ElementProps({ el, W, H, onChange }: { el: CardElement; W: number; H: n
     case "qr":
       return (
         <div className="space-y-2">
-          <input className="w-full rounded-lg border border-slate-300 px-2 py-1.5" value={el.value} onChange={(e) => onChange({ value: e.target.value })} placeholder="https://your-site.ae" />
+          <input className="w-full rounded-lg border border-outline-variant px-2 py-1.5" value={el.value} onChange={(e) => onChange({ value: e.target.value })} placeholder="https://your-site.ae" />
           <div className="grid grid-cols-2 gap-2">{n("x", el.x, 0, W)}{n("y", el.y, 0, H)}{n("size", el.size, 8, Math.min(W, H))}<ColorInput value={el.color ?? "#000000"} onChange={(v) => onChange({ color: v })} /></div>
         </div>
       );
@@ -431,8 +431,8 @@ function ElementProps({ el, W, H, onChange }: { el: CardElement; W: number; H: n
 function NumInput({ label, value, onChange, min, max, step }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number }) {
   return (
     <label className="block">
-      <span className="text-[11px] uppercase text-slate-400">{label}</span>
-      <input type="number" className="w-full rounded-lg border border-slate-300 px-2 py-1" value={Math.round(value * 100) / 100} min={min} max={max} step={step}
+      <span className="text-[11px] uppercase text-outline">{label}</span>
+      <input type="number" className="w-full rounded-lg border border-outline-variant px-2 py-1" value={Math.round(value * 100) / 100} min={min} max={max} step={step}
         onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) onChange(v); }} />
     </label>
   );
@@ -441,8 +441,8 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
   const hex6 = /^#[0-9a-f]{6}$/i.test(value) ? value : /^#[0-9a-f]{8}$/i.test(value) ? value.slice(0, 7) : "#000000";
   return (
     <label className="block">
-      <span className="text-[11px] uppercase text-slate-400">colour</span>
-      <span className="flex items-center gap-1 rounded-lg border border-slate-300 px-1 py-0.5">
+      <span className="text-[11px] uppercase text-outline">colour</span>
+      <span className="flex items-center gap-1 rounded-lg border border-outline-variant px-1 py-0.5">
         <input type="color" value={hex6} onChange={(e) => onChange(e.target.value)} className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0" />
         <input className="w-full min-w-0 text-xs outline-none" value={value} onChange={(e) => onChange(e.target.value)} />
       </span>
@@ -450,11 +450,11 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="flex items-center justify-between gap-3"><span className="font-medium text-slate-700">{label}</span><div className="w-36">{children}</div></div>;
+  return <div className="flex items-center justify-between gap-3"><span className="font-medium text-on-surface-variant">{label}</span><div className="w-36">{children}</div></div>;
 }
 function ToolBtn(p: React.ComponentProps<"button">) {
-  return <button type="button" {...p} className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40" />;
+  return <button type="button" {...p} className="rounded-lg border border-outline-variant bg-white px-2.5 py-1 font-medium text-on-surface-variant hover:bg-surface-low disabled:opacity-40" />;
 }
 function IconBtn({ danger, ...p }: React.ComponentProps<"button"> & { danger?: boolean }) {
-  return <button type="button" {...p} className={`h-7 w-7 rounded border text-xs ${danger ? "border-red-200 text-red-600 hover:bg-red-50" : "border-slate-300 hover:bg-slate-50"}`} />;
+  return <button type="button" {...p} className={`h-7 w-7 rounded border text-xs ${danger ? "border-critical/40 text-critical hover:bg-critical-container" : "border-outline-variant hover:bg-surface-low"}`} />;
 }

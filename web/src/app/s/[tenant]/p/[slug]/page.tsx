@@ -58,9 +58,9 @@ export default async function ProductPage({ params, searchParams }: P) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <JsonLd data={ld} />
-      <nav className="mb-4 text-sm text-slate-500"><a href={`/s/${tenant.slug}`} className="hover:text-slate-900">Home</a> / {product.name}</nav>
+      <nav className="mb-4 text-sm text-on-surface-variant"><a href={`/s/${tenant.slug}`} className="hover:text-on-surface">Home</a> / {product.name}</nav>
       <h1 className="text-3xl font-extrabold tracking-tight">{product.name}</h1>
-      <p className="mt-2 max-w-2xl text-slate-600">{product.description}</p>
+      <p className="mt-2 max-w-2xl text-on-surface-variant">{product.description}</p>
       <div className="mt-8">
         <Configurator
           store={tenant.slug}

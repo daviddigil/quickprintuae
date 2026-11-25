@@ -55,9 +55,9 @@ export function ProductEditor({ product, storeSlug }: { product: EditableProduct
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><Link href="/admin/products" className="text-sm text-slate-500 hover:underline">← Products</Link><h1 className="text-2xl font-bold">{p.name}</h1></div>
+        <div><Link href="/admin/products" className="text-sm text-on-surface-variant hover:underline">← Products</Link><h1 className="text-2xl font-bold">{p.name}</h1></div>
         <div className="flex gap-2">
-          <a className="inline-flex items-center rounded-lg px-3 text-sm text-slate-600 hover:underline" target="_blank" href={`/s/${storeSlug}/p/${p.slug}`}>View in store ↗</a>
+          <a className="inline-flex items-center rounded-lg px-3 text-sm text-on-surface-variant hover:underline" target="_blank" href={`/s/${storeSlug}/p/${p.slug}`}>View in store ↗</a>
           <Button variant="secondary" onClick={del}><Trash2 size={16} />Delete</Button>
           <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
         </div>
@@ -106,12 +106,12 @@ export function ProductEditor({ product, storeSlug }: { product: EditableProduct
                 <div className="space-y-2">
                   {cfg.tiers.map((t, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="w-16 text-slate-500">From</span>
+                      <span className="w-16 text-on-surface-variant">From</span>
                       <Input type="number" min={1} className="w-28" value={t.min} onChange={(e) => setCfg({ tiers: cfg.tiers.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) || 1 } : x)) })} />
-                      <span className="text-slate-500">units: AED</span>
+                      <span className="text-on-surface-variant">units: AED</span>
                       <Input type="number" step="0.01" min={0} className="w-28" value={t.unitPrice} onChange={(e) => setCfg({ tiers: cfg.tiers.map((x, j) => (j === i ? { ...x, unitPrice: Number(e.target.value) || 0 } : x)) })} />
-                      <span className="text-slate-500">/ unit</span>
-                      <button type="button" className="text-slate-400 hover:text-red-600" onClick={() => setCfg({ tiers: cfg.tiers.filter((_, j) => j !== i) })} aria-label="Remove tier"><Trash2 size={16} /></button>
+                      <span className="text-on-surface-variant">/ unit</span>
+                      <button type="button" className="text-outline hover:text-critical" onClick={() => setCfg({ tiers: cfg.tiers.filter((_, j) => j !== i) })} aria-label="Remove tier"><Trash2 size={16} /></button>
                     </div>
                   ))}
                   <Button type="button" variant="ghost" onClick={() => setCfg({ tiers: [...cfg.tiers, { min: (cfg.tiers.at(-1)?.min ?? 0) * 2 || 1, unitPrice: cfg.tiers.at(-1)?.unitPrice ?? 1 }] })}><Plus size={16} />Add tier</Button>
@@ -136,7 +136,7 @@ export function ProductEditor({ product, storeSlug }: { product: EditableProduct
               </div>
               <div className="overflow-x-auto p-3">
                 <table className="w-full text-sm">
-                  <thead className="text-left text-xs uppercase text-slate-500"><tr><th className="p-2">Label</th><th className="p-2">Value</th><th className="p-2" title="Added to unit price">+ AED / unit</th><th className="p-2" title="Multiplies the unit price">× Multiplier</th><th className="p-2" title="One-off fee per line">+ Flat fee</th><th /></tr></thead>
+                  <thead className="text-left text-xs uppercase text-on-surface-variant"><tr><th className="p-2">Label</th><th className="p-2">Value</th><th className="p-2" title="Added to unit price">+ AED / unit</th><th className="p-2" title="Multiplies the unit price">× Multiplier</th><th className="p-2" title="One-off fee per line">+ Flat fee</th><th /></tr></thead>
                   <tbody>
                     {g.choices.map((c, ci) => (
                       <tr key={ci}>
@@ -145,7 +145,7 @@ export function ProductEditor({ product, storeSlug }: { product: EditableProduct
                         <td className="w-28 p-1"><Input type="number" step="0.01" value={c.addPerUnit ?? ""} onChange={(e) => setChoice(gi, ci, { addPerUnit: numOrUndef(e.target.value) })} /></td>
                         <td className="w-28 p-1"><Input type="number" step="0.05" min={0} value={c.multiplier ?? ""} onChange={(e) => setChoice(gi, ci, { multiplier: numOrUndef(e.target.value) })} /></td>
                         <td className="w-28 p-1"><Input type="number" step="0.5" min={0} value={c.flat ?? ""} onChange={(e) => setChoice(gi, ci, { flat: numOrUndef(e.target.value) })} /></td>
-                        <td className="p-1"><button type="button" className="text-slate-400 hover:text-red-600" onClick={() => setGroup(gi, { choices: g.choices.filter((_, i) => i !== ci) })} aria-label="Remove choice"><Trash2 size={16} /></button></td>
+                        <td className="p-1"><button type="button" className="text-outline hover:text-critical" onClick={() => setGroup(gi, { choices: g.choices.filter((_, i) => i !== ci) })} aria-label="Remove choice"><Trash2 size={16} /></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -177,7 +177,7 @@ export function ProductEditor({ product, storeSlug }: { product: EditableProduct
                 </Field>
               ))}
               {"e" in preview ? <Alert tone="yellow">{preview.e}</Alert> : (
-                <div className="rounded-lg bg-slate-50 p-4 text-sm">
+                <div className="rounded-lg bg-surface-low p-4 text-sm">
                   <div className="flex justify-between"><span>Unit price</span><span>{formatAED(preview.r!.unitPrice)}</span></div>
                   <div className="flex justify-between"><span>Units</span><span>{preview.r!.units}</span></div>
                   {preview.r!.setupFees > 0 && <div className="flex justify-between"><span>Setup / finishing</span><span>{formatAED(preview.r!.setupFees)}</span></div>}

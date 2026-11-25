@@ -46,7 +46,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <CardHeader title="Branding & storefront" />
             <div className="grid gap-4 p-5 md:grid-cols-2">
               <Field label="Logo URL"><Input name="logoUrl" defaultValue={tenant.logoUrl ?? ""} placeholder="https://…/logo.png" /></Field>
-              <Field label="Brand colour"><div className="flex gap-2"><input type="color" name="primaryColor" defaultValue={tenant.primaryColor} className="h-10 w-14 rounded border" /><span className="self-center text-sm text-slate-500">Used for buttons and highlights</span></div></Field>
+              <Field label="Brand colour"><div className="flex gap-2"><input type="color" name="primaryColor" defaultValue={tenant.primaryColor} className="h-10 w-14 rounded border" /><span className="self-center text-sm text-on-surface-variant">Used for buttons and highlights</span></div></Field>
               <Field label="Homepage headline"><Input name="heroTitle" defaultValue={s.heroTitle ?? ""} /></Field>
               <Field label="Homepage sub-headline"><Input name="heroSubtitle" defaultValue={s.heroSubtitle ?? ""} /></Field>
               <div className="md:col-span-2"><Field label="Announcement bar" hint="e.g. Eid holiday hours"><Textarea name="announcement" rows={2} defaultValue={s.announcement ?? ""} /></Field></div>
@@ -57,20 +57,20 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <CardHeader title="Privacy" />
             <div className="grid gap-4 p-5 md:grid-cols-2">
               <Field label="Delete confidential files after (hours)" hint="counted from delivery / pickup"><Input type="number" min={1} max={720} name="confidentialRetentionHours" defaultValue={s.confidentialRetentionHours} /></Field>
-              <p className="self-end text-sm text-slate-500">Confidential uploads are encrypted at rest, every staff download is logged, and files are deleted permanently after this period.</p>
+              <p className="self-end text-sm text-on-surface-variant">Confidential uploads are encrypted at rest, every staff download is logged, and files are deleted permanently after this period.</p>
             </div>
           </Card>
           <Card>
             <CardHeader title="Domain" />
             <div className="grid gap-4 p-5 md:grid-cols-2">
               <div>
-                <p className="text-sm font-medium text-slate-700">Your free store address</p>
-                <a className="text-sm text-brand-600" target="_blank" href={subdomainUrl}>{subdomainUrl}</a>
-                <p className="mt-1 text-xs text-slate-500">Also available at {env.appUrl}/s/{tenant.slug}</p>
+                <p className="text-sm font-medium text-on-surface-variant">Your free store address</p>
+                <a className="text-sm text-primary" target="_blank" href={subdomainUrl}>{subdomainUrl}</a>
+                <p className="mt-1 text-xs text-on-surface-variant">Also available at {env.appUrl}/s/{tenant.slug}</p>
               </div>
               <Field label="Custom domain"><Input name="customDomain" defaultValue={tenant.customDomain ?? ""} placeholder="print.yourshop.ae" /></Field>
-              <div className="text-sm text-slate-600 md:col-span-2">
-                To connect a custom domain, add a DNS record at your domain registrar: <code className="rounded bg-slate-100 px-1">CNAME {tenant.customDomain || "print.yourshop.ae"} → {env.rootDomain.split(":")[0]}</code>. SSL is issued automatically after DNS propagates, which can take up to 24 hours.
+              <div className="text-sm text-on-surface-variant md:col-span-2">
+                To connect a custom domain, add a DNS record at your domain registrar: <code className="rounded bg-surface-container px-1">CNAME {tenant.customDomain || "print.yourshop.ae"} → {env.rootDomain.split(":")[0]}</code>. SSL is issued automatically after DNS propagates, which can take up to 24 hours.
               </div>
             </div>
           </Card>

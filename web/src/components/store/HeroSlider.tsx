@@ -27,7 +27,7 @@ export function HeroSlider({ slides, shopName, intervalMs = 5500 }: { slides: Sl
   return (
     <section className="mx-auto max-w-6xl px-4 pt-4" aria-roledescription="carousel" aria-label={`${shopName} offers`} data-testid="hero-slider">
       <div
-        className="group relative overflow-hidden rounded-2xl bg-slate-100"
+        className="group relative overflow-hidden rounded-2xl bg-surface-container"
         onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
         onTouchStart={(e) => { setPaused(true); touchX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => { if (touchX.current != null) { const dx = e.changedTouches[0].clientX - touchX.current; if (Math.abs(dx) > 40) go(i + (dx < 0 ? 1 : -1)); } touchX.current = null; setPaused(false); }}

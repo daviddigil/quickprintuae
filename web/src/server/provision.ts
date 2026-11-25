@@ -44,6 +44,7 @@ export async function provisionTenant(db: DB, input: ProvisionInput) {
     const [tenant] = await tx.insert(schema.tenants).values({
       slug: input.slug.toLowerCase(),
       name: input.shopName,
+      primaryColor: "#3300ff",
       email: input.ownerEmail.toLowerCase(),
       phone: input.phone,
       emirate,

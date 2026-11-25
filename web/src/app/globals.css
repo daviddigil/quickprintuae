@@ -217,7 +217,7 @@
   --color-brand-50: #fff1f2;
   --color-brand-100: #ffe4e6;
   --color-brand-500: #f43f5e;
-  --color-brand-600: #e11d48;
+  --color-brand-600: #3300ff;
   --color-brand-700: #be123c;
   --color-ink: #0f172a;
 
@@ -301,11 +301,11 @@ p, li, dd, blockquote { text-wrap: pretty; }
 }
 
 /* ---------- 5. Storefront tenant colour (unchanged API) --------------------- */
-.btn-store { background: var(--store, #e11d48); color: white; }
+.btn-store { background: var(--store, #3300ff); color: white; }
 .btn-store:hover { filter: brightness(0.92); }
-.text-store { color: var(--store, #e11d48); }
-.border-store { border-color: var(--store, #e11d48); }
-.bg-store-soft { background: color-mix(in srgb, var(--store, #e11d48) 10%, white); }
+.text-store { color: var(--store, #3300ff); }
+.border-store { border-color: var(--store, #3300ff); }
+.bg-store-soft { background: color-mix(in srgb, var(--store, #3300ff) 10%, white); }
 
 /* ---------- 6. Components ---------------------------------------------------- */
 @layer components {

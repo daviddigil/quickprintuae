@@ -15,7 +15,7 @@ function PlanForm({ plan }: { plan?: Plan }) {
     <form action={savePlan} className="grid gap-3 px-5 py-4 sm:grid-cols-4">
       {plan && <input type="hidden" name="id" value={plan.id} />}
       <Field label="Billing model" hint="(how shops on this plan pay)">
-        <select name="billingModel" defaultValue={plan?.billingModel ?? "subscription"} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <select name="billingModel" defaultValue={plan?.billingModel ?? "subscription"} className="w-full rounded-lg border border-outline-variant px-3 py-2 text-sm">
           <option value="subscription">Monthly subscription (no commission)</option>
           <option value="commission">Commission per order (no monthly fee)</option>
         </select>
@@ -32,21 +32,21 @@ function PlanForm({ plan }: { plan?: Plan }) {
       <Field label="Max staff" hint="(blank = ∞)"><Input name="maxStaff" type="number" defaultValue={plan?.maxStaff ?? ""} /></Field>
       <Field label="Sort"><Input name="sortOrder" type="number" defaultValue={plan?.sortOrder ?? 0} /></Field>
       <div className="sm:col-span-3"><Field label="Features (one per line)"><Textarea name="features" rows={4} defaultValue={plan?.features.join("\n")} /></Field></div>
-      <fieldset className="sm:col-span-4 rounded-lg border border-slate-200 p-3">
-        <legend className="px-1 text-sm font-medium text-slate-700">Free usage included per month</legend>
+      <fieldset className="sm:col-span-4 rounded-lg border border-outline-variant p-3">
+        <legend className="px-1 text-sm font-medium text-on-surface-variant">Free usage included per month</legend>
         <div className="grid gap-3 sm:grid-cols-4">
           {USAGE_KINDS.map((k) => (
             <Field key={k.kind} label={k.label}><Input name={`inc_${k.kind}`} type="number" min="0" defaultValue={plan?.includedUsage?.[k.kind] ?? 0} /></Field>
           ))}
         </div>
       </fieldset>
-      <fieldset className="sm:col-span-4 rounded-lg border border-slate-200 p-3" data-testid={`flags-${plan?.code ?? "new"}`}>
-        <legend className="px-1 text-sm font-medium text-slate-700">Feature flags</legend>
+      <fieldset className="sm:col-span-4 rounded-lg border border-outline-variant p-3" data-testid={`flags-${plan?.code ?? "new"}`}>
+        <legend className="px-1 text-sm font-medium text-on-surface-variant">Feature flags</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {PLAN_FLAGS.map((f) => (
             <label key={f.key} className="flex items-start gap-2 text-sm">
               <input type="checkbox" name="flags" value={f.key} defaultChecked={plan?.flags?.includes(f.key)} className="mt-1" />
-              <span><b>{f.label}</b><span className="block text-xs text-slate-500">{f.description}</span></span>
+              <span><b>{f.label}</b><span className="block text-xs text-on-surface-variant">{f.description}</span></span>
             </label>
           ))}
         </div>

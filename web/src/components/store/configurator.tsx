@@ -130,9 +130,9 @@ export function Configurator({
         {config.designer ? (
           <section>
             <h2 className="mb-3 font-semibold">Your design</h2>
-            <div className="mb-4 inline-flex rounded-lg bg-slate-100 p-1 text-sm">
+            <div className="mb-4 inline-flex rounded-lg bg-surface-container p-1 text-sm">
               {([aiEnabled ? ["ai", "AI design"] : null, ["design", "Design yourself"], ["upload", "Upload artwork"]].filter(Boolean) as [typeof cardTab, string][]).map(([k, l]) => (
-                <button key={k} type="button" onClick={() => setCardTab(k)} className={cn("rounded-md px-3 py-1.5 font-medium", cardTab === k ? "bg-white shadow-sm" : "text-slate-600")}>{l}</button>
+                <button key={k} type="button" onClick={() => setCardTab(k)} className={cn("rounded-md px-3 py-1.5 font-medium", cardTab === k ? "bg-white shadow-sm" : "text-on-surface-variant")}>{l}</button>
               ))}
             </div>
             {cardTab === "upload" ? uploader : (
@@ -171,24 +171,24 @@ export function Configurator({
         {/* Quantity */}
         <section className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">{config.perPage ? "Copies" : isPhotoMulti ? "Copies of each photo" : "Quantity"}</label>
+            <label className="mb-1 block text-sm font-medium text-on-surface-variant">{config.perPage ? "Copies" : isPhotoMulti ? "Copies of each photo" : "Quantity"}</label>
             {presets.length ? (
               <div className="flex flex-wrap gap-2">
                 {presets.map((q) => (
-                  <button key={q} type="button" onClick={() => setQty(q)} className={cn("rounded-lg border px-3 py-1.5 text-sm font-medium", qty === q ? "border-store bg-store-soft text-store" : "border-slate-300 hover:bg-slate-50")}>{q.toLocaleString()}</button>
+                  <button key={q} type="button" onClick={() => setQty(q)} className={cn("rounded-lg border px-3 py-1.5 text-sm font-medium", qty === q ? "border-store bg-store-soft text-store" : "border-outline-variant hover:bg-surface-low")}>{q.toLocaleString()}</button>
                 ))}
               </div>
             ) : (
               <Input type="number" min={config.minQuantity ?? 1} value={qty} name="quantity"
                 onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))} />
             )}
-            {config.minQuantity ? <p className="mt-1 text-xs text-slate-500">Minimum {config.minQuantity}</p> : null}
+            {config.minQuantity ? <p className="mt-1 text-xs text-on-surface-variant">Minimum {config.minQuantity}</p> : null}
           </div>
           {config.perPage && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Pages per copy</label>
+              <label className="mb-1 block text-sm font-medium text-on-surface-variant">Pages per copy</label>
               <Input type="number" min={1} value={pages} name="pages" onChange={(e) => setPages(Math.max(1, Math.floor(Number(e.target.value) || 1)))} />
-              <p className="mt-1 text-xs text-slate-500">Detected automatically from PDFs. The shop will confirm Word/other files.</p>
+              <p className="mt-1 text-xs text-on-surface-variant">Detected automatically from PDFs. The shop will confirm Word/other files.</p>
             </div>
           )}
         </section>
@@ -196,24 +196,24 @@ export function Configurator({
 
       {/* Summary */}
       <aside className="lg:sticky lg:top-32 lg:self-start">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Your price</p>
+        <div className="rounded-xl border border-outline-variant bg-white p-5 shadow-sm">
+          <p className="text-sm text-on-surface-variant">Your price</p>
           {price.ok ? (
             <>
               <p className="mt-1 text-3xl font-extrabold" data-testid="price">{formatAED(price.lineTotal)}</p>
-              <p className="mt-1 text-xs text-slate-500">{pricesIncludeVat ? `incl. ${vatRate}% VAT` : `+ ${vatRate}% VAT at checkout`}</p>
-              <dl className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm">
+              <p className="mt-1 text-xs text-on-surface-variant">{pricesIncludeVat ? `incl. ${vatRate}% VAT` : `+ ${vatRate}% VAT at checkout`}</p>
+              <dl className="mt-4 space-y-1 border-t border-outline-variant pt-3 text-sm">
                 {Object.entries(price.labels).map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-3"><dt className="text-slate-500">{config.optionGroups.find((g) => g.key === k)?.label}</dt><dd className="text-right font-medium">{v}</dd></div>
+                  <div key={k} className="flex justify-between gap-3"><dt className="text-on-surface-variant">{config.optionGroups.find((g) => g.key === k)?.label}</dt><dd className="text-right font-medium">{v}</dd></div>
                 ))}
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">{config.perPage ? "Pages × copies" : "Quantity"}</dt><dd className="font-medium">{config.perPage ? `${pages} × ${qty}` : effectiveQty.toLocaleString()}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">Unit price</dt><dd className="font-medium">{formatAED(price.unitPrice)}</dd></div>
-                {price.setupFees > 0 && <div className="flex justify-between gap-3"><dt className="text-slate-500">Setup / finishing</dt><dd className="font-medium">{formatAED(price.setupFees)}</dd></div>}
+                <div className="flex justify-between gap-3"><dt className="text-on-surface-variant">{config.perPage ? "Pages × copies" : "Quantity"}</dt><dd className="font-medium">{config.perPage ? `${pages} × ${qty}` : effectiveQty.toLocaleString()}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-on-surface-variant">Unit price</dt><dd className="font-medium">{formatAED(price.unitPrice)}</dd></div>
+                {price.setupFees > 0 && <div className="flex justify-between gap-3"><dt className="text-on-surface-variant">Setup / finishing</dt><dd className="font-medium">{formatAED(price.setupFees)}</dd></div>}
               </dl>
             </>
-          ) : <p className="mt-2 text-sm text-red-600">{price.error}</p>}
-          <p className="mt-4 flex items-center gap-2 text-sm text-slate-600"><Clock className="h-4 w-4" />Ready in ~{product.turnaroundHours < 24 ? `${product.turnaroundHours} hour${product.turnaroundHours > 1 ? "s" : ""}` : `${Math.round(product.turnaroundHours / 24)} day${product.turnaroundHours >= 48 ? "s" : ""}`}</p>
-          {kind === "confidential_document" && <p className="mt-2 flex items-center gap-2 text-sm text-emerald-700"><ShieldCheck className="h-4 w-4" />Restricted access & sealed packaging</p>}
+          ) : <p className="mt-2 text-sm text-critical">{price.error}</p>}
+          <p className="mt-4 flex items-center gap-2 text-sm text-on-surface-variant"><Clock className="h-4 w-4" />Ready in ~{product.turnaroundHours < 24 ? `${product.turnaroundHours} hour${product.turnaroundHours > 1 ? "s" : ""}` : `${Math.round(product.turnaroundHours / 24)} day${product.turnaroundHours >= 48 ? "s" : ""}`}</p>
+          {kind === "confidential_document" && <p className="mt-2 flex items-center gap-2 text-sm text-success"><ShieldCheck className="h-4 w-4" />Restricted access & sealed packaging</p>}
           {err && <div className="mt-4"><Alert>{err}</Alert></div>}
           <Button variant="store" className="mt-5 w-full py-3" onClick={add} disabled={!price.ok} data-testid="add-to-cart">Add to cart</Button>
         </div>
@@ -228,14 +228,14 @@ function OptionInput({ group, value, onChange }: { group: OptionGroup; value: st
   if (group.type === "radio" || group.choices.length <= 3) {
     return (
       <fieldset>
-        <legend className="mb-2 text-sm font-medium text-slate-700">{group.label}</legend>
+        <legend className="mb-2 text-sm font-medium text-on-surface-variant">{group.label}</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {group.choices.map((c) => (
-            <label key={c.value} className={cn("flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm", value === c.value ? "border-store bg-store-soft" : "border-slate-200 hover:border-slate-300")}>
+            <label key={c.value} className={cn("flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm", value === c.value ? "border-store bg-store-soft" : "border-outline-variant hover:border-outline-variant")}>
               <input type="radio" name={group.key} value={c.value} checked={value === c.value} onChange={() => onChange(c.value)} className="sr-only" />
-              <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded-full border", value === c.value ? "border-store btn-store" : "border-slate-300")}>{value === c.value && <Check className="h-3 w-3" />}</span>
+              <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded-full border", value === c.value ? "border-store btn-store" : "border-outline-variant")}>{value === c.value && <Check className="h-3 w-3" />}</span>
               <span className="flex-1">{c.label}</span>
-              {extra(c) && <span className="text-xs text-slate-500">{extra(c)}</span>}
+              {extra(c) && <span className="text-xs text-on-surface-variant">{extra(c)}</span>}
             </label>
           ))}
         </div>
@@ -244,9 +244,9 @@ function OptionInput({ group, value, onChange }: { group: OptionGroup; value: st
   }
   return (
     <div>
-      <label htmlFor={`opt-${group.key}`} className="mb-1 block text-sm font-medium text-slate-700">{group.label}</label>
+      <label htmlFor={`opt-${group.key}`} className="mb-1 block text-sm font-medium text-on-surface-variant">{group.label}</label>
       <select id={`opt-${group.key}`} name={group.key} value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-500">
+        className="w-full rounded-lg border border-outline-variant bg-white px-3 py-2.5 text-sm outline-none focus:border-outline">
         {group.choices.map((c) => <option key={c.value} value={c.value}>{c.label}{extra(c) ? `  (${extra(c)})` : ""}</option>)}
       </select>
     </div>
@@ -256,18 +256,18 @@ function OptionInput({ group, value, onChange }: { group: OptionGroup; value: st
 function FrameSwatches({ group, value, onChange }: { group: OptionGroup; value: string; onChange: (v: string) => void }) {
   return (
     <fieldset>
-      <legend className="mb-2 text-sm font-medium text-slate-700">{group.label}</legend>
+      <legend className="mb-2 text-sm font-medium text-on-surface-variant">{group.label}</legend>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {group.choices.map((c) => {
           const st = FRAME_STYLE[c.value] ?? { border: "#334155" };
           return (
             <button key={c.value} type="button" onClick={() => onChange(c.value)} data-frame={c.value}
-              className={cn("rounded-lg border p-2 text-left text-xs", value === c.value ? "border-store ring-2 ring-[var(--store)]/30" : "border-slate-200 hover:border-slate-300")}>
-              <div className="mx-auto mb-2 aspect-[4/5] w-full bg-slate-200" style={{ border: `8px solid ${st.border}`, boxShadow: st.shadow }}>
+              className={cn("rounded-lg border p-2 text-left text-xs", value === c.value ? "border-store ring-2 ring-[var(--store)]/30" : "border-outline-variant hover:border-outline-variant")}>
+              <div className="mx-auto mb-2 aspect-[4/5] w-full bg-surface-high" style={{ border: `8px solid ${st.border}`, boxShadow: st.shadow }}>
                 <div className={cn("h-full w-full", c.value === "canvas-wrap" ? "bg-gradient-to-br from-sky-300 to-indigo-400" : "bg-gradient-to-br from-slate-100 to-slate-300")} />
               </div>
               <span className="font-medium">{c.label}</span>
-              {c.addPerUnit ? <span className="block text-slate-500">+{formatAED(c.addPerUnit)}</span> : null}
+              {c.addPerUnit ? <span className="block text-on-surface-variant">+{formatAED(c.addPerUnit)}</span> : null}
             </button>
           );
         })}
@@ -285,7 +285,7 @@ function FramePreview({ file, frame, mount }: { file?: UploadedFile; frame: stri
           {file?.previewUrl
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={file.previewUrl} alt="Preview" className="block aspect-[4/5] w-full object-cover" />
-            : <div className="flex aspect-[4/5] w-full items-center justify-center bg-slate-100 text-xs text-slate-400">Your photo</div>}
+            : <div className="flex aspect-[4/5] w-full items-center justify-center bg-surface-container text-xs text-outline">Your photo</div>}
         </div>
       </div>
     </div>
@@ -295,14 +295,14 @@ function FramePreview({ file, frame, mount }: { file?: UploadedFile; frame: stri
 function PassportGuide({ file, size }: { file?: UploadedFile; size: { w: number; h: number } | null }) {
   return (
     <div className="mt-6 grid gap-6 sm:grid-cols-[auto_1fr]">
-      <div className="mx-auto w-36 overflow-hidden rounded border-2 border-dashed border-slate-300 bg-white" style={{ aspectRatio: size ? `${size.w} / ${size.h}` : "35 / 45" }}>
+      <div className="mx-auto w-36 overflow-hidden rounded border-2 border-dashed border-outline-variant bg-white" style={{ aspectRatio: size ? `${size.w} / ${size.h}` : "35 / 45" }}>
         {file?.previewUrl
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src={file.previewUrl} alt="Preview" className="h-full w-full object-cover" />
-          : <div className="flex h-full items-center justify-center text-xs text-slate-400">Photo</div>}
+          : <div className="flex h-full items-center justify-center text-xs text-outline">Photo</div>}
       </div>
-      <div className="text-sm text-slate-600">
-        {size && <p className="font-semibold text-slate-900">Print size: {size.w} × {size.h} mm</p>}
+      <div className="text-sm text-on-surface-variant">
+        {size && <p className="font-semibold text-on-surface">Print size: {size.w} × {size.h} mm</p>}
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>Face the camera, neutral expression, mouth closed</li>
           <li>Plain light background, even lighting, no shadows</li>

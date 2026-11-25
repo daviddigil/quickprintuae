@@ -67,32 +67,32 @@ export function FileUploader({
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files.length) upload(e.dataTransfer.files); }}
         onClick={() => input.current?.click()}
-        className={cn("flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 text-center transition", drag ? "border-store bg-store-soft" : "border-slate-300 hover:border-slate-400 hover:bg-slate-50")}
+        className={cn("flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 text-center transition", drag ? "border-store bg-store-soft" : "border-outline-variant hover:border-outline hover:bg-surface-low")}
       >
-        {busy > 0 ? <Loader2 className="h-8 w-8 animate-spin text-slate-400" /> : <Upload className="h-8 w-8 text-slate-400" />}
+        {busy > 0 ? <Loader2 className="h-8 w-8 animate-spin text-outline" /> : <Upload className="h-8 w-8 text-outline" />}
         <p className="mt-2 font-medium">{busy > 0 ? `Uploading ${busy} file${busy > 1 ? "s" : ""}…` : `Drop ${multiple ? "files" : "a file"} here or click to browse`}</p>
-        <p className="mt-1 text-xs text-slate-500">{accept?.split(",").join(" ").toUpperCase()} · max 50 MB</p>
-        {confidential && <p className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><Lock className="h-3.5 w-3.5" />Encrypted at rest · auto-deleted after collection</p>}
+        <p className="mt-1 text-xs text-on-surface-variant">{accept?.split(",").join(" ").toUpperCase()} · max 50 MB</p>
+        {confidential && <p className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-success"><Lock className="h-3.5 w-3.5" />Encrypted at rest · auto-deleted after collection</p>}
         <input ref={input} type="file" className="hidden" accept={accept} multiple={multiple} data-testid="file-input"
           onChange={(e) => { if (e.target.files?.length) upload(e.target.files); e.target.value = ""; }} />
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-critical">{error}</p>}
       {files.length > 0 && (
         <ul className="mt-3 space-y-2">
           {files.map((f) => (
-            <li key={f.id} className="flex items-center gap-3 rounded-lg border border-slate-200 p-2 text-sm">
+            <li key={f.id} className="flex items-center gap-3 rounded-lg border border-outline-variant p-2 text-sm">
               {f.previewUrl
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={f.previewUrl} alt="" className="h-10 w-10 rounded object-cover" />
-                : <FileText className="h-10 w-10 p-2 text-slate-400" />}
+                : <FileText className="h-10 w-10 p-2 text-outline" />}
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{f.filename}</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-on-surface-variant">
                   {f.pageCount ? `${f.pageCount} page${f.pageCount > 1 ? "s" : ""}` : "Page count will be checked by the shop"}
                   {f.width ? ` · ${f.width} × ${f.height} px` : ""}
                 </p>
               </div>
-              <button type="button" onClick={() => onChange(files.filter((x) => x.id !== f.id))} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Remove file"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={() => onChange(files.filter((x) => x.id !== f.id))} className="rounded p-1 text-outline hover:bg-surface-container hover:text-on-surface-variant" aria-label="Remove file"><X className="h-4 w-4" /></button>
             </li>
           ))}
         </ul>

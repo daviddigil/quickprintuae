@@ -43,20 +43,20 @@ export function WalkInStatus({ store, orderId, token, providers, initial, shopNa
 
   const ahead = Math.min(...data.jobs.filter((j) => j.ahead != null).map((j) => j.ahead as number));
   const card = {
-    awaiting_payment: { icon: CreditCard, tone: "bg-amber-50 border-amber-200 text-amber-900", title: "Payment needed", sub: "Pay to put your files in the print queue." },
+    awaiting_payment: { icon: CreditCard, tone: "bg-warning-container border-warning/50 text-on-warning-container", title: "Payment needed", sub: "Pay to put your files in the print queue." },
     waiting: { icon: Clock, tone: "bg-sky-50 border-sky-200 text-sky-900", title: `Waiting — ${Number.isFinite(ahead) ? ahead : 0} ahead of you`, sub: ahead === 0 ? "You're next in line." : "We'll print as soon as it's your turn. Keep this page open." },
     printing: { icon: Printer, tone: "bg-violet-50 border-violet-200 text-violet-900", title: "Printing now", sub: "Your documents are being printed." },
-    ready: { icon: CheckCircle2, tone: "bg-emerald-50 border-emerald-200 text-emerald-900", title: "Ready — collect at the counter", sub: `Show ticket ${data.ticketNo ?? ""} to the staff.` },
-    needs_attention: { icon: AlertTriangle, tone: "bg-amber-50 border-amber-200 text-amber-900", title: "Needs attention — please see the staff", sub: "One of your files needs a hand. The staff will help you at the counter." },
-    cancelled: { icon: AlertTriangle, tone: "bg-slate-50 border-slate-200 text-slate-700", title: "Cancelled", sub: "This order was cancelled. Please ask the staff if this is a mistake." },
-  }[data.state] ?? { icon: Clock, tone: "bg-slate-50 border-slate-200 text-slate-700", title: "Checking…", sub: "" };
+    ready: { icon: CheckCircle2, tone: "bg-success-container border-success/50 text-success", title: "Ready — collect at the counter", sub: `Show ticket ${data.ticketNo ?? ""} to the staff.` },
+    needs_attention: { icon: AlertTriangle, tone: "bg-warning-container border-warning/50 text-on-warning-container", title: "Needs attention — please see the staff", sub: "One of your files needs a hand. The staff will help you at the counter." },
+    cancelled: { icon: AlertTriangle, tone: "bg-surface-low border-outline-variant text-on-surface-variant", title: "Cancelled", sub: "This order was cancelled. Please ask the staff if this is a mistake." },
+  }[data.state] ?? { icon: Clock, tone: "bg-surface-low border-outline-variant text-on-surface-variant", title: "Checking…", sub: "" };
   const Icon = card.icon;
 
   return (
     <div className="mx-auto max-w-md px-4 py-6" data-testid="walk-in-status">
-      <p className="text-center text-sm text-slate-500">{shopName}</p>
+      <p className="text-center text-sm text-on-surface-variant">{shopName}</p>
       <div className="mt-2 rounded-2xl bg-store-soft py-6 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Your ticket</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Your ticket</p>
         <p className="text-5xl font-extrabold tracking-tight text-store" data-testid="ticket-no">{data.ticketNo ?? "—"}</p>
       </div>
 
@@ -73,23 +73,23 @@ export function WalkInStatus({ store, orderId, token, providers, initial, shopNa
               Pay {formatAED(data.total)}{providers.length > 1 ? ` · ${p === "stripe" ? "Card / Apple Pay" : "Mamo Pay"}` : ""}
             </Button>
           ))}
-          {err && <p className="text-sm text-red-600">{err}</p>}
+          {err && <p className="text-sm text-critical">{err}</p>}
         </div>
       )}
 
-      <Card className="mt-4 divide-y divide-slate-100">
+      <Card className="mt-4 divide-y divide-outline-variant">
         {data.jobs.map((j) => {
           const l = JOB_LABEL[j.status] ?? { t: j.status, tone: "gray" as const };
           return (
             <div key={j.id} className="flex items-center gap-3 p-3" data-testid="status-file">
-              <FileText className="h-5 w-5 shrink-0 text-slate-400" />
-              <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{j.filename}</p><p className="text-xs text-slate-500">{j.pages} page{j.pages > 1 ? "s" : ""} × {j.copies}</p></div>
+              <FileText className="h-5 w-5 shrink-0 text-outline" />
+              <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{j.filename}</p><p className="text-xs text-on-surface-variant">{j.pages} page{j.pages > 1 ? "s" : ""} × {j.copies}</p></div>
               <Badge tone={l.tone}>{l.t}</Badge>
             </div>
           );
         })}
       </Card>
-      {!done && <p className="mt-3 text-center text-xs text-slate-400">This page updates automatically.</p>}
+      {!done && <p className="mt-3 text-center text-xs text-outline">This page updates automatically.</p>}
     </div>
   );
 }

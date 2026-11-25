@@ -38,8 +38,8 @@ export default async function CommissionsPage({ searchParams }: { searchParams: 
     <div className="space-y-6">
       <PageTitle title="Commissions" subtitle="What QuickPrint earns on paid orders, per shop. Each order is priced with the shop's terms at the moment it was paid." />
       <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Month">
-        {months.map((x) => <Link key={x} href={`/superadmin/commissions?m=${x}`} className={`rounded-full border px-3 py-1 text-sm ${x === m ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50"}`}>{x}</Link>)}
-        <a href={`/api/v1/superadmin/commissions/export?m=${m}`} className="ms-auto text-sm font-medium text-brand-600" data-testid="export-csv">Download CSV</a>
+        {months.map((x) => <Link key={x} href={`/superadmin/commissions?m=${x}`} className={`rounded-full border px-3 py-1 text-sm ${x === m ? "border-on-surface bg-inverse-surface text-white" : "border-outline-variant hover:bg-surface-low"}`}>{x}</Link>)}
+        <a href={`/api/v1/superadmin/commissions/export?m=${m}`} className="ms-auto text-sm font-medium text-primary" data-testid="export-csv">Download CSV</a>
       </div>
       <div className="grid gap-4 md:grid-cols-5">
         <Stat label="Paid orders" value={orders} sub={`${formatAED(basis)} order value`} />
@@ -58,8 +58,8 @@ export default async function CommissionsPage({ searchParams }: { searchParams: 
               const e = r.accrued + r.invoiced;
               return (
                 <tr key={r.tenant_id}>
-                  <td className="px-4 py-3"><Link href={`/superadmin/tenants/${r.tenant_id}`} className="font-medium text-brand-600">{r.name}</Link></td>
-                  <td className="px-4 py-3 text-xs text-slate-600">{describeRule(rule)} {t?.commissionOverride && t.commissionOverride.mode !== "plan" && <Badge tone="purple">custom</Badge>}</td>
+                  <td className="px-4 py-3"><Link href={`/superadmin/tenants/${r.tenant_id}`} className="font-medium text-primary">{r.name}</Link></td>
+                  <td className="px-4 py-3 text-xs text-on-surface-variant">{describeRule(rule)} {t?.commissionOverride && t.commissionOverride.mode !== "plan" && <Badge tone="purple">custom</Badge>}</td>
                   <td className="px-4 py-3 tabular-nums">{r.orders}</td>
                   <td className="px-4 py-3 tabular-nums">{formatAED(r.basis)}</td>
                   <td className="px-4 py-3 font-medium tabular-nums">{formatAED(e)}</td>

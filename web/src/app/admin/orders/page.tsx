@@ -56,10 +56,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         {rows.length === 0 ? <EmptyState title="No orders match your filters" /> : (
           <Table head={["Order", "Date", "Customer", "Fulfillment", "Slot", "Total", "Status"]}>
             {rows.slice(0, PAGE).map((o) => (
-              <tr key={o.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3"><Link className="font-semibold text-brand-600" href={`/admin/orders/${o.id}`}>{o.number}</Link>{o.source === "walk_in" && <div className="mt-1"><Badge tone="purple">Walk-in {o.ticketNo}</Badge></div>}</td>
-                <td className="px-4 py-3 text-xs text-slate-500">{dubai(o.createdAt)}</td>
-                <td className="px-4 py-3"><div>{o.customerName}</div><div className="text-xs text-slate-500">{o.customerPhone}</div></td>
+              <tr key={o.id} className="hover:bg-surface-low">
+                <td className="px-4 py-3"><Link className="font-semibold text-primary" href={`/admin/orders/${o.id}`}>{o.number}</Link>{o.source === "walk_in" && <div className="mt-1"><Badge tone="purple">Walk-in {o.ticketNo}</Badge></div>}</td>
+                <td className="px-4 py-3 text-xs text-on-surface-variant">{dubai(o.createdAt)}</td>
+                <td className="px-4 py-3"><div>{o.customerName}</div><div className="text-xs text-on-surface-variant">{o.customerPhone}</div></td>
                 <td className="px-4 py-3"><Badge tone={o.fulfillment === "delivery" ? "blue" : "gray"}>{o.fulfillment}</Badge></td>
                 <td className="px-4 py-3 text-xs">{o.slotStart ? slotLabel(o.slotStart, o.slotEnd) : "—"}</td>
                 <td className="px-4 py-3 font-medium">{formatAED(o.total)}</td>

@@ -55,9 +55,9 @@ export default async function OrderPage({ params, searchParams }: P) {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-500">Order</p>
+          <p className="text-sm text-on-surface-variant">Order</p>
           <h1 className="text-2xl font-bold" data-testid="order-number">{order.number}</h1>
-          <p className="text-sm text-slate-500">Placed {formatUaeDateTime(order.createdAt)}</p>
+          <p className="text-sm text-on-surface-variant">Placed {formatUaeDateTime(order.createdAt)}</p>
         </div>
         <Badge tone={ORDER_STATUS_TONE[order.status]}>{ORDER_STATUS_LABEL[order.status as OrderStatus]}</Badge>
       </div>
@@ -65,7 +65,7 @@ export default async function OrderPage({ params, searchParams }: P) {
       {order.status === "pending_payment" && (
         <Card className="mt-6 p-5">
           <p className="font-semibold">Awaiting payment of {formatAED(order.total)}</p>
-          <p className="text-sm text-slate-600">Your order goes into production as soon as payment is confirmed.</p>
+          <p className="text-sm text-on-surface-variant">Your order goes into production as soon as payment is confirmed.</p>
           <PayAgain store={tenant.slug} orderId={order.id} token={t} providers={enabledProviders(tenant)} />
         </Card>
       )}
@@ -74,8 +74,8 @@ export default async function OrderPage({ params, searchParams }: P) {
         <ol className="mt-8 grid gap-2" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0,1fr))` }}>
           {steps.map((s, i) => (
             <li key={s} className="text-center">
-              <div className={`mx-auto h-1.5 rounded-full ${i <= reached ? "btn-store" : "bg-slate-200"}`} />
-              <p className={`mt-2 text-xs ${i <= reached ? "font-semibold text-slate-900" : "text-slate-400"}`}>{ORDER_STATUS_LABEL[s]}</p>
+              <div className={`mx-auto h-1.5 rounded-full ${i <= reached ? "btn-store" : "bg-surface-high"}`} />
+              <p className={`mt-2 text-xs ${i <= reached ? "font-semibold text-on-surface" : "text-outline"}`}>{ORDER_STATUS_LABEL[s]}</p>
             </li>
           ))}
         </ol>
@@ -83,23 +83,23 @@ export default async function OrderPage({ params, searchParams }: P) {
 
       <div className="mt-8 grid gap-6 md:grid-cols-[1fr_300px]">
         <Card>
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-outline-variant">
             {items.map((it) => (
               <li key={it.id} className="flex gap-4 p-4">
                 {it.design && <CardPreview design={it.design} className="h-16 w-24 shrink-0 rounded" />}
                 <div className="flex-1">
                   <p className="font-semibold">{it.productName}</p>
-                  <p className="text-sm text-slate-600">{it.pages > 1 ? `${it.pages} pages × ${it.quantity}` : `Qty ${it.quantity.toLocaleString()}`}</p>
-                  <p className="mt-1 text-xs text-slate-500">{Object.values(it.selectionLabels ?? {}).join(" · ")}</p>
+                  <p className="text-sm text-on-surface-variant">{it.pages > 1 ? `${it.pages} pages × ${it.quantity}` : `Qty ${it.quantity.toLocaleString()}`}</p>
+                  <p className="mt-1 text-xs text-on-surface-variant">{Object.values(it.selectionLabels ?? {}).join(" · ")}</p>
                 </div>
                 <p className="font-medium">{formatAED(it.lineTotal)}</p>
               </li>
             ))}
           </ul>
-          <dl className="space-y-1 border-t border-slate-100 p-4 text-sm">
-            <div className="flex justify-between"><dt className="text-slate-600">Subtotal</dt><dd>{formatAED(order.subtotal)}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-600">{order.fulfillment === "delivery" ? "Delivery" : "Pickup"}</dt><dd>{order.deliveryFee ? formatAED(order.deliveryFee) : "Free"}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-600">VAT</dt><dd>{formatAED(order.vat)}</dd></div>
+          <dl className="space-y-1 border-t border-outline-variant p-4 text-sm">
+            <div className="flex justify-between"><dt className="text-on-surface-variant">Subtotal</dt><dd>{formatAED(order.subtotal)}</dd></div>
+            <div className="flex justify-between"><dt className="text-on-surface-variant">{order.fulfillment === "delivery" ? "Delivery" : "Pickup"}</dt><dd>{order.deliveryFee ? formatAED(order.deliveryFee) : "Free"}</dd></div>
+            <div className="flex justify-between"><dt className="text-on-surface-variant">VAT</dt><dd>{formatAED(order.vat)}</dd></div>
             <div className="flex justify-between pt-1 text-base font-bold"><dt>Total</dt><dd>{formatAED(order.total)}</dd></div>
           </dl>
         </Card>
@@ -109,17 +109,17 @@ export default async function OrderPage({ params, searchParams }: P) {
             {order.fulfillment === "pickup" ? (
               <>
                 <p className="flex items-center gap-2 font-semibold"><MapPin className="text-store h-4 w-4" />Pickup</p>
-                {location && <p className="mt-1 text-slate-600">{location.name}<br />{location.address}, {location.emirate}</p>}
+                {location && <p className="mt-1 text-on-surface-variant">{location.name}<br />{location.address}, {location.emirate}</p>}
                 {location?.mapUrl && <a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="text-store mt-1 inline-block font-medium">Open map</a>}
               </>
             ) : (
               <>
                 <p className="flex items-center gap-2 font-semibold"><Truck className="text-store h-4 w-4" />Delivery</p>
-                {order.deliveryAddress && <p className="mt-1 text-slate-600">{order.deliveryAddress.line1}{order.deliveryAddress.line2 ? `, ${order.deliveryAddress.line2}` : ""}<br />{order.deliveryAddress.area}, {order.deliveryAddress.city}, {order.deliveryAddress.emirate}</p>}
+                {order.deliveryAddress && <p className="mt-1 text-on-surface-variant">{order.deliveryAddress.line1}{order.deliveryAddress.line2 ? `, ${order.deliveryAddress.line2}` : ""}<br />{order.deliveryAddress.area}, {order.deliveryAddress.city}, {order.deliveryAddress.emirate}</p>}
                 {order.deliveryTrackingUrl && <a href={order.deliveryTrackingUrl} target="_blank" rel="noopener noreferrer" className="text-store mt-2 inline-block font-medium">Track your delivery</a>}
               </>
             )}
-            {order.slotStart && <p className="mt-3 text-slate-600"><span className="font-medium text-slate-900">Slot:</span> {formatUaeDateTime(order.slotStart)}{order.slotEnd ? ` – ${formatUaeTime(order.slotEnd)}` : ""}</p>}
+            {order.slotStart && <p className="mt-3 text-on-surface-variant"><span className="font-medium text-on-surface">Slot:</span> {formatUaeDateTime(order.slotStart)}{order.slotEnd ? ` – ${formatUaeTime(order.slotEnd)}` : ""}</p>}
           </Card>
           <Card className="p-4 text-sm">
             <p className="font-semibold">Timeline</p>
@@ -127,7 +127,7 @@ export default async function OrderPage({ params, searchParams }: P) {
               {events.map((e) => (
                 <li key={e.id} className="flex gap-2">
                   <CheckCircle2 className="text-store mt-0.5 h-4 w-4 shrink-0" />
-                  <div><p className="font-medium">{ORDER_STATUS_LABEL[e.status as OrderStatus] ?? e.status}</p>{e.message && <p className="text-slate-600">{e.message}</p>}<p className="text-xs text-slate-400">{formatUaeDateTime(e.createdAt)}</p></div>
+                  <div><p className="font-medium">{ORDER_STATUS_LABEL[e.status as OrderStatus] ?? e.status}</p>{e.message && <p className="text-on-surface-variant">{e.message}</p>}<p className="text-xs text-outline">{formatUaeDateTime(e.createdAt)}</p></div>
                 </li>
               ))}
             </ul>

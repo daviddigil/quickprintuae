@@ -49,7 +49,7 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
             const row = rateRows.find((r) => r.kind === k.kind);
             return (
               <div key={k.kind} className="flex items-end gap-3">
-                <label className="flex-1 text-sm font-medium">{k.label} <span className="text-xs text-slate-500">per {k.unit}</span>
+                <label className="flex-1 text-sm font-medium">{k.label} <span className="text-xs text-on-surface-variant">per {k.unit}</span>
                   <Input name={`rate_${k.kind}`} type="number" step="0.0001" min="0" max="100" defaultValue={row?.priceAed ?? 0} /></label>
                 <label className="pb-2 text-xs"><input type="checkbox" name={`active_${k.kind}`} defaultChecked={row?.active ?? true} /> active</label>
               </div>

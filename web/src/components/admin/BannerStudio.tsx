@@ -97,11 +97,11 @@ export function BannerStudio({ initial, engine, aiEnabled, storeUrl }: { initial
     <div className="space-y-6">
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="inline-flex rounded-lg bg-slate-100 p-1 text-sm font-medium">
-            <button type="button" onClick={() => setTab("upload")} className={cn("rounded-md px-3 py-1.5", tab === "upload" ? "bg-white shadow-sm" : "text-slate-600")} data-testid="tab-upload"><ImagePlus className="mr-1.5 inline h-4 w-4" />Upload your image</button>
-            {aiEnabled && <button type="button" onClick={() => setTab("ai")} className={cn("rounded-md px-3 py-1.5", tab === "ai" ? "bg-white shadow-sm" : "text-slate-600")} data-testid="tab-ai"><Sparkles className="mr-1.5 inline h-4 w-4" />Create with AI</button>}
+          <div className="inline-flex rounded-lg bg-surface-container p-1 text-sm font-medium">
+            <button type="button" onClick={() => setTab("upload")} className={cn("rounded-md px-3 py-1.5", tab === "upload" ? "bg-white shadow-sm" : "text-on-surface-variant")} data-testid="tab-upload"><ImagePlus className="mr-1.5 inline h-4 w-4" />Upload your image</button>
+            {aiEnabled && <button type="button" onClick={() => setTab("ai")} className={cn("rounded-md px-3 py-1.5", tab === "ai" ? "bg-white shadow-sm" : "text-on-surface-variant")} data-testid="tab-ai"><Sparkles className="mr-1.5 inline h-4 w-4" />Create with AI</button>}
           </div>
-          <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900">View storefront <ExternalLink className="h-3.5 w-3.5" /></a>
+          <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-on-surface">View storefront <ExternalLink className="h-3.5 w-3.5" /></a>
         </div>
 
         {full && <Alert tone="yellow">You have reached the limit of {MAX_SLIDES} slides. Delete one to add another.</Alert>}
@@ -109,13 +109,13 @@ export function BannerStudio({ initial, engine, aiEnabled, storeUrl }: { initial
         {tab === "upload" && !full && (
           <form onSubmit={upload} className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center hover:border-slate-400">
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-outline-variant bg-surface-low p-6 text-center hover:border-outline">
                 {preview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={preview} alt="Preview" className="max-h-40 rounded-lg object-contain" />
-                ) : <ImagePlus className="h-8 w-8 text-slate-400" />}
+                ) : <ImagePlus className="h-8 w-8 text-outline" />}
                 <span className="text-sm font-medium">{preview ? "Choose a different image" : "Click to choose your offer image"}</span>
-                <span className="text-xs text-slate-500">Recommended {RECOMMENDED_SIZE}</span>
+                <span className="text-xs text-on-surface-variant">Recommended {RECOMMENDED_SIZE}</span>
                 <input ref={fileRef} name="file" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" data-testid="slide-file"
                   onChange={(e) => { const f = e.target.files?.[0]; setPreview(f ? URL.createObjectURL(f) : null); }} />
               </label>
@@ -132,7 +132,7 @@ export function BannerStudio({ initial, engine, aiEnabled, storeUrl }: { initial
 
         {tab === "ai" && aiEnabled && !full && (
           <form onSubmit={generate} className="grid gap-4 md:grid-cols-2">
-            <div className="md:col-span-2"><Field label="Describe your offer"><Textarea name="prompt" required minLength={3} rows={3} placeholder="Eid sale: 20% off flyers and business cards, festive gold and green, modern" /></Field><p className="mt-1 text-xs text-slate-500">AI engine in use: <b>{engine}</b></p></div>
+            <div className="md:col-span-2"><Field label="Describe your offer"><Textarea name="prompt" required minLength={3} rows={3} placeholder="Eid sale: 20% off flyers and business cards, festive gold and green, modern" /></Field><p className="mt-1 text-xs text-on-surface-variant">AI engine in use: <b>{engine}</b></p></div>
             <Field label="Headline (optional)"><Input name="title" maxLength={60} placeholder="Eid Mubarak — 20% off" /></Field>
             <Field label="Sub-headline (optional)"><Input name="subtitle" maxLength={120} placeholder="Order online, pick up today" /></Field>
             <div className="md:col-span-2"><Button disabled={busy === "new"} data-testid="generate-banner"><Sparkles className="h-4 w-4" />{busy === "new" ? "Generating…" : "Generate slide"}</Button></div>
@@ -150,11 +150,11 @@ export function BannerStudio({ initial, engine, aiEnabled, storeUrl }: { initial
             <Card key={b.id} className="overflow-hidden" data-testid="banner-card">
               <div className="grid gap-0 md:grid-cols-[320px_1fr]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/api/banners/${b.id}?v=${b.version}`} alt={b.title || "Slide"} className="aspect-[3/1] w-full bg-slate-100 object-cover md:aspect-auto md:h-full" />
+                <img src={`/api/banners/${b.id}?v=${b.version}`} alt={b.title || "Slide"} className="aspect-[3/1] w-full bg-surface-container object-cover md:aspect-auto md:h-full" />
                 <div className="space-y-3 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0"><p className="truncate font-semibold">{b.title || "Untitled slide"}</p>
-                      <p className="text-xs text-slate-500">{b.startsAt || b.endsAt ? `${b.startsAt ? "From " + fmt(b.startsAt) : ""}${b.startsAt && b.endsAt ? " · " : ""}${b.endsAt ? "Until " + fmt(b.endsAt) : ""} (UAE time)` : "Always on"}</p></div>
+                      <p className="text-xs text-on-surface-variant">{b.startsAt || b.endsAt ? `${b.startsAt ? "From " + fmt(b.startsAt) : ""}${b.startsAt && b.endsAt ? " · " : ""}${b.endsAt ? "Until " + fmt(b.endsAt) : ""} (UAE time)` : "Always on"}</p></div>
                     <div className="flex items-center gap-2"><Badge tone="purple">{SOURCE_LABEL[b.source] ?? b.source}</Badge><Badge tone={st.tone}>{st.label}</Badge></div>
                   </div>
                   {canAi && aiEnabled && (
@@ -168,10 +168,10 @@ export function BannerStudio({ initial, engine, aiEnabled, storeUrl }: { initial
                     <Button variant="ghost" onClick={() => move(idx, 1)} disabled={idx === slides.length - 1} aria-label="Move later"><ArrowDown className="h-4 w-4" /></Button>
                     <Button variant="ghost" onClick={() => setOpen(open === b.id ? null : b.id)} data-testid="edit-details">{open === b.id ? "Close" : "Edit details & dates"}</Button>
                     <Button variant="ghost" onClick={() => toggle(b)}>{b.active ? "Hide" : "Show"}</Button>
-                    <Button variant="ghost" className="text-red-600" onClick={() => remove(b)}><Trash2 className="h-4 w-4" />Delete</Button>
+                    <Button variant="ghost" className="text-critical" onClick={() => remove(b)}><Trash2 className="h-4 w-4" />Delete</Button>
                   </div>
                   {open === b.id && (
-                    <form onSubmit={(e) => saveDetails(b, e)} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2">
+                    <form onSubmit={(e) => saveDetails(b, e)} className="grid gap-3 rounded-lg border border-outline-variant bg-surface-low p-3 sm:grid-cols-2">
                       <Field label="Headline"><Input name="title" defaultValue={b.title} maxLength={60} /></Field>
                       <Field label="Sub-headline"><Input name="subtitle" defaultValue={b.subtitle} maxLength={120} /></Field>
                       <Field label="Button label"><Input name="ctaLabel" defaultValue={b.ctaLabel} maxLength={24} /></Field>
@@ -186,7 +186,7 @@ export function BannerStudio({ initial, engine, aiEnabled, storeUrl }: { initial
             </Card>
           );
         })}
-        {!slides.length && <p className="text-sm text-slate-500">No slides yet. Upload an image or describe an offer above — your storefront shows the normal headline until you add one.</p>}
+        {!slides.length && <p className="text-sm text-on-surface-variant">No slides yet. Upload an image or describe an offer above — your storefront shows the normal headline until you add one.</p>}
       </div>
     </div>
   );

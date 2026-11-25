@@ -33,7 +33,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
           <Field label="Publishable key"><Input name="publishableKey" defaultValue={p.stripe?.publishableKey ?? ""} placeholder="pk_live_…" disabled={!owner} /></Field>
           <Field label="Secret key" hint={p.stripe?.secretKeyEnc ? `saved: ${m(p.stripe.secretKeyEnc)}` : undefined}><Input name="secretKey" type="password" autoComplete="off" placeholder={p.stripe?.secretKeyEnc ? "Leave empty to keep" : "sk_live_…"} disabled={!owner} /></Field>
           <Field label="Webhook signing secret" hint={p.stripe?.webhookSecretEnc ? `saved: ${m(p.stripe.webhookSecretEnc)}` : undefined}><Input name="webhookSecret" type="password" autoComplete="off" placeholder={p.stripe?.webhookSecretEnc ? "Leave empty to keep" : "whsec_…"} disabled={!owner} /></Field>
-          <Field label="Webhook URL" hint="add in Stripe → Webhooks, event checkout.session.completed"><Input readOnly value={stripeHook} className="bg-slate-50 font-mono text-xs" /></Field>
+          <Field label="Webhook URL" hint="add in Stripe → Webhooks, event checkout.session.completed"><Input readOnly value={stripeHook} className="bg-surface-low font-mono text-xs" /></Field>
           <div className="flex flex-wrap items-center gap-4 md:col-span-2">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="enabled" defaultChecked={p.stripe?.enabled} disabled={!owner} />Enable Stripe at checkout</label>
             <Button disabled={!owner}>Save Stripe</Button>
@@ -49,7 +49,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
           <input type="hidden" name="provider" value="mamo" />
           <Field label="API key" hint={p.mamo?.apiKeyEnc ? `saved: ${m(p.mamo.apiKeyEnc)}` : undefined}><Input name="apiKey" type="password" autoComplete="off" placeholder={p.mamo?.apiKeyEnc ? "Leave empty to keep" : "sk-…"} disabled={!owner} /></Field>
           <Field label="Webhook secret (optional)" hint={p.mamo?.webhookSecretEnc ? `saved: ${m(p.mamo.webhookSecretEnc)}` : undefined}><Input name="webhookSecret" type="password" autoComplete="off" disabled={!owner} /></Field>
-          <div className="md:col-span-2"><Field label="Webhook URL" hint="register in Mamo → Developer → Webhooks (charge.succeeded)"><Input readOnly value={mamoHook} className="bg-slate-50 font-mono text-xs" /></Field></div>
+          <div className="md:col-span-2"><Field label="Webhook URL" hint="register in Mamo → Developer → Webhooks (charge.succeeded)"><Input readOnly value={mamoHook} className="bg-surface-low font-mono text-xs" /></Field></div>
           <div className="flex flex-wrap items-center gap-4 md:col-span-2">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="sandbox" defaultChecked={p.mamo?.sandbox ?? true} disabled={!owner} />Sandbox mode</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="enabled" defaultChecked={p.mamo?.enabled} disabled={!owner} />Enable Mamo Pay at checkout</label>

@@ -35,8 +35,8 @@ export default async function AccountPage({ params }: { params: Promise<{ tenant
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><h1 className="text-2xl font-bold">Hi, {customer.name.split(" ")[0]}</h1><p className="text-sm text-slate-500">{customer.email}{customer.phone ? ` · ${customer.phone}` : ""}</p></div>
-        <a href={`/logout?next=${base}`} className="text-sm font-medium text-slate-600 hover:text-slate-900">Sign out</a>
+        <div><h1 className="text-2xl font-bold">Hi, {customer.name.split(" ")[0]}</h1><p className="text-sm text-on-surface-variant">{customer.email}{customer.phone ? ` · ${customer.phone}` : ""}</p></div>
+        <a href={`/logout?next=${base}`} className="text-sm font-medium text-on-surface-variant hover:text-on-surface">Sign out</a>
       </div>
       <h2 className="mb-3 mt-8 text-lg font-semibold">Your orders</h2>
       {orders.length === 0 ? (
@@ -49,13 +49,13 @@ export default async function AccountPage({ params }: { params: Promise<{ tenant
                 <Link href={`${base}/orders/${o.id}?t=${orderToken(o.id)}`} className="font-semibold hover:underline">{o.number}</Link>
                 <Badge tone={ORDER_STATUS_TONE[o.status]}>{ORDER_STATUS_LABEL[o.status as OrderStatus]}</Badge>
               </div>
-              <p className="text-sm text-slate-500">{formatUaeDateTime(o.createdAt)} · {formatAED(o.total)} · {o.fulfillment === "pickup" ? "Pickup" : "Delivery"}</p>
+              <p className="text-sm text-on-surface-variant">{formatUaeDateTime(o.createdAt)} · {formatAED(o.total)} · {o.fulfillment === "pickup" ? "Pickup" : "Delivery"}</p>
               <ul className="mt-2 space-y-1 text-sm">
                 {items.filter((i) => i.orderId === o.id).map((i) => {
                   const href = reorderHref(i);
                   return (
                     <li key={i.id} className="flex items-center justify-between gap-2">
-                      <span className="text-slate-700">{i.productName} × {i.quantity}</span>
+                      <span className="text-on-surface-variant">{i.productName} × {i.quantity}</span>
                       {href && <Link href={href} className="text-store text-xs font-semibold">Reorder</Link>}
                     </li>
                   );

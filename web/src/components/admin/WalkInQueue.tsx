@@ -45,7 +45,7 @@ export function WalkInQueue({ initial }: { initial: WalkInQueueData }) {
         <Stat label="Printed today" value={<span data-testid="stat-printed">{stats.printedToday}</span>} sub="files" />
         <Stat label="Walk-in revenue today" value={formatAED(stats.revenueToday)} sub={`${stats.ordersToday} paid order${stats.ordersToday === 1 ? "" : "s"} · incl. VAT`} />
       </div>
-      {offline && <p className="text-sm text-amber-700">Connection lost — retrying…</p>}
+      {offline && <p className="text-sm text-warning">Connection lost — retrying…</p>}
 
       <Section title="Printing now" rows={s.printing} now={now} onDone={refresh} empty="Nothing printing right now." testid="sec-printing" />
       <Section title="Up next" rows={s.upNext} now={now} onDone={refresh} empty="The queue is empty. New paid jobs appear here in print order." testid="sec-next" showPosition />
@@ -60,15 +60,15 @@ function Section({ title, subtitle, rows, now, onDone, empty, tone, testid, show
   title: string; subtitle?: string; rows: QueueRow[]; now: number; onDone: () => void; empty?: string; tone?: "red"; testid: string; showPosition?: boolean;
 }) {
   return (
-    <Card data-testid={testid} className={tone === "red" ? "border-red-200" : ""}>
-      <CardHeader title={<span className="flex items-center gap-2">{tone === "red" && <TriangleAlert size={16} className="text-red-600" />}{title} <span className="text-sm font-normal text-slate-400">({rows.length})</span></span>} subtitle={subtitle} />
-      {rows.length === 0 ? <p className="px-5 py-6 text-sm text-slate-500">{empty ?? "None."}</p> : (
+    <Card data-testid={testid} className={tone === "red" ? "border-critical/40" : ""}>
+      <CardHeader title={<span className="flex items-center gap-2">{tone === "red" && <TriangleAlert size={16} className="text-critical" />}{title} <span className="text-sm font-normal text-outline">({rows.length})</span></span>} subtitle={subtitle} />
+      {rows.length === 0 ? <p className="px-5 py-6 text-sm text-on-surface-variant">{empty ?? "None."}</p> : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b bg-slate-50 text-xs uppercase text-slate-500"><tr>
+            <thead className="border-b bg-surface-low text-xs uppercase text-on-surface-variant"><tr>
               {[showPosition ? "#" : "", "Ticket", "Customer", "File", "Priority", "Status", "Paid", "Wait", "Printer", ""].map((h, i) => <th key={i} className="px-3 py-2.5 font-medium">{h}</th>)}
             </tr></thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-outline-variant">
               {rows.map((r, i) => <Row key={r.id} r={r} idx={showPosition ? i + 1 : null} now={now} onDone={onDone} />)}
             </tbody>
           </table>
@@ -82,26 +82,26 @@ function Row({ r, idx, now, onDone }: { r: QueueRow; idx: number | null; now: nu
   const st = STATUS[r.status];
   const wait = r.status === "printed" ? null : mins(r.queuedAt ?? r.createdAt, now);
   return (
-    <tr data-job={r.id} data-status={r.status} className="align-top hover:bg-slate-50">
-      <td className="px-3 py-3 text-slate-400">{idx ?? ""}</td>
-      <td className="px-3 py-3"><a className="font-semibold text-brand-600" href={`/admin/orders/${r.orderId}`}>{r.ticketNo}</a><div className="text-xs text-slate-400">{r.orderNumber}</div></td>
+    <tr data-job={r.id} data-status={r.status} className="align-top hover:bg-surface-low">
+      <td className="px-3 py-3 text-outline">{idx ?? ""}</td>
+      <td className="px-3 py-3"><a className="font-semibold text-primary" href={`/admin/orders/${r.orderId}`}>{r.ticketNo}</a><div className="text-xs text-outline">{r.orderNumber}</div></td>
       <td className="px-3 py-3"><div className="font-medium">{r.customerName}</div>
-        <a className="text-xs text-emerald-700 hover:underline" target="_blank" rel="noopener noreferrer" href={waLink(r.customerPhone, `Hi ${r.customerName}, this is about your print job ${r.ticketNo}.`)}>{r.customerPhone}</a></td>
+        <a className="text-xs text-success hover:underline" target="_blank" rel="noopener noreferrer" href={waLink(r.customerPhone, `Hi ${r.customerName}, this is about your print job ${r.ticketNo}.`)}>{r.customerPhone}</a></td>
       <td className="px-3 py-3">
         <div className="max-w-[16rem] truncate font-medium" title={r.filename}>{r.filename}</div>
-        <div className="text-xs text-slate-500">{r.pages} pg × {r.copies} · {r.options.color === "color" ? "colour" : "B&W"} · {r.options.sides === "double" ? "2-sided" : "1-sided"} · {r.options.paperSize}</div>
+        <div className="text-xs text-on-surface-variant">{r.pages} pg × {r.copies} · {r.options.color === "color" ? "colour" : "B&W"} · {r.options.sides === "double" ? "2-sided" : "1-sided"} · {r.options.paperSize}</div>
         {!r.pagesVerified && <Badge tone="yellow">pages unverified</Badge>}
-        {r.error && <div className="mt-1 max-w-[16rem] text-xs text-red-600">{r.error}{r.attempts > 1 ? ` (attempt ${r.attempts})` : ""}</div>}
+        {r.error && <div className="mt-1 max-w-[16rem] text-xs text-critical">{r.error}{r.attempts > 1 ? ` (attempt ${r.attempts})` : ""}</div>}
       </td>
       <td className="px-3 py-3"><Badge tone={r.priority >= 2 ? "red" : r.priority === 1 ? "yellow" : "gray"}>{priorityLabel(r.priority)}</Badge></td>
       <td className="px-3 py-3"><Badge tone={st.tone}>{st.label}</Badge></td>
-      <td className="px-3 py-3">{r.paid ? <span className="font-semibold text-emerald-600" title="Paid">✓</span> : <span className="text-amber-600">—</span>}</td>
-      <td className="px-3 py-3 text-xs text-slate-500">{waitLabel(wait)}</td>
-      <td className="px-3 py-3 text-xs text-slate-500">{r.printerName ?? "—"}</td>
+      <td className="px-3 py-3">{r.paid ? <span className="font-semibold text-success" title="Paid">✓</span> : <span className="text-warning">—</span>}</td>
+      <td className="px-3 py-3 text-xs text-on-surface-variant">{waitLabel(wait)}</td>
+      <td className="px-3 py-3 text-xs text-on-surface-variant">{r.printerName ?? "—"}</td>
       <td className="px-3 py-3">
         <div className="flex flex-col gap-1.5">
           <WalkInJobActions jobId={r.id} status={r.status} onDone={onDone} />
-          <a className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:underline" href={`/api/v1/admin/files/${r.fileId}`}><Download size={13} />Download file</a>
+          <a className="inline-flex items-center gap-1 text-xs font-medium text-on-surface-variant hover:underline" href={`/api/v1/admin/files/${r.fileId}`}><Download size={13} />Download file</a>
         </div>
       </td>
     </tr>

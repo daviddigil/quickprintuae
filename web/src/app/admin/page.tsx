@@ -64,9 +64,9 @@ export default async function Dashboard() {
       </div>
 
       {walkIn && (
-        <Link href="/admin/walk-in" data-testid="dash-walkin" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:border-slate-400">
-          <div><p className="font-semibold">Walk-in queue</p><p className="text-sm text-slate-500">Customers scanning your QR and printing in the shop</p></div>
-          <p className="text-sm font-medium"><span className="text-sky-700">{walkIn.waiting} waiting</span> · <span className="text-violet-700">{walkIn.printing} printing</span> · <span className="text-emerald-700">{walkIn.printedToday} printed today</span></p>
+        <Link href="/admin/walk-in" data-testid="dash-walkin" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-outline-variant bg-white px-5 py-4 shadow-sm hover:border-outline">
+          <div><p className="font-semibold">Walk-in queue</p><p className="text-sm text-on-surface-variant">Customers scanning your QR and printing in the shop</p></div>
+          <p className="text-sm font-medium"><span className="text-sky-700">{walkIn.waiting} waiting</span> · <span className="text-violet-700">{walkIn.printing} printing</span> · <span className="text-success">{walkIn.printedToday} printed today</span></p>
         </Link>
       )}
 
@@ -76,12 +76,12 @@ export default async function Dashboard() {
           <div className="flex h-52 items-end gap-1.5 px-5 pb-2 pt-6">
             {days.map((d) => (
               <div key={d.day} className="group relative flex h-full flex-1 flex-col justify-end">
-                <div className="rounded-t bg-slate-900/80 transition group-hover:bg-brand-600" style={{ height: `${Math.max(2, (d.revenue / max) * 100)}%` }} />
-                <span className="pointer-events-none absolute -top-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-1.5 py-0.5 text-[10px] text-white group-hover:block">{formatAED(d.revenue)}</span>
+                <div className="rounded-t bg-inverse-surface/80 transition group-hover:bg-primary" style={{ height: `${Math.max(2, (d.revenue / max) * 100)}%` }} />
+                <span className="pointer-events-none absolute -top-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-inverse-surface px-1.5 py-0.5 text-[10px] text-white group-hover:block">{formatAED(d.revenue)}</span>
               </div>
             ))}
           </div>
-          <div className="flex gap-1.5 px-5 pb-4 text-[10px] text-slate-400">
+          <div className="flex gap-1.5 px-5 pb-4 text-[10px] text-outline">
             {days.map((d, i) => <span key={d.day} className="flex-1 text-center">{i % 2 === 0 ? d.day.slice(8) : ""}</span>)}
           </div>
         </Card>
@@ -101,12 +101,12 @@ export default async function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Production queue" subtitle="Paid and printing, by due time" action={<Link className="text-sm font-medium text-brand-600" href="/admin/orders?status=paid">All</Link>} />
+          <CardHeader title="Production queue" subtitle="Paid and printing, by due time" action={<Link className="text-sm font-medium text-primary" href="/admin/orders?status=paid">All</Link>} />
           {queue.length === 0 ? <EmptyState title="Queue is clear" /> : (
             <Table head={["Order", "Customer", "Due", "Status"]}>
               {queue.map((o) => (
                 <tr key={o.id}>
-                  <td className="px-4 py-2.5"><Link className="font-medium text-brand-600" href={`/admin/orders/${o.id}`}>{o.number}</Link></td>
+                  <td className="px-4 py-2.5"><Link className="font-medium text-primary" href={`/admin/orders/${o.id}`}>{o.number}</Link></td>
                   <td className="px-4 py-2.5">{o.customerName}</td>
                   <td className="px-4 py-2.5 text-xs">{o.slotStart ? slotLabel(o.slotStart, o.slotEnd) : dubai(o.paidAt ? new Date(o.paidAt.getTime() + 86400_000) : null)}</td>
                   <td className="px-4 py-2.5"><Badge tone={ORDER_STATUS_TONE[o.status]}>{ORDER_STATUS_LABEL[o.status]}</Badge></td>
@@ -122,7 +122,7 @@ export default async function Dashboard() {
               {upcoming.map((o) => (
                 <tr key={o.id}>
                   <td className="px-4 py-2.5 text-xs">{slotLabel(o.slotStart, o.slotEnd)}</td>
-                  <td className="px-4 py-2.5"><Link className="font-medium text-brand-600" href={`/admin/orders/${o.id}`}>{o.number}</Link></td>
+                  <td className="px-4 py-2.5"><Link className="font-medium text-primary" href={`/admin/orders/${o.id}`}>{o.number}</Link></td>
                   <td className="px-4 py-2.5"><Badge tone={o.fulfillment === "delivery" ? "blue" : "gray"}>{o.fulfillment}</Badge></td>
                   <td className="px-4 py-2.5 text-xs">{o.deliveryAddress ? `${o.deliveryAddress.area}, ${o.deliveryAddress.emirate}` : "Pickup"}</td>
                 </tr>

@@ -25,9 +25,9 @@ export function ProofDownload({ design, name }: { design: CardDesign; name: stri
     <div ref={ref} className="grid gap-4 sm:grid-cols-2">
       {sides.map((s) => (
         <div key={s} data-side={s}>
-          <p className="mb-1 text-xs font-medium uppercase text-slate-500">{s} · {design.widthMm}×{design.heightMm} mm</p>
+          <p className="mb-1 text-xs font-medium uppercase text-on-surface-variant">{s} · {design.widthMm}×{design.heightMm} mm</p>
           <CardPreview design={design} side={s} className="w-full overflow-hidden rounded border shadow-sm" />
-          <button type="button" onClick={() => download(s)} className="mt-2 text-sm font-medium text-brand-600 hover:underline">Download {s} proof (SVG)</button>
+          <button type="button" onClick={() => download(s)} className="mt-2 text-sm font-medium text-primary hover:underline">Download {s} proof (SVG)</button>
         </div>
       ))}
     </div>

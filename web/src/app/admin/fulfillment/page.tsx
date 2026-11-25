@@ -39,7 +39,7 @@ export default async function FulfillmentPage({ searchParams }: { searchParams: 
           <Field label="Opens (hour, 0–23)"><Input type="number" name="openHour" min={0} max={23} defaultValue={d.openHour} /></Field>
           <Field label="Closes (hour, 1–24)"><Input type="number" name="closeHour" min={1} max={24} defaultValue={d.closeHour} /></Field>
           <div className="sm:col-span-2">
-            <p className="mb-1 text-sm font-medium text-slate-700">Closed on</p>
+            <p className="mb-1 text-sm font-medium text-on-surface-variant">Closed on</p>
             <div className="flex flex-wrap gap-3 text-sm">{DAYS.map((n, i) => <label key={i} className="flex items-center gap-1"><input type="checkbox" name={`closed_${i}`} defaultChecked={d.closedWeekdays.includes(i)} />{n}</label>)}</div>
           </div>
           <div className="sm:col-span-2 lg:col-span-4"><Button>Save scheduling</Button></div>
@@ -60,7 +60,7 @@ export default async function FulfillmentPage({ searchParams }: { searchParams: 
               <div className="flex items-center gap-3 md:col-span-6">
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={l?.active ?? true} /> Active</label>
                 <Button variant={l ? "secondary" : "primary"}>{l ? "Save" : "Add location"}</Button>
-                {l && <Button formAction={deletePickupLocation} variant="ghost" className="text-red-600">Remove</Button>}
+                {l && <Button formAction={deletePickupLocation} variant="ghost" className="text-critical">Remove</Button>}
               </div>
             </form>
           ))}
@@ -72,7 +72,7 @@ export default async function FulfillmentPage({ searchParams }: { searchParams: 
         <form action={saveZones}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="px-4 py-2">Emirate</th><th className="px-4 py-2">Fee</th><th className="px-4 py-2">Free above</th><th className="px-4 py-2">Min. lead time (h)</th><th className="px-4 py-2">Same day</th><th className="px-4 py-2">Active</th></tr></thead>
+              <thead className="bg-surface-low text-left text-xs uppercase text-on-surface-variant"><tr><th className="px-4 py-2">Emirate</th><th className="px-4 py-2">Fee</th><th className="px-4 py-2">Free above</th><th className="px-4 py-2">Min. lead time (h)</th><th className="px-4 py-2">Same day</th><th className="px-4 py-2">Active</th></tr></thead>
               <tbody className="divide-y">
                 {zones.map((z) => (
                   <tr key={z.id}>
@@ -111,7 +111,7 @@ export default async function FulfillmentPage({ searchParams }: { searchParams: 
                     <div className="md:col-span-2"><Field label="API key" hint={cur?.apiKeyEnc ? `saved: ${safeMask(cur.apiKeyEnc)}` : undefined}><Input name="apiKey" type="password" placeholder={cur?.apiKeyEnc ? "Leave empty to keep" : "Paste API key"} autoComplete="off" disabled={!isOwner} /></Field></div>
                     <Field label="Account / client ID"><Input name="accountId" defaultValue={cur?.accountId ?? ""} disabled={!isOwner} /></Field>
                   </>
-                ) : <p className="text-sm text-slate-500 md:col-span-3">{p.code === "inhouse" ? "Your own drivers. Orders get an internal reference and a driver run sheet." : "Enter tracking details by hand on each order."}</p>}
+                ) : <p className="text-sm text-on-surface-variant md:col-span-3">{p.code === "inhouse" ? "Your own drivers. Orders get an internal reference and a driver run sheet." : "Enter tracking details by hand on each order."}</p>}
                 <div className="flex flex-wrap items-center gap-3 text-sm md:col-span-2">
                   <label className="flex items-center gap-1"><input type="checkbox" name="enabled" defaultChecked={cur?.enabled ?? false} disabled={!isOwner} />Enabled</label>
                   {p.needsApiKey && <label className="flex items-center gap-1"><input type="checkbox" name="sandbox" defaultChecked={cur?.sandbox ?? true} disabled={!isOwner} />Sandbox</label>}

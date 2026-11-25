@@ -32,11 +32,11 @@ export function WalkInJobActions({ jobId, status, onDone }: { jobId: string; sta
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {acts.map((a) => (
-        <Button key={a} type="button" variant={BTN[a].danger ? "ghost" : "secondary"} className={`px-2.5 py-1 text-xs ${BTN[a].danger ? "text-red-600" : ""}`} disabled={!!busy} onClick={() => run(a)} data-action={a}>
+        <Button key={a} type="button" variant={BTN[a].danger ? "ghost" : "secondary"} className={`px-2.5 py-1 text-xs ${BTN[a].danger ? "text-critical" : ""}`} disabled={!!busy} onClick={() => run(a)} data-action={a}>
           {BTN[a].icon}{busy === a ? "…" : BTN[a].label}
         </Button>
       ))}
-      {err && <span className="text-xs text-red-600">{err}</span>}
+      {err && <span className="text-xs text-critical">{err}</span>}
     </div>
   );
 }

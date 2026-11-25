@@ -23,10 +23,10 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         <Table head={["Name", "Email", "Role", "Last sign-in", "Status", ""]}>
           {team.map((u) => (
             <tr key={u.id}>
-              <td className="px-4 py-3 font-medium">{u.name}{u.id === user.id && <span className="text-xs text-slate-400"> (you)</span>}</td>
+              <td className="px-4 py-3 font-medium">{u.name}{u.id === user.id && <span className="text-xs text-outline"> (you)</span>}</td>
               <td className="px-4 py-3">{u.email}</td>
               <td className="px-4 py-3"><Badge tone={u.role === "owner" ? "purple" : "gray"}>{u.role}</Badge></td>
-              <td className="px-4 py-3 text-xs text-slate-500">{dubai(u.lastLoginAt)}</td>
+              <td className="px-4 py-3 text-xs text-on-surface-variant">{dubai(u.lastLoginAt)}</td>
               <td className="px-4 py-3">{u.active ? <Badge tone="green">Active</Badge> : <Badge tone="red">Deactivated</Badge>}</td>
               <td className="px-4 py-3 text-right">
                 {u.id !== user.id && (
@@ -47,7 +47,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
           <Field label="Role"><Select name="role" defaultValue="staff"><option value="staff">Staff</option><option value="owner">Co-owner</option></Select></Field>
           <Button>Add member</Button>
         </form>
-        <p className="px-5 pb-5 text-xs text-slate-500">Staff can manage orders, products and fulfillment. Owners can also change payments, store settings and staff.</p>
+        <p className="px-5 pb-5 text-xs text-on-surface-variant">Staff can manage orders, products and fulfillment. Owners can also change payments, store settings and staff.</p>
       </Card>
     </div>
   );

@@ -23,7 +23,7 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageTitle title="Print shops" subtitle={`${rows.length} shown`} />
-      {deleted && <p className="mb-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800">Tenant deleted.</p>}
+      {deleted && <p className="mb-4 rounded-lg bg-success-container px-4 py-2 text-sm text-success">Tenant deleted.</p>}
       <form className="mb-4 flex flex-wrap gap-2">
         <Input name="q" defaultValue={q} placeholder="Search name, slug or email" className="max-w-xs" />
         <Select name="status" defaultValue={status ?? ""} className="max-w-[180px]">
@@ -36,9 +36,9 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
         {rows.length === 0 ? <EmptyState title="No print shops match" /> : (
           <Table head={["Shop", "Plan", "Status", "Emirate", "Contact", "Created", ""]}>
             {rows.map(({ t, plan }) => (
-              <tr key={t.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3"><Link href={`/superadmin/tenants/${t.id}`} className="font-medium hover:underline">{t.name}</Link>{t.settings?.walkIn?.enabled && <span className="ml-2"><Badge tone="purple">walk-in</Badge></span>}<div className="text-xs text-slate-500">/{t.slug}{t.customDomain ? ` · ${t.customDomain}` : ""}</div></td>
-                <td className="px-4 py-3">{plan ?? "—"} <span className="text-xs text-slate-400">{t.billingCycle}</span></td>
+              <tr key={t.id} className="hover:bg-surface-low">
+                <td className="px-4 py-3"><Link href={`/superadmin/tenants/${t.id}`} className="font-medium hover:underline">{t.name}</Link>{t.settings?.walkIn?.enabled && <span className="ml-2"><Badge tone="purple">walk-in</Badge></span>}<div className="text-xs text-on-surface-variant">/{t.slug}{t.customDomain ? ` · ${t.customDomain}` : ""}</div></td>
+                <td className="px-4 py-3">{plan ?? "—"} <span className="text-xs text-outline">{t.billingCycle}</span></td>
                 <td className="px-4 py-3"><Badge tone={TENANT_STATUS_TONE[t.status]}>{t.status.replace("_", " ")}</Badge></td>
                 <td className="px-4 py-3">{t.emirate}</td>
                 <td className="px-4 py-3 text-xs">{t.email}<br />{t.phone}</td>
@@ -46,7 +46,7 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
                 <td className="px-4 py-3 text-right">
                   <form action="/api/v1/superadmin/impersonate" method="post">
                     <input type="hidden" name="tenantId" value={t.id} />
-                    <button className="text-xs font-semibold text-brand-600 hover:underline">Impersonate</button>
+                    <button className="text-xs font-semibold text-primary hover:underline">Impersonate</button>
                   </form>
                 </td>
               </tr>

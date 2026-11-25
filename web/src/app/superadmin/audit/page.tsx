@@ -28,7 +28,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <PageTitle title="Audit log" subtitle="Every sensitive action, including everything done while impersonating." />
       <div className="mb-3 flex flex-wrap gap-2 text-sm" data-testid="audit-chips">
         {[["All", ""], ["Walk-in", "walkin"], ["Print agents", "agent."], ["Impersonation", "impersonate"]].map(([l, a]) => (
-          <Link key={l} href={a ? `?action=${encodeURIComponent(a)}${sp.tenant ? `&tenant=${sp.tenant}` : ""}` : "?"} className={`rounded-full border px-3 py-1 ${((sp.action ?? "") === a) ? "border-brand-600 bg-brand-50 text-brand-700" : "bg-white hover:bg-slate-50"}`}>{l}</Link>
+          <Link key={l} href={a ? `?action=${encodeURIComponent(a)}${sp.tenant ? `&tenant=${sp.tenant}` : ""}` : "?"} className={`rounded-full border px-3 py-1 ${((sp.action ?? "") === a) ? "border-primary bg-primary text-primary" : "bg-white hover:bg-surface-low"}`}>{l}</Link>
         ))}
       </div>
       <form className="mb-4 flex flex-wrap gap-2">
@@ -49,7 +49,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                 <td className="px-4 py-2 font-mono text-xs">{a.action}</td>
                 <td className="px-4 py-2 text-xs">{a.tenantId ? <Link className="hover:underline" href={`/superadmin/tenants/${a.tenantId}`}>{tenant ?? "deleted"}</Link> : "platform"}</td>
                 <td className="px-4 py-2 text-xs">{actor ?? "—"}{imp && <div className="mt-1"><Badge tone="yellow">via {imp}</Badge></div>}</td>
-                <td className="max-w-xs truncate px-4 py-2 font-mono text-[11px] text-slate-500">{a.meta ? JSON.stringify(a.meta) : ""}</td>
+                <td className="max-w-xs truncate px-4 py-2 font-mono text-[11px] text-on-surface-variant">{a.meta ? JSON.stringify(a.meta) : ""}</td>
                 <td className="px-4 py-2 text-xs">{a.ip ?? ""}</td>
               </tr>
             ))}

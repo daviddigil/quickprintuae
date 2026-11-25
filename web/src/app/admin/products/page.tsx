@@ -31,21 +31,21 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             const from = Math.min(...p.config.tiers.map((t) => t.unitPrice));
             return (
               <tr key={p.id}>
-                <td className="px-4 py-3"><Link href={`/admin/products/${p.id}`} className="font-semibold hover:text-brand-600">{p.name}</Link><div className="text-xs text-slate-500">/{p.slug}</div></td>
+                <td className="px-4 py-3"><Link href={`/admin/products/${p.id}`} className="font-semibold hover:text-primary">{p.name}</Link><div className="text-xs text-on-surface-variant">/{p.slug}</div></td>
                 <td className="px-4 py-3"><Badge>{p.kind.replace(/_/g, " ")}</Badge></td>
-                <td className="px-4 py-3">{Number.isFinite(from) ? formatAED(from) : "—"}<span className="text-xs text-slate-500"> /{p.config.perPage ? "page" : "unit"}</span></td>
+                <td className="px-4 py-3">{Number.isFinite(from) ? formatAED(from) : "—"}<span className="text-xs text-on-surface-variant"> /{p.config.perPage ? "page" : "unit"}</span></td>
                 <td className="px-4 py-3">{p.turnaroundHours}h</td>
                 {(["active", "featured"] as const).map((f) => (
                   <td key={f} className="px-4 py-3">
                     <form action={toggleProduct}>
                       <input type="hidden" name="productId" value={p.id} /><input type="hidden" name="field" value={f} />
-                      <button className={`relative h-6 w-11 rounded-full transition ${p[f] ? "bg-emerald-500" : "bg-slate-300"}`} aria-label={`Toggle ${f}`}>
+                      <button className={`relative h-6 w-11 rounded-full transition ${p[f] ? "bg-success" : "bg-surface-highest"}`} aria-label={`Toggle ${f}`}>
                         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${p[f] ? "left-[22px]" : "left-0.5"}`} />
                       </button>
                     </form>
                   </td>
                 ))}
-                <td className="px-4 py-3 text-right"><Link href={`/admin/products/${p.id}`} className="text-sm font-medium text-brand-600">Edit</Link></td>
+                <td className="px-4 py-3 text-right"><Link href={`/admin/products/${p.id}`} className="text-sm font-medium text-primary">Edit</Link></td>
               </tr>
             );
           })}

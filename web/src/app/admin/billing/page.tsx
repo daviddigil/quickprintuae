@@ -51,13 +51,13 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <Stat label="Current plan" value={plan?.name ?? "—"} sub={isCommissionPlan ? "No monthly fee · commission per order" : price !== undefined ? `${formatAED(price)} / ${tenant.billingCycle === "yearly" ? "year" : "month"} · no commission` : undefined} />
         <Stat label="Status" value={<span className="capitalize">{tenant.status.replace("_", " ")}</span>}
           sub={tenant.status === "trial" && trialDays !== null ? `Trial ends ${dubai(tenant.trialEndsAt, "d MMM yyyy")} (${Math.max(0, trialDays)} days)` : tenant.currentPeriodEnd ? `Renews ${dubai(tenant.currentPeriodEnd, "d MMM yyyy")}` : undefined} />
-        <Stat label="Orders this month" value={`${usage.n}${plan?.maxOrdersPerMonth ? ` / ${plan.maxOrdersPerMonth}` : ""}`} sub={plan?.maxOrdersPerMonth ? <span className="mt-1 block h-1.5 w-full overflow-hidden rounded bg-slate-200"><span className={`block h-full ${pct > 85 ? "bg-red-500" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} /></span> : "Unlimited"} />
+        <Stat label="Orders this month" value={`${usage.n}${plan?.maxOrdersPerMonth ? ` / ${plan.maxOrdersPerMonth}` : ""}`} sub={plan?.maxOrdersPerMonth ? <span className="mt-1 block h-1.5 w-full overflow-hidden rounded bg-surface-high"><span className={`block h-full ${pct > 85 ? "bg-critical" : "bg-success"}`} style={{ width: `${pct}%` }} /></span> : "Unlimited"} />
         <Stat label="Paid sales this month" value={formatAED(usage.gmv)} sub={`Platform commission ${formatAED(feeTotal)}`} />
       </div>
       <Card data-testid="billing-model">
         <CardHeader title="How you pay" subtitle={tenant.status === "trial" ? "Switching during your trial is instant." : "A change takes effect at the start of next month, so this month is billed on your current terms."} />
         {pendingPlan && (
-          <form action={changeBillingPlan} className="mx-5 mt-4 flex items-center justify-between rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900" data-testid="pending-change">
+          <form action={changeBillingPlan} className="mx-5 mt-4 flex items-center justify-between rounded-lg bg-warning-container px-4 py-3 text-sm text-on-warning-container" data-testid="pending-change">
             <span>Switching to <b>{pendingPlan.name}</b> on {dubai(tenant.pendingPlanAt, "d MMM yyyy")}.</span>
             <button name="cancel" value="1" className="font-medium underline">Cancel change</button>
           </form>
@@ -66,12 +66,12 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           {allPlans.map((p) => {
             const cur = p.id === tenant.planId;
             return (
-              <form key={p.id} action={changeBillingPlan} className={`rounded-xl border p-4 text-sm ${cur ? "border-emerald-500 bg-emerald-50" : "border-slate-200"}`} data-testid={`plan-${p.code}`}>
+              <form key={p.id} action={changeBillingPlan} className={`rounded-xl border p-4 text-sm ${cur ? "border-success/50 bg-success-container" : "border-outline-variant"}`} data-testid={`plan-${p.code}`}>
                 <input type="hidden" name="planId" value={p.id} />
                 <p className="font-semibold">{p.name}</p>
-                <p className="mt-1 text-slate-600">{p.billingModel === "commission" ? `No monthly fee + ${p.orderFeePct}% per order` : `${formatAED(p.priceMonthly)} / month, no commission`}</p>
-                <p className="mt-1 text-xs text-slate-500">{p.billingModel === "commission" ? "Pay only when you sell" : "Predictable cost"}</p>
-                {cur ? <Badge tone="green">Current plan</Badge> : <button className="mt-3 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white">Switch</button>}
+                <p className="mt-1 text-on-surface-variant">{p.billingModel === "commission" ? `No monthly fee + ${p.orderFeePct}% per order` : `${formatAED(p.priceMonthly)} / month, no commission`}</p>
+                <p className="mt-1 text-xs text-on-surface-variant">{p.billingModel === "commission" ? "Pay only when you sell" : "Predictable cost"}</p>
+                {cur ? <Badge tone="green">Current plan</Badge> : <button className="mt-3 rounded-lg bg-inverse-surface px-3 py-1.5 text-xs font-medium text-white">Switch</button>}
               </form>
             );
           })}
@@ -88,7 +88,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             ))}
           </Table>
         )}
-        <p className="px-5 py-3 text-xs text-slate-500" data-testid="usage-total">Usage so far: {formatAED(usageNow.total)} (+5% VAT). Tracked: {USAGE_KINDS.map((k) => k.label).join(", ")}.</p>
+        <p className="px-5 py-3 text-xs text-on-surface-variant" data-testid="usage-total">Usage so far: {formatAED(usageNow.total)} (+5% VAT). Tracked: {USAGE_KINDS.map((k) => k.label).join(", ")}.</p>
       </Card>
       <Card data-testid="commission-statement">
         <CardHeader title="Commission on your orders" subtitle="Charged on the value of each paid order excluding VAT and delivery, and added to your monthly invoice. No commission during your free trial." />
@@ -96,9 +96,9 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         {ledger.length === 0 ? <EmptyState title="No paid orders this month yet" /> : (
           <Table head={["Order", "Paid", "Order value", "Commission", "Status"]}>
             {ledger.map((r) => (
-              <tr key={r.number}><td className="px-4 py-2.5 font-medium">{r.number}</td><td className="px-4 py-2.5 text-slate-600">{dubai(r.paidAt, "d MMM, HH:mm")}</td>
+              <tr key={r.number}><td className="px-4 py-2.5 font-medium">{r.number}</td><td className="px-4 py-2.5 text-on-surface-variant">{dubai(r.paidAt, "d MMM, HH:mm")}</td>
                 <td className="px-4 py-2.5 tabular-nums">{formatAED(r.basis)}</td><td className="px-4 py-2.5 tabular-nums">{formatAED(r.fee)}</td>
-                <td className="px-4 py-2.5 text-xs capitalize text-slate-600">{r.status === "waived" ? "Not charged" : r.status === "refunded" ? "Refunded" : r.status === "invoiced" ? "Invoiced" : "To be invoiced"}</td></tr>
+                <td className="px-4 py-2.5 text-xs capitalize text-on-surface-variant">{r.status === "waived" ? "Not charged" : r.status === "refunded" ? "Refunded" : r.status === "invoiced" ? "Invoiced" : "To be invoiced"}</td></tr>
             ))}
           </Table>
         )}
@@ -107,11 +107,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <Card>
           <CardHeader title={`${plan.name} includes`} />
           <ul className="grid gap-2 p-5 text-sm sm:grid-cols-2">{displayFeatures(plan.features, plan.flags).map((f) => <li key={f}>✓ {f}</li>)}</ul>
-          <div className="border-t border-slate-100 px-5 py-4 text-sm" data-testid="plan-flags">
+          <div className="border-t border-outline-variant px-5 py-4 text-sm" data-testid="plan-flags">
             <p className="mb-2 font-medium">Feature access</p>
             <ul className="space-y-1">
               {PLAN_FLAGS.map((f) => (
-                <li key={f.key}>{plan.flags?.includes(f.key) ? <span className="text-emerald-700">✓ {f.label}</span> : <span className="text-slate-500">✕ {f.label} — not in your plan. Contact support to upgrade.</span>}</li>
+                <li key={f.key}>{plan.flags?.includes(f.key) ? <span className="text-success">✓ {f.label}</span> : <span className="text-on-surface-variant">✕ {f.label} — not in your plan. Contact support to upgrade.</span>}</li>
               ))}
             </ul>
           </div>

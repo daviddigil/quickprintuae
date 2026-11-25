@@ -39,11 +39,11 @@ export function SignupForm({ plans, defaultPlan }: { plans: { code: string; name
       {error && <Alert>{error}</Alert>}
       <Field label="Shop name"><Input value={shopName} onChange={(e) => setShopName(e.target.value)} required placeholder="Al Noor Printing" /></Field>
       <Field label="Store address">
-        <div className="flex items-center rounded-lg border border-slate-300 bg-white focus-within:ring-2 focus-within:ring-slate-200">
+        <div className="flex items-center rounded-lg border border-outline-variant bg-white focus-within:ring-2 focus-within:ring-slate-200">
           <Input value={slug} onChange={(e) => { setSlugTouched(true); setSlug(slugify(e.target.value)); }} required className="border-0 focus:ring-0" placeholder="alnoor" aria-label="Store slug" />
-          <span className="whitespace-nowrap pr-3 text-sm text-slate-400">.quickprint.ae</span>
+          <span className="whitespace-nowrap pr-3 text-sm text-outline">.quickprint.ae</span>
         </div>
-        {slugState && <p className={`mt-1 text-xs ${slugState.available ? "text-emerald-600" : "text-red-600"}`}>{slugState.available ? "✓ Available" : slugState.reason}</p>}
+        {slugState && <p className={`mt-1 text-xs ${slugState.available ? "text-success" : "text-critical"}`}>{slugState.available ? "✓ Available" : slugState.reason}</p>}
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Your name"><Input name="ownerName" required autoComplete="name" /></Field>
@@ -60,7 +60,7 @@ export function SignupForm({ plans, defaultPlan }: { plans: { code: string; name
         </Field>
       </div>
       <Button className="w-full" disabled={loading || slugState?.available === false}>{loading ? "Setting up your shop…" : "Create my shop — free for 14 days"}</Button>
-      <p className="text-center text-xs text-slate-500">By signing up you agree to the Terms and Privacy Policy.</p>
+      <p className="text-center text-xs text-on-surface-variant">By signing up you agree to the Terms and Privacy Policy.</p>
     </form>
   );
 }

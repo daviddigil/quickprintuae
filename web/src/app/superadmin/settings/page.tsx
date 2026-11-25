@@ -36,23 +36,23 @@ export default async function PlatformSettings() {
       <PageTitle title="Platform health" subtitle="Values are never displayed — only whether they are configured." />
       <Card className="mb-6">
         <CardHeader title="WhatsApp Tech Provider (Meta)" subtitle="One-click “Connect WhatsApp” for shop owners — paste your Meta app credentials here, no redeploy needed."
-          action={<Link href="/superadmin/settings/whatsapp" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" data-testid="sa-wa-link">Configure</Link>} />
+          action={<Link href="/superadmin/settings/whatsapp" className="rounded-lg bg-inverse-surface px-4 py-2 text-sm font-semibold text-white hover:bg-inverse-surface" data-testid="sa-wa-link">Configure</Link>} />
       </Card>
       <Card className="mb-6">
         <CardHeader title="Runtime" />
         <dl className="grid grid-cols-2 gap-y-2 px-5 py-4 text-sm sm:grid-cols-4">
-          <dt className="text-slate-500">Database</dt><dd>{dbOk ? <Badge tone="green">connected</Badge> : <Badge tone="red">down</Badge>} <span className="text-xs text-slate-500">{dbVersion}</span></dd>
-          <dt className="text-slate-500">Environment</dt><dd><Badge tone={prod ? "green" : "yellow"}>{process.env.NODE_ENV}</Badge></dd>
+          <dt className="text-on-surface-variant">Database</dt><dd>{dbOk ? <Badge tone="green">connected</Badge> : <Badge tone="red">down</Badge>} <span className="text-xs text-on-surface-variant">{dbVersion}</span></dd>
+          <dt className="text-on-surface-variant">Environment</dt><dd><Badge tone={prod ? "green" : "yellow"}>{process.env.NODE_ENV}</Badge></dd>
         </dl>
       </Card>
       <Card>
         <CardHeader title="Environment variables" />
-        <ul className="divide-y divide-slate-100 text-sm">
+        <ul className="divide-y divide-outline-variant text-sm">
           {VARS.map((v) => {
             const set = !!process.env[v.name];
             return (
               <li key={v.name} className="flex items-center justify-between gap-4 px-5 py-3">
-                <div><p className="font-mono text-xs font-semibold">{v.name}</p><p className="text-xs text-slate-500">{v.purpose}</p></div>
+                <div><p className="font-mono text-xs font-semibold">{v.name}</p><p className="text-xs text-on-surface-variant">{v.purpose}</p></div>
                 {set ? <Badge tone="green">set</Badge> : <Badge tone={v.required ? "red" : "gray"}>{v.required ? "missing" : "not set"}</Badge>}
               </li>
             );

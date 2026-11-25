@@ -17,7 +17,7 @@ export function TestConnection({ provider, keyField }: { provider: "stripe" | "m
   return (
     <span className="inline-flex items-center gap-3">
       <Button type="button" variant="secondary" onClick={run} disabled={state.loading}>{state.loading ? "Testing…" : "Test connection"}</Button>
-      {state.message && <span className={`text-sm ${state.ok ? "text-emerald-700" : "text-red-600"}`}>{state.ok ? "✓ " : "✗ "}{state.message}</span>}
+      {state.message && <span className={`text-sm ${state.ok ? "text-success" : "text-critical"}`}>{state.ok ? "✓ " : "✗ "}{state.message}</span>}
     </span>
   );
 }

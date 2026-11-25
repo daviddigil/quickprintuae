@@ -55,8 +55,8 @@ export function WhatsappPanel({ isOwner }: { isOwner: boolean }) {
 
   return (
     <div className="space-y-6" data-testid="wa-panel">
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="wa-error">{error}</div>}
-      {notice && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div>}
+      {error && <div className="rounded-lg border border-critical/40 bg-critical-container px-4 py-3 text-sm text-critical" data-testid="wa-error">{error}</div>}
+      {notice && <div className="rounded-lg border border-success/50 bg-success-container px-4 py-3 text-sm text-success">{notice}</div>}
 
       {status && !active && isOwner && (
         <WhatsappConnectHero platform={status.platform} requested={status.activationRequested}
@@ -76,13 +76,13 @@ export function WhatsappPanel({ isOwner }: { isOwner: boolean }) {
           {active ? (
             <>
               <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2" data-testid="wa-connected">
-                <dt className="text-slate-500">Number</dt><dd className="font-medium">{account!.displayPhone ?? "connected"}</dd>
-                <dt className="text-slate-500">Connected via</dt><dd>{account!.connectionMethod === "manual" ? "Your own Meta app (manual)" : "Facebook sign-in (Embedded Signup)"} · {account!.mode}</dd>
-                <dt className="text-slate-500">Access token</dt><dd className="font-mono text-xs">{account!.tokenMask ?? "—"} <span className="font-sans text-slate-400">(stored encrypted, never shown)</span></dd>
-                <dt className="text-slate-500">Last message from Meta</dt><dd>{account!.lastWebhookAt ? new Date(account!.lastWebhookAt).toLocaleString("en-AE") : "none yet — send your number a WhatsApp message"}</dd>
-                {account!.verifyToken && <><dt className="text-slate-500">Webhook verify token</dt><dd className="break-all font-mono text-xs" data-testid="wa-verify-token">{account!.verifyToken}</dd></>}
+                <dt className="text-on-surface-variant">Number</dt><dd className="font-medium">{account!.displayPhone ?? "connected"}</dd>
+                <dt className="text-on-surface-variant">Connected via</dt><dd>{account!.connectionMethod === "manual" ? "Your own Meta app (manual)" : "Facebook sign-in (Embedded Signup)"} · {account!.mode}</dd>
+                <dt className="text-on-surface-variant">Access token</dt><dd className="font-mono text-xs">{account!.tokenMask ?? "—"} <span className="font-sans text-outline">(stored encrypted, never shown)</span></dd>
+                <dt className="text-on-surface-variant">Last message from Meta</dt><dd>{account!.lastWebhookAt ? new Date(account!.lastWebhookAt).toLocaleString("en-AE") : "none yet — send your number a WhatsApp message"}</dd>
+                {account!.verifyToken && <><dt className="text-on-surface-variant">Webhook verify token</dt><dd className="break-all font-mono text-xs" data-testid="wa-verify-token">{account!.verifyToken}</dd></>}
               </dl>
-              {account!.connectionMethod === "manual" && <p className="text-xs text-slate-500">In your Meta app → WhatsApp → Configuration → Webhook: callback URL <code className="rounded bg-slate-100 px-1">{status?.webhookUrl}</code>, the verify token above, then subscribe to <code>messages</code> and <code>smb_message_echoes</code>.</p>}
+              {account!.connectionMethod === "manual" && <p className="text-xs text-on-surface-variant">In your Meta app → WhatsApp → Configuration → Webhook: callback URL <code className="rounded bg-surface-container px-1">{status?.webhookUrl}</code>, the verify token above, then subscribe to <code>messages</code> and <code>smb_message_echoes</code>.</p>}
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={account!.aiEnabled} disabled={!isOwner} onChange={(e) => guarded(async () => { await api("/api/v1/admin/whatsapp/settings", "PATCH", { aiEnabled: e.target.checked }); await refresh(); })} />AI replies enabled</label>
               <Field label="AI greeting (optional)"><Textarea rows={2} value={greeting} disabled={!isOwner} onChange={(e) => setGreeting(e.target.value)} placeholder="Hi! Welcome to our print shop 👋 What can we print for you?" /></Field>
               <Field label="Pause AI after you reply (minutes)"><Input type="number" min={1} value={handoff} disabled={!isOwner} onChange={(e) => setHandoff(Number(e.target.value))} className="max-w-40" /></Field>
@@ -94,9 +94,9 @@ export function WhatsappPanel({ isOwner }: { isOwner: boolean }) {
               )}
             </>
           ) : !isOwner ? (
-            <p className="text-sm text-slate-600">Only the shop owner can connect WhatsApp.</p>
+            <p className="text-sm text-on-surface-variant">Only the shop owner can connect WhatsApp.</p>
           ) : (
-            <p className="text-sm text-slate-600">Not connected yet. Use the green <b>Connect WhatsApp</b> button above — it takes about a minute.</p>
+            <p className="text-sm text-on-surface-variant">Not connected yet. Use the green <b>Connect WhatsApp</b> button above — it takes about a minute.</p>
           )}
         </div>
       </Card>
@@ -108,11 +108,11 @@ export function WhatsappPanel({ isOwner }: { isOwner: boolean }) {
           <Card>
             <CardHeader title="Conversations" />
             {convs.length === 0 ? <EmptyState title="No chats yet" /> : (
-              <ul className="divide-y divide-slate-100" data-testid="wa-convs">
+              <ul className="divide-y divide-outline-variant" data-testid="wa-convs">
                 {convs.map((c) => (
-                  <li key={c.id}><button onClick={() => guarded(() => openConv(c.id))} className={`w-full px-4 py-3 text-left text-sm hover:bg-slate-50 ${open === c.id ? "bg-slate-50" : ""}`}>
+                  <li key={c.id}><button onClick={() => guarded(() => openConv(c.id))} className={`w-full px-4 py-3 text-left text-sm hover:bg-surface-low ${open === c.id ? "bg-surface-low" : ""}`}>
                     <p className="flex items-center justify-between gap-2 font-medium"><span>{c.customerName ?? c.customerWaId}</span>{c.needsHuman && <Badge tone="red">Needs you</Badge>}</p>
-                    <p className="text-xs text-slate-500">{new Date(c.lastMessageAt).toLocaleString("en-AE")}{c.aiPausedUntil && new Date(c.aiPausedUntil) > new Date() ? " · AI paused" : ""}{c.cart?.length ? ` · cart: ${c.cart.length} item${c.cart.length > 1 ? "s" : ""}` : ""}</p>
+                    <p className="text-xs text-on-surface-variant">{new Date(c.lastMessageAt).toLocaleString("en-AE")}{c.aiPausedUntil && new Date(c.aiPausedUntil) > new Date() ? " · AI paused" : ""}{c.cart?.length ? ` · cart: ${c.cart.length} item${c.cart.length > 1 ? "s" : ""}` : ""}</p>
                   </button></li>
                 ))}
               </ul>
@@ -122,12 +122,12 @@ export function WhatsappPanel({ isOwner }: { isOwner: boolean }) {
             <CardHeader title="Thread" action={open && <Button variant="secondary" onClick={() => guarded(async () => { await api(`/api/v1/admin/whatsapp/conversations/${open}`, "PATCH", { resumeAi: true }); await refresh(); await openConv(open); })}>Resume AI</Button>} />
             {!open ? <EmptyState title="Select a conversation" /> : (
               <div className="space-y-3 p-4">
-                {openConvData?.needsHuman && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">Needs you: {REASON[openConvData.needsHumanReason ?? ""] ?? openConvData.needsHumanReason}. Reply below (pauses the AI) or tap Resume AI.</div>}
-                {!!openConvData?.cart?.length && <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">Cart: {openConvData.cart.map((i) => `${i.quantity} × ${i.name}`).join(" · ")}</div>}
+                {openConvData?.needsHuman && <div className="rounded-lg border border-critical/40 bg-critical-container px-3 py-2 text-sm text-critical">Needs you: {REASON[openConvData.needsHumanReason ?? ""] ?? openConvData.needsHumanReason}. Reply below (pauses the AI) or tap Resume AI.</div>}
+                {!!openConvData?.cart?.length && <div className="rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant">Cart: {openConvData.cart.map((i) => `${i.quantity} × ${i.name}`).join(" · ")}</div>}
                 <div className="max-h-96 space-y-2 overflow-y-auto" data-testid="wa-thread">
                   {msgs.map((m) => (
                     <div key={m.id} className={`flex ${m.direction === "in" ? "justify-start" : "justify-end"}`}>
-                      <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${m.direction === "in" ? "bg-slate-100" : "bg-emerald-50"}`}>
+                      <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${m.direction === "in" ? "bg-surface-container" : "bg-success-container"}`}>
                         <div className="mb-1 flex gap-1"><Badge tone={SRC[m.source]?.tone ?? "gray"}>{SRC[m.source]?.label ?? m.source}</Badge>{m.status === "skipped" && <Badge tone="yellow">Not sent: 24h window</Badge>}{m.status === "failed" && <Badge tone="red">Failed</Badge>}</div>
                         <p className="whitespace-pre-wrap">{m.body}</p>
                       </div>

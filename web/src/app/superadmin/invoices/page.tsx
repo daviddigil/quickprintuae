@@ -45,7 +45,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 <td className="px-4 py-3"><Link className="hover:underline" href={`/superadmin/tenants/${i.tenantId}`}>{tenant}</Link></td>
                 <td className="px-4 py-3 text-xs">{fmtDate(i.periodStart)}</td>
                 <td className="px-4 py-3">{formatAED(i.subscriptionAmount)}</td>
-                <td className="px-4 py-3">{formatAED(i.orderFeeAmount)}<div className="text-xs text-slate-400">GMV {formatAED(i.gmv)}</div></td>
+                <td className="px-4 py-3">{formatAED(i.orderFeeAmount)}<div className="text-xs text-outline">GMV {formatAED(i.gmv)}</div></td>
                 <td className="px-4 py-3">{formatAED(i.vat)}</td>
                 <td className="px-4 py-3 font-semibold">{formatAED(i.total)}</td>
                 <td className="px-4 py-3"><Badge tone={i.status === "paid" ? "green" : i.status === "open" ? "yellow" : "gray"}>{i.status}</Badge></td>
@@ -54,7 +54,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                     <div className="flex gap-2 text-xs font-semibold">
                       {(["collect", "paid", "void"] as const).map((op) => (
                         <form key={op} action={invoiceAction}><input type="hidden" name="invoiceId" value={i.id} /><input type="hidden" name="op" value={op} />
-                          <button className={op === "void" ? "text-red-600" : "text-brand-600"}>{op === "collect" ? "Charge" : op === "paid" ? "Mark paid" : "Void"}</button></form>
+                          <button className={op === "void" ? "text-critical" : "text-primary"}>{op === "collect" ? "Charge" : op === "paid" ? "Mark paid" : "Void"}</button></form>
                       ))}
                     </div>
                   )}

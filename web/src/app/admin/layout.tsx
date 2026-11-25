@@ -16,15 +16,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const trialDays = tenant.trialEndsAt ? Math.ceil((tenant.trialEndsAt.getTime() - Date.now()) / 86400_000) : null;
   const planLine = `${plan?.name ?? "No plan"} · ${tenant.status === "trial" && trialDays !== null ? (trialDays > 0 ? `trial, ${trialDays} days left` : "trial expired") : tenant.status.replace("_", " ")}`;
   return (
-    <div className="min-h-screen bg-slate-50" style={{ ["--store" as string]: tenant.primaryColor }}>
+    <div className="min-h-screen bg-surface-low" style={{ ["--store" as string]: tenant.primaryColor }}>
       {session.imp && (
-        <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950 print:hidden">
+        <div className="flex flex-wrap items-center justify-center gap-3 bg-warning px-4 py-2 text-sm font-medium text-on-warning-container print:hidden">
           Impersonating {user.name} ({user.email}) at {tenant.name}. Actions are audit-logged.
-          <a href="/api/v1/superadmin/impersonate/stop" className="rounded bg-amber-950 px-3 py-1 text-xs font-semibold text-white">Return to superadmin</a>
+          <a href="/api/v1/superadmin/impersonate/stop" className="rounded bg-inverse-surface px-3 py-1 text-xs font-semibold text-white">Return to superadmin</a>
         </div>
       )}
       {(tenant.status === "past_due" || (tenant.status === "trial" && trialDays !== null && trialDays <= 3)) && (
-        <div className="bg-red-600 px-4 py-2 text-center text-sm text-white print:hidden">
+        <div className="bg-critical px-4 py-2 text-center text-sm text-white print:hidden">
           {tenant.status === "past_due" ? "Your subscription payment is overdue." : `Your trial ends in ${Math.max(0, trialDays!)} day(s).`}{" "}
           <a className="font-semibold underline" href="/admin/billing">Go to billing</a>
         </div>

@@ -12,7 +12,7 @@ export interface SetupStatus {
 function Row({ id, ok, label, hint, warn }: { id: string; ok: boolean; label: string; hint?: string; warn?: boolean }) {
   return (
     <li className="flex items-start justify-between gap-4 px-5 py-3 text-sm" data-testid={`wa-check-${id}`} data-ok={ok}>
-      <div><p className="font-medium">{label}</p>{hint && <p className="text-xs text-slate-500">{hint}</p>}</div>
+      <div><p className="font-medium">{label}</p>{hint && <p className="text-xs text-on-surface-variant">{hint}</p>}</div>
       <Badge tone={ok ? "green" : warn ? "yellow" : "gray"}>{ok ? "OK" : warn ? "Optional" : "Not yet"}</Badge>
     </li>
   );
@@ -24,11 +24,11 @@ export function WhatsappSetupStatus({ s }: { s: SetupStatus }) {
   return (
     <Card data-testid="wa-setup">
       <CardHeader title="At a glance" />
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-outline-variant">
         <Row id="ai" ok warn={c.ai !== "claude"} label={c.ai === "claude" ? "AI replies: Claude" : "AI replies: built-in assistant"} hint={c.ai === "claude" ? "Understands free-form requests, builds carts and quotes real prices." : "Answers menu, price quotes, cart and checkout questions. Smarter AI replies switch on when the platform adds its AI key."} />
         <Row id="connected" ok={c.connected} label="Your WhatsApp number" hint={c.connected ? "Connected." : "Tap Connect WhatsApp above — or try the AI in the test chat first."} />
       </ul>
-      {c.fakeMode && <p className="border-t border-slate-100 px-5 py-3 text-xs text-amber-700">TEST MODE: messages are recorded, not sent to WhatsApp.</p>}
+      {c.fakeMode && <p className="border-t border-outline-variant px-5 py-3 text-xs text-warning">TEST MODE: messages are recorded, not sent to WhatsApp.</p>}
     </Card>
   );
 }

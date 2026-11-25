@@ -34,8 +34,8 @@ export function CommissionTerms({ tenantId, plan, planName, override }: { tenant
       <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Commission mode">
         {MODES.map((m) => (
           <button key={m.value} type="button" role="radio" aria-checked={mode === m.value} onClick={() => setMode(m.value)} data-testid={`mode-${m.value}`}
-            className={cn("rounded-xl border p-3 text-start transition", mode === m.value ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900" : "border-slate-200 hover:bg-slate-50")}>
-            <p className="text-sm font-semibold">{m.title}</p><p className="mt-0.5 text-xs text-slate-500">{m.text}</p>
+            className={cn("rounded-xl border p-3 text-start transition", mode === m.value ? "border-on-surface bg-surface-low ring-1 ring-slate-900" : "border-outline-variant hover:bg-surface-low")}>
+            <p className="text-sm font-semibold">{m.title}</p><p className="mt-0.5 text-xs text-on-surface-variant">{m.text}</p>
           </button>
         ))}
       </div>
@@ -47,23 +47,23 @@ export function CommissionTerms({ tenantId, plan, planName, override }: { tenant
           <Field label="Min per order (AED)" hint={`(plan: ${plan?.minOrderFee ?? 0})`}><Input name="minOrderFee" type="number" step="0.01" min="0" value={f.minOrderFee} onChange={(e) => setF({ ...f, minOrderFee: e.target.value })} /></Field>
           <div>
             <Field label="Max per order (AED)" hint={`(plan: ${plan?.maxOrderFee ?? "no cap"})`}><Input name="maxOrderFee" type="number" step="0.01" min="0" value={f.maxOrderFee} disabled={f.noCap} onChange={(e) => setF({ ...f, maxOrderFee: e.target.value })} /></Field>
-            <label className="mt-1 flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" name="noCap" checked={f.noCap} onChange={(e) => setF({ ...f, noCap: e.target.checked })} /> No maximum</label>
+            <label className="mt-1 flex items-center gap-2 text-xs text-on-surface-variant"><input type="checkbox" name="noCap" checked={f.noCap} onChange={(e) => setF({ ...f, noCap: e.target.checked })} /> No maximum</label>
           </div>
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4" data-testid="commission-preview">
+      <div className="rounded-xl border border-outline-variant bg-surface-low p-4" data-testid="commission-preview">
         <p className="text-sm font-semibold">Effective terms for this shop</p>
-        <p className="mt-1 text-sm text-slate-700" data-testid="commission-effective">{describeRule(rule)}{planName ? <span className="text-slate-400"> · based on {planName}</span> : null}</p>
+        <p className="mt-1 text-sm text-on-surface-variant" data-testid="commission-effective">{describeRule(rule)}{planName ? <span className="text-outline"> · based on {planName}</span> : null}</p>
         <table className="mt-3 w-full text-sm tabular-nums">
-          <thead className="text-xs text-slate-500"><tr><th className="py-1 text-start font-medium">Order value (ex VAT)</th><th className="py-1 text-start font-medium">Print jobs</th><th className="py-1 text-end font-medium">You earn</th><th className="py-1 text-end font-medium">Shop keeps</th></tr></thead>
+          <thead className="text-xs text-on-surface-variant"><tr><th className="py-1 text-start font-medium">Order value (ex VAT)</th><th className="py-1 text-start font-medium">Print jobs</th><th className="py-1 text-end font-medium">You earn</th><th className="py-1 text-end font-medium">Shop keeps</th></tr></thead>
           <tbody>{samples.map(([basis, jobs]) => { const fee = computeCommission(basis, jobs, rule).fee; return (
-            <tr key={basis} className="border-t border-slate-200"><td className="py-1">{aed(basis)}</td><td className="py-1">{jobs}</td><td className="py-1 text-end font-medium">{aed(fee)}</td><td className="py-1 text-end text-slate-500">{aed(basis - fee)}</td></tr>); })}</tbody>
+            <tr key={basis} className="border-t border-outline-variant"><td className="py-1">{aed(basis)}</td><td className="py-1">{jobs}</td><td className="py-1 text-end font-medium">{aed(fee)}</td><td className="py-1 text-end text-on-surface-variant">{aed(basis - fee)}</td></tr>); })}</tbody>
         </table>
       </div>
 
       <Field label="Internal note" hint="(why this shop has special terms; visible to superadmins only)"><Input name="note" maxLength={300} defaultValue={override?.note ?? ""} /></Field>
-      <div className="flex flex-wrap items-center gap-3"><Button data-testid="save-commission">Save terms</Button><p className="text-xs text-slate-500">Applies to orders paid from now on. Orders already paid keep the terms they were paid under.</p></div>
+      <div className="flex flex-wrap items-center gap-3"><Button data-testid="save-commission">Save terms</Button><p className="text-xs text-on-surface-variant">Applies to orders paid from now on. Orders already paid keep the terms they were paid under.</p></div>
     </form>
   );
 }

@@ -102,10 +102,10 @@ export function CheckoutForm(d: CheckoutData) {
           {mode === "pickup" ? (
             <div className="mt-4 space-y-2">
               {d.pickupLocations.map((l) => (
-                <label key={l.id} className={cn("flex cursor-pointer gap-3 rounded-lg border p-3 text-sm", pickupId === l.id ? "border-store bg-store-soft" : "border-slate-200")}>
+                <label key={l.id} className={cn("flex cursor-pointer gap-3 rounded-lg border p-3 text-sm", pickupId === l.id ? "border-store bg-store-soft" : "border-outline-variant")}>
                   <input type="radio" name="pickup" checked={pickupId === l.id} onChange={() => setPickupId(l.id)} className="mt-1" />
                   <MapPin className="text-store mt-0.5 h-4 w-4 shrink-0" />
-                  <span><span className="font-medium">{l.name}</span><span className="block text-slate-600">{l.address}, {l.emirate}</span><span className="block text-xs text-slate-500">{l.hours}</span></span>
+                  <span><span className="font-medium">{l.name}</span><span className="block text-on-surface-variant">{l.address}, {l.emirate}</span><span className="block text-xs text-on-surface-variant">{l.hours}</span></span>
                 </label>
               ))}
             </div>
@@ -121,26 +121,26 @@ export function CheckoutForm(d: CheckoutData) {
               <Field label="Flat / office (optional)"><Input name="line2" value={addr.line2} onChange={a("line2")} /></Field>
               <Field label="City"><Input name="city" required value={addr.city} onChange={a("city")} placeholder={addr.emirate} /></Field>
               <Field label="Directions for driver (optional)"><Input name="addrnotes" value={addr.notes} onChange={a("notes")} placeholder="Landmark, Makani no." /></Field>
-              {zone && <p className="text-sm text-slate-600 sm:col-span-2">Delivery to {zone.emirate}: {formatAED(zone.fee)}{zone.freeAbove != null ? ` · free over ${formatAED(zone.freeAbove)}` : ""}</p>}
+              {zone && <p className="text-sm text-on-surface-variant sm:col-span-2">Delivery to {zone.emirate}: {formatAED(zone.fee)}{zone.freeAbove != null ? ` · free over ${formatAED(zone.freeAbove)}` : ""}</p>}
             </div>
           )}
         </section>
 
         <section>
           <h2 className="mb-1 text-lg font-semibold">{mode === "pickup" ? "Pickup time" : "Delivery slot"}</h2>
-          <p className="mb-3 text-sm text-slate-500">Earliest slot reflects production time ({turnaround < 24 ? `${turnaround}h` : `${Math.round(turnaround / 24)} day(s)`}){mode === "delivery" ? " and delivery lead time" : ""}. UAE time.</p>
+          <p className="mb-3 text-sm text-on-surface-variant">Earliest slot reflects production time ({turnaround < 24 ? `${turnaround}h` : `${Math.round(turnaround / 24)} day(s)`}){mode === "delivery" ? " and delivery lead time" : ""}. UAE time.</p>
           {days.length === 0 ? <Alert tone="yellow">No slots available right now. Please contact the shop.</Alert> : (
             <>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {days.map((x) => (
                   <button type="button" key={x.date} onClick={() => { setDay(x.date); setSlot(""); }}
-                    className={cn("shrink-0 rounded-lg border px-3 py-2 text-sm font-medium", activeDay?.date === x.date ? "border-store bg-store-soft text-store" : "border-slate-200 hover:bg-slate-50")}>{x.label}</button>
+                    className={cn("shrink-0 rounded-lg border px-3 py-2 text-sm font-medium", activeDay?.date === x.date ? "border-store bg-store-soft text-store" : "border-outline-variant hover:bg-surface-low")}>{x.label}</button>
                 ))}
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="slots">
                 {activeDay?.slots.map((s) => (
                   <button type="button" key={s.start} onClick={() => setSlot(s.start)}
-                    className={cn("rounded-lg border px-2 py-2 text-xs font-medium sm:text-sm", slot === s.start ? "btn-store border-transparent" : "border-slate-200 hover:bg-slate-50")}>{s.label}</button>
+                    className={cn("rounded-lg border px-2 py-2 text-xs font-medium sm:text-sm", slot === s.start ? "btn-store border-transparent" : "border-outline-variant hover:bg-surface-low")}>{s.label}</button>
                 ))}
               </div>
             </>
@@ -154,26 +154,26 @@ export function CheckoutForm(d: CheckoutData) {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {d.providers.map((p) => (
-                <label key={p} className={cn("flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm", provider === p ? "border-store bg-store-soft" : "border-slate-200")}>
+                <label key={p} className={cn("flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm", provider === p ? "border-store bg-store-soft" : "border-outline-variant")}>
                   <input type="radio" name="provider" checked={provider === p} onChange={() => setProvider(p)} />
-                  <CreditCard className="h-5 w-5 text-slate-500" />
-                  <span><span className="font-medium">{PROVIDER_LABEL[p].t}</span><span className="block text-xs text-slate-500">{PROVIDER_LABEL[p].s}</span></span>
+                  <CreditCard className="h-5 w-5 text-on-surface-variant" />
+                  <span><span className="font-medium">{PROVIDER_LABEL[p].t}</span><span className="block text-xs text-on-surface-variant">{PROVIDER_LABEL[p].s}</span></span>
                 </label>
               ))}
             </div>
           )}
-          <p className="mt-2 text-xs text-slate-500">Online payment only — cash on delivery is not available.</p>
+          <p className="mt-2 text-xs text-on-surface-variant">Online payment only — cash on delivery is not available.</p>
         </section>
 
         <Field label="Order notes (optional)"><Textarea name="notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
       </div>
 
-      <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-32">
+      <aside className="h-fit rounded-xl border border-outline-variant bg-white p-5 lg:sticky lg:top-32">
         <h2 className="font-semibold">Order summary</h2>
         <ul className="mt-3 space-y-2 text-sm">
-          {lines.map((l) => <li key={l.key} className="flex justify-between gap-2"><span className="text-slate-600">{l.productName} × {l.quantity}{l.pages > 1 ? ` (${l.pages}p)` : ""}</span><span>{formatAED(l.estimate)}</span></li>)}
+          {lines.map((l) => <li key={l.key} className="flex justify-between gap-2"><span className="text-on-surface-variant">{l.productName} × {l.quantity}{l.pages > 1 ? ` (${l.pages}p)` : ""}</span><span>{formatAED(l.estimate)}</span></li>)}
         </ul>
-        <dl className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm">
+        <dl className="mt-4 space-y-1 border-t border-outline-variant pt-3 text-sm">
           <Row k="Subtotal" v={formatAED(totals.subtotal)} />
           <Row k={mode === "delivery" ? "Delivery" : "Pickup"} v={totals.deliveryFee ? formatAED(totals.deliveryFee) : "Free"} />
           <Row k={`VAT ${d.vatRate}%${d.pricesIncludeVat ? " (incl.)" : ""}`} v={formatAED(totals.vat)} />
@@ -183,21 +183,21 @@ export function CheckoutForm(d: CheckoutData) {
         <Button variant="store" className="mt-5 w-full py-3" disabled={busy || !d.providers.length || !lines.length} data-testid="place-order">
           {busy ? <><Loader2 className="h-4 w-4 animate-spin" />Processing…</> : `Pay ${formatAED(totals.total)}`}
         </Button>
-        <p className="mt-2 text-center text-xs text-slate-500">Final price is confirmed by the server before payment.</p>
+        <p className="mt-2 text-center text-xs text-on-surface-variant">Final price is confirmed by the server before payment.</p>
       </aside>
     </form>
   );
 }
 
 function Row({ k, v }: { k: string; v: string }) {
-  return <div className="flex justify-between"><dt className="text-slate-600">{k}</dt><dd>{v}</dd></div>;
+  return <div className="flex justify-between"><dt className="text-on-surface-variant">{k}</dt><dd>{v}</dd></div>;
 }
 
 function ModeCard({ active, onClick, icon, title, sub, testid }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; sub: string; testid: string }) {
   return (
-    <button type="button" onClick={onClick} data-testid={testid} className={cn("flex items-center gap-3 rounded-lg border p-4 text-left", active ? "border-store bg-store-soft" : "border-slate-200 hover:bg-slate-50")}>
-      <span className={cn("rounded-lg p-2", active ? "btn-store" : "bg-slate-100")}>{icon}</span>
-      <span><span className="block font-semibold">{title}</span><span className="text-sm text-slate-600">{sub}</span></span>
+    <button type="button" onClick={onClick} data-testid={testid} className={cn("flex items-center gap-3 rounded-lg border p-4 text-left", active ? "border-store bg-store-soft" : "border-outline-variant hover:bg-surface-low")}>
+      <span className={cn("rounded-lg p-2", active ? "btn-store" : "bg-surface-container")}>{icon}</span>
+      <span><span className="block font-semibold">{title}</span><span className="text-sm text-on-surface-variant">{sub}</span></span>
     </button>
   );
 }

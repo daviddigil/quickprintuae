@@ -34,8 +34,8 @@ export default async function SuperadminDashboard() {
               {m.signups.map((s) => (
                 <div key={s.week} className="flex flex-1 flex-col items-center gap-1">
                   <span className="text-xs font-semibold">{s.n}</span>
-                  <div className="w-full rounded-t bg-brand-500" style={{ height: `${(s.n / max) * 120}px` }} />
-                  <span className="text-[10px] text-slate-400">{s.week.slice(5)}</span>
+                  <div className="w-full rounded-t bg-primary" style={{ height: `${(s.n / max) * 120}px` }} />
+                  <span className="text-[10px] text-outline">{s.week.slice(5)}</span>
                 </div>
               ))}
             </div>
@@ -43,7 +43,7 @@ export default async function SuperadminDashboard() {
         </Card>
         <Card>
           <CardHeader title="Shops by status" />
-          <ul className="divide-y divide-slate-100 text-sm">
+          <ul className="divide-y divide-outline-variant text-sm">
             {(["active", "trial", "past_due", "suspended", "cancelled"] as const).map((s) => (
               <li key={s} className="flex items-center justify-between px-5 py-3">
                 <Badge tone={TENANT_STATUS_TONE[s]}>{s.replace("_", " ")}</Badge>
@@ -57,11 +57,11 @@ export default async function SuperadminDashboard() {
       <Card className="mt-6">
         <CardHeader title="Trials ending within 7 days" subtitle="Reach out before they lapse" />
         {m.expiringTrials.length === 0 ? <EmptyState title="Nothing expiring this week" /> : (
-          <ul className="divide-y divide-slate-100 text-sm">
+          <ul className="divide-y divide-outline-variant text-sm">
             {m.expiringTrials.map((t) => (
               <li key={t.id} className="flex items-center justify-between px-5 py-3">
                 <Link href={`/superadmin/tenants/${t.id}`} className="font-medium hover:underline">{t.name}</Link>
-                <span className="text-slate-500">{t.phone ?? t.email} · ends {fmtDate(t.trialEndsAt)}</span>
+                <span className="text-on-surface-variant">{t.phone ?? t.email} · ends {fmtDate(t.trialEndsAt)}</span>
               </li>
             ))}
           </ul>

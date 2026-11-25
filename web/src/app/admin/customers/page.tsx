@@ -37,18 +37,18 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           <Table head={["Customer", "Phone", "Orders", "Spent", "Last order", ""]}>
             {rows.map((r) => (
               <tr key={r.email}>
-                <td className="px-4 py-3"><div className="font-medium">{r.name}</div><div className="text-xs text-slate-500">{r.email}{r.registered ? " · account" : " · guest"}</div></td>
+                <td className="px-4 py-3"><div className="font-medium">{r.name}</div><div className="text-xs text-on-surface-variant">{r.email}{r.registered ? " · account" : " · guest"}</div></td>
                 <td className="px-4 py-3">{r.phone}</td>
-                <td className="px-4 py-3"><a className="text-brand-600" href={`/admin/orders?q=${encodeURIComponent(r.email)}`}>{r.orders}</a></td>
+                <td className="px-4 py-3"><a className="text-primary" href={`/admin/orders?q=${encodeURIComponent(r.email)}`}>{r.orders}</a></td>
                 <td className="px-4 py-3">{formatAED(r.spent)}</td>
-                <td className="px-4 py-3 text-xs text-slate-500">{dubai(new Date(r.last))}</td>
-                <td className="px-4 py-3 text-right"><a className="text-sm font-medium text-emerald-700" target="_blank" href={waLink(r.phone, `Hi ${r.name}, `)}>WhatsApp</a></td>
+                <td className="px-4 py-3 text-xs text-on-surface-variant">{dubai(new Date(r.last))}</td>
+                <td className="px-4 py-3 text-right"><a className="text-sm font-medium text-success" target="_blank" href={waLink(r.phone, `Hi ${r.name}, `)}>WhatsApp</a></td>
               </tr>
             ))}
           </Table>
         )}
       </Card>
-      <h2 className="mb-2 mt-8 text-lg font-semibold">Walk-in customers <span className="text-sm font-normal text-slate-400">({walkIns.length})</span></h2>
+      <h2 className="mb-2 mt-8 text-lg font-semibold">Walk-in customers <span className="text-sm font-normal text-outline">({walkIns.length})</span></h2>
       <Card data-testid="walkin-customers">
         {walkIns.length === 0 ? <EmptyState title="No walk-in customers yet">{" "}<span className="text-sm">They are saved by phone number the first time someone prints via your QR code.</span></EmptyState> : (
           <Table head={["Customer", "Phone", "Visits", "Spent", "Last visit", ""]}>
@@ -56,10 +56,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               <tr key={w.id}>
                 <td className="px-4 py-3"><div className="font-medium">{w.name}</div><Badge tone="purple">Walk-in</Badge></td>
                 <td className="px-4 py-3">{w.phone}</td>
-                <td className="px-4 py-3"><a className="text-brand-600" href={`/admin/orders?source=walk_in&q=${encodeURIComponent(w.phone)}`}>{w.visits}</a></td>
+                <td className="px-4 py-3"><a className="text-primary" href={`/admin/orders?source=walk_in&q=${encodeURIComponent(w.phone)}`}>{w.visits}</a></td>
                 <td className="px-4 py-3">{formatAED(w.totalSpent)}</td>
-                <td className="px-4 py-3 text-xs text-slate-500">{dubai(w.lastSeenAt)}</td>
-                <td className="px-4 py-3 text-right"><a className="text-sm font-medium text-emerald-700" target="_blank" rel="noopener noreferrer" href={waLink(w.phone, `Hi ${w.name}, `)}>WhatsApp</a></td>
+                <td className="px-4 py-3 text-xs text-on-surface-variant">{dubai(w.lastSeenAt)}</td>
+                <td className="px-4 py-3 text-right"><a className="text-sm font-medium text-success" target="_blank" rel="noopener noreferrer" href={waLink(w.phone, `Hi ${w.name}, `)}>WhatsApp</a></td>
               </tr>
             ))}
           </Table>

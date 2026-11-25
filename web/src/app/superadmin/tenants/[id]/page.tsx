@@ -40,13 +40,13 @@ export default async function TenantDetail({ params, searchParams }: { params: P
 
   return (
     <>
-      <Link href="/superadmin/tenants" className="text-sm text-slate-500 hover:underline">← All print shops</Link>
+      <Link href="/superadmin/tenants" className="text-sm text-on-surface-variant hover:underline">← All print shops</Link>
       <PageTitle
         title={t.name}
         subtitle={`/s/${t.slug}${t.customDomain ? ` · ${t.customDomain}` : ""} · ${t.emirate}`}
         action={
           <div className="flex gap-2">
-            <Link href={`/s/${t.slug}`} target="_blank" className="rounded-lg border bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">View store ↗</Link>
+            <Link href={`/s/${t.slug}`} target="_blank" className="rounded-lg border bg-white px-4 py-2 text-sm font-semibold hover:bg-surface-low">View store ↗</Link>
             <form action="/api/v1/superadmin/impersonate" method="post">
               <input type="hidden" name="tenantId" value={t.id} />
               <Button>Impersonate owner</Button>
@@ -68,13 +68,13 @@ export default async function TenantDetail({ params, searchParams }: { params: P
         <Card>
           <CardHeader title="Business details" />
           <dl className="grid grid-cols-3 gap-y-2 px-5 py-4 text-sm">
-            <dt className="text-slate-500">Legal name</dt><dd className="col-span-2">{t.legalName ?? "—"}</dd>
-            <dt className="text-slate-500">TRN</dt><dd className="col-span-2">{t.trn ?? "—"}</dd>
-            <dt className="text-slate-500">Email</dt><dd className="col-span-2">{t.email ?? "—"}</dd>
-            <dt className="text-slate-500">Phone</dt><dd className="col-span-2">{t.phone ?? "—"}</dd>
-            <dt className="text-slate-500">Address</dt><dd className="col-span-2">{t.address ?? "—"}</dd>
-            <dt className="text-slate-500">Stripe customer</dt><dd className="col-span-2 font-mono text-xs">{t.stripeCustomerId ?? "none (no card on file)"}</dd>
-            <dt className="text-slate-500">Joined</dt><dd className="col-span-2">{fmtDate(t.createdAt)}</dd>
+            <dt className="text-on-surface-variant">Legal name</dt><dd className="col-span-2">{t.legalName ?? "—"}</dd>
+            <dt className="text-on-surface-variant">TRN</dt><dd className="col-span-2">{t.trn ?? "—"}</dd>
+            <dt className="text-on-surface-variant">Email</dt><dd className="col-span-2">{t.email ?? "—"}</dd>
+            <dt className="text-on-surface-variant">Phone</dt><dd className="col-span-2">{t.phone ?? "—"}</dd>
+            <dt className="text-on-surface-variant">Address</dt><dd className="col-span-2">{t.address ?? "—"}</dd>
+            <dt className="text-on-surface-variant">Stripe customer</dt><dd className="col-span-2 font-mono text-xs">{t.stripeCustomerId ?? "none (no card on file)"}</dd>
+            <dt className="text-on-surface-variant">Joined</dt><dd className="col-span-2">{fmtDate(t.createdAt)}</dd>
           </dl>
         </Card>
 
@@ -126,10 +126,10 @@ export default async function TenantDetail({ params, searchParams }: { params: P
 
         <Card>
           <CardHeader title="Team" />
-          <ul className="divide-y divide-slate-100 text-sm">
+          <ul className="divide-y divide-outline-variant text-sm">
             {staff.map((u) => (
               <li key={u.id} className="flex items-center justify-between px-5 py-2.5">
-                <span>{u.name} <span className="text-slate-500">· {u.email}</span></span>
+                <span>{u.name} <span className="text-on-surface-variant">· {u.email}</span></span>
                 <span className="flex items-center gap-2"><Badge tone={u.role === "owner" ? "purple" : "gray"}>{u.role}</Badge>{!u.active && <Badge tone="red">disabled</Badge>}</span>
               </li>
             ))}
@@ -137,7 +137,7 @@ export default async function TenantDetail({ params, searchParams }: { params: P
         </Card>
 
         <Card>
-          <CardHeader title="Recent SaaS invoices" action={<Link href="/superadmin/invoices" className="text-sm text-brand-600">All →</Link>} />
+          <CardHeader title="Recent SaaS invoices" action={<Link href="/superadmin/invoices" className="text-sm text-primary">All →</Link>} />
           <Table head={["Invoice", "Period", "Total", "Status"]}>
             {invoices.map((i) => (
               <tr key={i.id}><td className="px-4 py-2 font-mono text-xs">{i.number}</td><td className="px-4 py-2">{fmtDate(i.periodStart)}</td><td className="px-4 py-2">{formatAED(i.total)}</td><td className="px-4 py-2"><Badge tone={i.status === "paid" ? "green" : i.status === "open" ? "yellow" : "gray"}>{i.status}</Badge></td></tr>
@@ -146,10 +146,10 @@ export default async function TenantDetail({ params, searchParams }: { params: P
         </Card>
 
         <Card>
-          <CardHeader title="Recent activity" action={<Link href={`/superadmin/audit?tenant=${t.id}`} className="text-sm text-brand-600">Audit log →</Link>} />
-          <ul className="divide-y divide-slate-100 text-sm">
+          <CardHeader title="Recent activity" action={<Link href={`/superadmin/audit?tenant=${t.id}`} className="text-sm text-primary">Audit log →</Link>} />
+          <ul className="divide-y divide-outline-variant text-sm">
             {recentAudit.map((a) => (
-              <li key={a.id} className="flex justify-between px-5 py-2"><span className="font-mono text-xs">{a.action}{a.impersonatorId && <Badge tone="yellow">impersonated</Badge>}</span><span className="text-xs text-slate-500">{fmtDateTime(a.createdAt)}</span></li>
+              <li key={a.id} className="flex justify-between px-5 py-2"><span className="font-mono text-xs">{a.action}{a.impersonatorId && <Badge tone="yellow">impersonated</Badge>}</span><span className="text-xs text-on-surface-variant">{fmtDateTime(a.createdAt)}</span></li>
             ))}
           </ul>
         </Card>
@@ -167,19 +167,19 @@ export default async function TenantDetail({ params, searchParams }: { params: P
             </div>
           } />
         <div className="grid grid-cols-2 gap-4 px-5 py-4 lg:grid-cols-6 text-sm">
-          <div><p className="text-slate-500">Plan includes</p><Badge tone={walkInPlan ? "green" : "gray"}>{walkInPlan ? "yes" : "no"}</Badge></div>
-          <div><p className="text-slate-500">Enabled by shop</p><Badge tone={walkInOn ? "green" : "gray"}>{walkInOn ? "on" : "off"}</Badge></div>
-          <div><p className="text-slate-500">Jobs this month</p><p className="font-semibold">{walkInStats.jobsThisMonth}</p></div>
-          <div><p className="text-slate-500">Waiting now</p><p className="font-semibold">{walkInStats.waiting}</p></div>
-          <div><p className="text-slate-500">Printed today</p><p className="font-semibold">{walkInStats.printedToday}</p></div>
-          <div><p className="text-slate-500">Customers saved</p><p className="font-semibold">{walkInStats.customers}</p></div>
+          <div><p className="text-on-surface-variant">Plan includes</p><Badge tone={walkInPlan ? "green" : "gray"}>{walkInPlan ? "yes" : "no"}</Badge></div>
+          <div><p className="text-on-surface-variant">Enabled by shop</p><Badge tone={walkInOn ? "green" : "gray"}>{walkInOn ? "on" : "off"}</Badge></div>
+          <div><p className="text-on-surface-variant">Jobs this month</p><p className="font-semibold">{walkInStats.jobsThisMonth}</p></div>
+          <div><p className="text-on-surface-variant">Waiting now</p><p className="font-semibold">{walkInStats.waiting}</p></div>
+          <div><p className="text-on-surface-variant">Printed today</p><p className="font-semibold">{walkInStats.printedToday}</p></div>
+          <div><p className="text-on-surface-variant">Customers saved</p><p className="font-semibold">{walkInStats.customers}</p></div>
         </div>
-        <ul className="divide-y divide-slate-100 border-t border-slate-100 text-sm">
-          {walkInStats.agents.length === 0 && <li className="px-5 py-3 text-slate-500">No print agents registered.</li>}
+        <ul className="divide-y divide-outline-variant border-t border-outline-variant text-sm">
+          {walkInStats.agents.length === 0 && <li className="px-5 py-3 text-on-surface-variant">No print agents registered.</li>}
           {walkInStats.agents.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-2.5">
-              <span>{a.name} <span className="font-mono text-xs text-slate-400">{a.apiKeyPrefix}…</span> {!a.active && <Badge tone="red">revoked</Badge>}</span>
-              <span className="flex items-center gap-2 text-xs text-slate-500">
+              <span>{a.name} <span className="font-mono text-xs text-outline">{a.apiKeyPrefix}…</span> {!a.active && <Badge tone="red">revoked</Badge>}</span>
+              <span className="flex items-center gap-2 text-xs text-on-surface-variant">
                 {a.printers.length ? a.printers.join(", ") : "no printers reported"} · {a.lastSeenAt ? `seen ${fmtDateTime(a.lastSeenAt)}` : "never seen"}
                 <Badge tone={a.active && agentOnline(a) ? "green" : "gray"}>{a.active && agentOnline(a) ? "online" : "offline"}</Badge>
               </span>
@@ -188,7 +188,7 @@ export default async function TenantDetail({ params, searchParams }: { params: P
         </ul>
       </Card>
 
-      <Card className="mt-6 border-red-200">
+      <Card className="mt-6 border-critical/40">
         <CardHeader title="Danger zone" subtitle="Deletes the store, its products, orders, customers and files records. This cannot be undone." />
         <form action={deleteTenant} className="flex flex-wrap items-end gap-2 px-5 py-4">
           <input type="hidden" name="tenantId" value={t.id} />

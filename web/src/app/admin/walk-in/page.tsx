@@ -25,9 +25,9 @@ export default async function WalkInPage({ searchParams }: { searchParams: Promi
       <div>
         <PageHeader title="Walk-in queue" subtitle="Let customers in a busy shop scan a QR code, upload documents, pay on their phone and join the print queue." />
         <Card className="p-8 text-center" data-testid="walkin-locked">
-          <QrCode className="mx-auto mb-3 text-slate-400" size={36} />
+          <QrCode className="mx-auto mb-3 text-outline" size={36} />
           <h2 className="text-lg font-semibold">Walk-in QR print queue isn&apos;t included in your plan</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">Upgrade to the Growth plan or higher to give walk-in customers a QR code, take payment before printing and feed jobs straight to your printer.</p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-on-surface-variant">Upgrade to the Growth plan or higher to give walk-in customers a QR code, take payment before printing and feed jobs straight to your printer.</p>
           <LinkButton href="/admin/billing" className="mt-5">View plans &amp; billing</LinkButton>
         </Card>
       </div>
@@ -59,7 +59,7 @@ export default async function WalkInPage({ searchParams }: { searchParams: Promi
           <CardHeader title="Your QR code" subtitle="Show it at the counter" />
           <div className="space-y-3 p-5 text-center">
             <div className="mx-auto inline-block rounded-lg border bg-white p-2" data-testid="qr-svg" dangerouslySetInnerHTML={{ __html: qr }} />
-            <p className="break-all text-xs text-slate-500" data-testid="walkin-url">{url}</p>
+            <p className="break-all text-xs text-on-surface-variant" data-testid="walkin-url">{url}</p>
             <div className="flex justify-center gap-2"><WalkInCopy text={url} label="Copy link" /><LinkButton variant="secondary" href="/admin/walk-in/poster">Poster</LinkButton></div>
           </div>
         </Card>
@@ -76,14 +76,14 @@ export default async function WalkInPage({ searchParams }: { searchParams: Promi
             <Field label="Small-job boost (pages)" hint="0 = off"><Input type="number" name="smallJobBoostPages" min={0} max={100} defaultValue={s.smallJobBoostPages} disabled={!isOwner} /></Field>
             <Field label="Delete files after printing (hours)"><Input type="number" name="fileRetentionHours" min={1} max={168} defaultValue={s.fileRetentionHours} disabled={!isOwner} /></Field>
             <Field label="Max files per visit"><Input type="number" name="maxFilesPerVisit" min={1} max={30} defaultValue={s.maxFilesPerVisit} disabled={!isOwner} /></Field>
-            <p className="self-end text-xs text-slate-500">Jobs with this many pages or fewer jump ahead of longer jobs, so a 1-page print never waits behind a 300-page one.</p>
+            <p className="self-end text-xs text-on-surface-variant">Jobs with this many pages or fewer jump ahead of longer jobs, so a 1-page print never waits behind a 300-page one.</p>
             {isOwner && <div className="sm:col-span-2"><Button>Save settings</Button></div>}
           </form>
         </Card>
       </div>
 
       <WalkInAgents agents={initial.agents} appUrl={env.appUrl} isOwner={isOwner} />
-      <p className="text-sm text-slate-500">Saved walk-in customers (by phone number) are listed under <Link className="font-medium text-brand-600" href="/admin/customers">Customers</Link>.</p>
+      <p className="text-sm text-on-surface-variant">Saved walk-in customers (by phone number) are listed under <Link className="font-medium text-primary" href="/admin/customers">Customers</Link>.</p>
     </div>
   );
 }

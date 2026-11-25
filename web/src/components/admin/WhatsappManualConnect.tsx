@@ -23,7 +23,7 @@ export function WhatsappManualConnect({ onConnected }: { onConnected: (r: { webh
   return (
     <form onSubmit={submit} className="space-y-3" data-testid="wa-manual-form" autoComplete="off">
       {err && <Alert>{err}</Alert>}
-      <p className="text-xs text-slate-500">Use this if you already have your own Meta app (developers.facebook.com → WhatsApp → API Setup). The access token should be a permanent <b>System User</b> token with whatsapp_business_messaging and whatsapp_business_management.</p>
+      <p className="text-xs text-on-surface-variant">Use this if you already have your own Meta app (developers.facebook.com → WhatsApp → API Setup). The access token should be a permanent <b>System User</b> token with whatsapp_business_messaging and whatsapp_business_management.</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="WhatsApp Business Account ID"><Input name="wabaId" required inputMode="numeric" placeholder="e.g. 104996122399160" /></Field>
         <Field label="Phone number ID"><Input name="phoneNumberId" required inputMode="numeric" placeholder="e.g. 106540352242922" /></Field>
