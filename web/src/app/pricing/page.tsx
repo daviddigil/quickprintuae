@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo/metadata";
 import { MarketingFooter, MarketingNav } from "@/components/platform/MarketingNav";
 import { BillingExplainer, PricingTable } from "@/components/platform/PricingTable";
 import { PlanComparison } from "@/components/platform/PlanComparison";
@@ -6,7 +7,11 @@ import { FinalCta } from "@/components/platform/home/FinalCta";
 import { getPublicPlans, getPublicUsageRates } from "@/server/billing/public-plans";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Pricing" };
+export const metadata = pageMetadata({
+  title: "Print shop software pricing in AED: subscription or pay per order",
+  description: "QuickPrint UAE plans for print shops: a monthly subscription with no fee on orders, or pay per order with no monthly fee. WhatsApp and AI usage is pay as you go.",
+  path: "/pricing",
+});
 
 const PRICING_FAQ = [
   { q: "Is there a free trial?", a: "Yes. Every plan starts with 14 days free and no card. You can switch plans during the trial." },
