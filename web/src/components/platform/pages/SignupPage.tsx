@@ -16,7 +16,7 @@ export async function SignupPage({ locale, plan }: { locale: Locale; plan?: stri
         <Logo onDark href={home} label={copy.common.homeAria} />
         <div>
           <h1 className="text-4xl font-extrabold leading-tight">{t.headline}</h1>
-          <ul className="mt-8 space-y-3 text-outline">
+          <ul className="mt-8 space-y-3 text-inverse-on-surface/80">
             {t.bullets.map((b) => <li key={b}>✓ {b}</li>)}
           </ul>
         </div>

@@ -14,7 +14,7 @@ async function scan(page, url, label) {
   await page.goto(BASE + url, { waitUntil: "load", timeout: 45000 }); await page.waitForTimeout(900);
   await page.evaluate(axeSrc);
   const r = await page.evaluate(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
-  for (const v of r.violations) results.push({ label, url, id: v.id, impact: v.impact, n: v.nodes.length, help: v.help, sample: v.nodes[0]?.target?.join(" ").slice(0, 90), html: v.nodes.slice(0,3).map((n) => n.html.slice(0, 160)).join(" || ") });
+  for (const v of r.violations) results.push({ label, url, id: v.id === "color-contrast" ? "color-contrast@" + url : v.id, impact: v.impact, n: v.nodes.length, help: v.help, sample: v.nodes[0]?.target?.join(" ").slice(0, 90), html: v.nodes.slice(0,4).map((n) => n.html.slice(0, 120) + (v.id === 'color-contrast' ? ' ' + (n.any[0]?.message ?? '').slice(0, 110) : '')).join(" || ") });
 }
 const slug = "ax" + Date.now().toString(36);
 try {
