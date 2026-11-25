@@ -1,4 +1,6 @@
 "use server";
+import { USAGE_KINDS } from "@/lib/usage";
+import { saveUsageRate } from "@/server/usage";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
@@ -87,6 +89,8 @@ export async function savePlan(fd: FormData) {
     features: str(fd, "features").split("\n").map((s) => s.trim()).filter(Boolean),
     active: fd.get("active") === "on",
     flags: parsePlanFlags(fd.getAll("flags")) ?? [],
+    billingModel: str(fd, "billingModel") === "commission" ? "commission" : "subscription",
+    includedUsage: Object.fromEntries(USAGE_KINDS.map((k) => [k.kind, Math.max(0, Math.floor(num(fd, `inc_${k.kind}`) ?? 0))])),
   };
   if (!values.code || !values.name) redirect("/superadmin/plans?error=missing");
   if (parsePlanFlags(fd.getAll("flags")) === null) redirect("/superadmin/plans?error=flags");
@@ -95,6 +99,20 @@ export async function savePlan(fd: FormData) {
   await audit(id ? "plan.updated" : "plan.created", { code: values.code, flags: values.flags }, null);
   revalidatePath("/superadmin/plans");
   redirect("/superadmin/plans?saved=1");
+}
+
+/** Platform rate card for pay-as-you-go usage. */
+export async function saveUsageRates(fd: FormData) {
+  await requireSuperadmin();
+  for (const k of USAGE_KINDS) {
+    const v = num(fd, `rate_${k.kind}`);
+    if (v === null) continue;
+    if (v < 0 || v > 100) redirect("/superadmin/usage?error=range");
+    await saveUsageRate(k.kind, v, fd.get(`active_${k.kind}`) === "on");
+  }
+  await audit("usage.rates_updated", {}, null);
+  revalidatePath("/superadmin/usage");
+  redirect("/superadmin/usage?saved=1");
 }
 
 const COMMISSION_MODES = ["plan", "custom", "commission_only", "subscription_only", "none"] as const;

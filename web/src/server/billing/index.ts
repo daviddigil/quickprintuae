@@ -13,6 +13,8 @@ export { PLAN_FLAGS, type PlanFlag } from "./flags";
 import { PAID_STATUSES } from "./paid-statuses";
 import { commissionsToInvoice, ensureCommissionsForPeriod } from "@/server/commission";
 import { resolveRule } from "@/lib/commission";
+import { usageForPeriod } from "@/server/usage";
+import { applyPendingPlanChanges } from "./plan-change";
 
 export function platformStripe() {
   return env.platformStripeKey ? new Stripe(env.platformStripeKey) : null;
@@ -85,7 +87,9 @@ export async function generateInvoicesForPeriod(date: Date, opts: { tenantId?: s
     await ensureCommissionsForPeriod(t.id, start, end);
     const led = await commissionsToInvoice(t.id, end);
     const rule = resolveRule(plan, t.commissionOverride);
+    const usage = await usageForPeriod(t.id, start, end, plan.includedUsage ?? {});
     const m = computeSaasInvoice({
+      usageAmount: usage.total,
       priceMonthly: plan.priceMonthly, priceYearly: plan.priceYearly, billingCycle: t.billingCycle,
       orderFeePct: plan.orderFeePct, gmv, orderFeeAmount: r2(led.accrued - led.credits), subscriptionWaived: rule.subscriptionWaived,
       isYearlyBillingMonth: anchor.getUTCMonth() === start.getUTCMonth(),
@@ -95,7 +99,7 @@ export async function generateInvoicesForPeriod(date: Date, opts: { tenantId?: s
     const inv = await db.transaction(async (tx) => {
       const [row] = await tx.insert(schema.saasInvoices).values({
         tenantId: t.id, number: invoiceNumber(start, Number(n) + 1), periodStart: start, periodEnd: end,
-        subscriptionAmount: m.subscription, orderFeeAmount: m.orderFee, gmv, vat: m.vat, total: m.total, status: "open",
+        subscriptionAmount: m.subscription, orderFeeAmount: m.orderFee, usageAmount: m.usage, usageDetail: usage.lines, gmv, vat: m.vat, total: m.total, status: "open",
       }).returning();
       if (led.accruedIds.length) await tx.update(schema.orderCommissions).set({ status: "invoiced", invoiceId: row.id, updatedAt: new Date() }).where(inArray(schema.orderCommissions.id, led.accruedIds));
       if (led.creditIds.length) await tx.update(schema.orderCommissions).set({ creditedInvoiceId: row.id, updatedAt: new Date() }).where(inArray(schema.orderCommissions.id, led.creditIds));
@@ -188,11 +192,13 @@ export async function enforceDunning(now = new Date()) {
 export async function runBillingCron(now = new Date()) {
   const prev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15));
   const created = await generateInvoicesForPeriod(prev);
+  // plan-model switches requested by owners start with the new period, after the old period is invoiced
+  const switched = await applyPendingPlanChanges(now);
   const open = await db.query.saasInvoices.findMany({ where: eq(schema.saasInvoices.status, "open") });
   const collected: Record<string, string> = {};
   for (const inv of open) collected[inv.number] = (await collectInvoice(inv.id)).status;
   const dunning = await enforceDunning(now);
-  return { created: created.length, collected, dunning };
+  return { created: created.length, collected, dunning, switched };
 }
 
 /** Platform KPIs for the superadmin dashboard. */

@@ -1,3 +1,4 @@
+import { recordUsage } from "@/server/usage";
 import { NextResponse } from "next/server";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -81,6 +82,7 @@ export async function POST(req: Request) {
       storageKey: key, mime: result.mime, source: result.source, sortOrder: Date.now() % 1_000_000,
     }).returning();
   }
+  if (result.source !== "template") await recordUsage(tenant.id, "ai_banner");
   await audit(existing ? "banner.edit" : "banner.create", { bannerId: banner.id, source: result.source, by: cu.user.id }, tenant.id);
   return NextResponse.json({ banner, note: result.note ?? null });
 }

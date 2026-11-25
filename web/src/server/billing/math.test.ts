@@ -4,7 +4,7 @@ import { computeSaasInvoice, invoiceNumber, periodBounds, mrrOf } from "./math";
 
 test("monthly plan with order fee and VAT", () => {
   const r = computeSaasInvoice({ priceMonthly: 499, priceYearly: 4990, billingCycle: "monthly", orderFeePct: 1, gmv: 18000 });
-  assert.deepEqual(r, { subscription: 499, orderFee: 180, vat: 33.95, total: 712.95 });
+  assert.deepEqual(r, { subscription: 499, orderFee: 180, usage: 0, vat: 33.95, total: 712.95 });
 });
 test("yearly plan bills full year only in anniversary month", () => {
   const off = computeSaasInvoice({ priceMonthly: 499, priceYearly: 4990, billingCycle: "yearly", orderFeePct: 1, gmv: 1000 });

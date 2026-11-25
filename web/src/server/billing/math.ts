@@ -11,6 +11,8 @@ export interface InvoiceMathInput {
   orderFeeAmount?: number;
   /** commission-only shops: no subscription charge */
   subscriptionWaived?: boolean;
+  /** pay-as-you-go usage (WhatsApp/Meta, AI) net of VAT */
+  usageAmount?: number;
   /** for yearly plans: bill the full year on the anniversary month, nothing otherwise */
   isYearlyBillingMonth?: boolean;
   vatRate?: number;
@@ -20,9 +22,10 @@ export function computeSaasInvoice(i: InvoiceMathInput) {
   const subscription = i.subscriptionWaived ? 0 :
     i.billingCycle === "yearly" ? (i.isYearlyBillingMonth ? i.priceYearly : 0) : i.priceMonthly;
   const orderFee = i.orderFeeAmount !== undefined ? r2(i.orderFeeAmount) : r2((i.gmv * i.orderFeePct) / 100);
-  const net = r2(subscription + orderFee);
+  const usage = r2(i.usageAmount ?? 0);
+  const net = r2(subscription + orderFee + usage);
   const vat = r2((net * (i.vatRate ?? 5)) / 100);
-  return { subscription: r2(subscription), orderFee, vat, total: r2(net + vat) };
+  return { subscription: r2(subscription), orderFee, usage, vat, total: r2(net + vat) };
 }
 
 export function periodBounds(date: Date) {

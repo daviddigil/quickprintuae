@@ -7,12 +7,14 @@ import { DEFAULT_PRODUCTS, DEFAULT_TENANT_SETTINGS } from "@/lib/catalog-default
 import { EMIRATES } from "@/lib/types";
 
 export const DEFAULT_PLANS = [
-  { code: "starter", name: "Starter", priceMonthly: 199, priceYearly: 1990, orderFeePct: 2, maxOrdersPerMonth: 300, maxStaff: 2, sortOrder: 1,
+  { code: "starter", name: "Starter", priceMonthly: 199, priceYearly: 1990, orderFeePct: 0, maxOrdersPerMonth: 300, maxStaff: 2, sortOrder: 1,
     flags: ["walk_in_queue"], features: ["Online storefront", "Stripe & Mamo Pay", "Pickup + in-house delivery", "Walk-in QR print queue", "Hero slider for offers", "All product types", "300 orders / month"] },
-  { code: "growth", name: "Growth", priceMonthly: 499, priceYearly: 4990, orderFeePct: 1, maxOrdersPerMonth: 2000, maxStaff: 10, sortOrder: 2,
+  { code: "growth", name: "Growth", priceMonthly: 499, priceYearly: 4990, orderFeePct: 0, maxOrdersPerMonth: 2000, maxStaff: 10, sortOrder: 2,
     flags: ["walk_in_queue"], features: ["Everything in Starter", "AI business card designer", "Courier integrations (Jeebly, Quiqup…)", "Custom domain", "10 staff"] },
-  { code: "enterprise", name: "Enterprise", priceMonthly: 1499, priceYearly: 14990, orderFeePct: 0.5, maxOrdersPerMonth: null, maxStaff: null, sortOrder: 3,
+  { code: "enterprise", name: "Enterprise", priceMonthly: 1499, priceYearly: 14990, orderFeePct: 0, maxOrdersPerMonth: null, maxStaff: null, sortOrder: 3,
     flags: ["walk_in_queue"], features: ["Everything in Growth", "Multiple branches", "Unlimited orders & staff", "Priority support & onboarding", "API access"] },
+  { code: "payg", name: "Pay per order", priceMonthly: 0, priceYearly: 0, orderFeePct: 3, maxOrdersPerMonth: 2000, maxStaff: 5, sortOrder: 4,
+    billingModel: "commission", flags: ["walk_in_queue"], features: ["No monthly fee", "Commission only on paid orders", "Everything in Growth", "Meta API & AI pay as you go"] },
 ];
 
 export async function ensurePlans(db: DB) {

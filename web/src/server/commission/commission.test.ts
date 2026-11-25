@@ -11,9 +11,18 @@ import { recordOrderCommission } from "./index";
 
 const suffix = Date.now().toString(36);
 const created: string[] = [];
+/** a dedicated 1%-commission plan so the numbers below do not depend on the seeded plans */
+const PLAN = `cm${suffix}`;
+let planId = "";
+async function ensureTestPlan() {
+  if (planId) return;
+  const [p] = await db.insert(schema.plans).values({ code: PLAN, name: "T", priceMonthly: 499, priceYearly: 4990, orderFeePct: 1, sortOrder: 99, active: false }).returning();
+  planId = p.id;
+}
 
 async function shop(opts: { status?: "trial" | "active"; override?: unknown } = {}) {
-  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `C ${suffix}`, slug: `c${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: "growth" });
+  await ensureTestPlan();
+  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `C ${suffix}`, slug: `c${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: PLAN });
   created.push(t.id);
   await db.update(schema.tenants).set({ status: opts.status ?? "active", commissionOverride: (opts.override ?? null) as never }).where(eq(schema.tenants.id, t.id));
   return (await db.query.tenants.findFirst({ where: eq(schema.tenants.id, t.id) }))!;
@@ -30,14 +39,14 @@ async function order(tenantId: string, subtotal: number, items = 1) {
 }
 const pay = (id: string) => markOrderPaid(id, "mamo", `ref-${id}`);
 const comm = (orderId: string) => db.query.orderCommissions.findFirst({ where: eq(schema.orderCommissions.orderId, orderId) });
-after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); });
+after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); if (planId) await db.delete(schema.plans).where(eq(schema.plans.id, planId)); });
 
 test("paying an order records ONE commission with the rule snapshot (Growth plan = 1% of the ex-VAT value)", async () => {
   const t = await shop(); const o = await order(t.id, 200);
   assert.equal(await pay(o.id), true);
   await pay(o.id); await recordOrderCommission(o.id);
   const c = (await comm(o.id))!;
-  assert.equal(c.basis, 200); assert.equal(c.fee, 2); assert.equal(c.status, "accrued"); assert.equal(c.ruleSource, "plan"); assert.equal(c.planCode, "growth");
+  assert.equal(c.basis, 200); assert.equal(c.fee, 2); assert.equal(c.status, "accrued"); assert.equal(c.ruleSource, "plan"); assert.equal(c.planCode, PLAN);
   assert.equal((await db.select().from(schema.orderCommissions).where(eq(schema.orderCommissions.tenantId, t.id))).length, 1);
 });
 

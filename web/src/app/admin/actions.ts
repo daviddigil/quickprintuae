@@ -262,3 +262,27 @@ export async function toggleStaff(fd: FormData) {
   await audit(u!.active ? "staff.deactivate" : "staff.activate", { userId: u!.id, email: u!.email }, tenant.id);
   back("/admin/staff", `${u!.name} ${u!.active ? "deactivated" : "re-activated"}`);
 }
+
+/* billing model: owner chooses monthly subscription vs pay-per-order commission */
+export async function changeBillingPlan(fd: FormData) {
+  const { tenant, user } = await requireStaff();
+  if (user.role !== "owner") return back("/admin/billing", "Only the owner can change the plan", true);
+  const { ensurePlans } = await import("@/server/provision");
+  await ensurePlans(db);
+  const { requestPlanChange, clearPendingPlanChange, PlanChangeError } = await import("@/server/billing/plan-change");
+  if (str(fd, "cancel")) {
+    await clearPendingPlanChange(tenant.id);
+    await audit("billing.plan_change_cancelled");
+    revalidatePath("/admin/billing");
+    return back("/admin/billing", "Scheduled change cancelled");
+  }
+  try {
+    const r = await requestPlanChange(tenant.id, str(fd, "planId"));
+    await audit("billing.plan_change", { planId: str(fd, "planId"), result: r });
+    revalidatePath("/admin/billing");
+    return back("/admin/billing", r === "applied" ? "Plan updated" : r === "scheduled" ? "Change scheduled for the start of next month" : "You are already on this plan");
+  } catch (e) {
+    if (e instanceof PlanChangeError) return back("/admin/billing", e.message, true);
+    throw e;
+  }
+}

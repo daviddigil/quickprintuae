@@ -1,3 +1,4 @@
+import { recordUsage } from "@/server/usage";
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -74,6 +75,7 @@ async function handleInbound(e: Extract<WaEvent, { kind: "inbound" }>) {
   if (!tenant || ["suspended", "cancelled"].includes(tenant.status)) return;
   const button = e.buttonId ? await handleButton(tenant, dbCartStore(conv.id), e.buttonId) : null;
   const result = button ?? await runAgent(tenant, await history(conv.id), { cart: dbCartStore(conv.id), greeting: account.greeting, firstMessage: !existed });
+  if (result.engine === "claude") await recordUsage(account.tenantId, "ai_chat_turn", { tokensIn: result.tokens?.in, tokensOut: result.tokens?.out, ref: `${conv.id}:${e.wamid}` });
   const fresh = (await db.query.whatsappConversations.findFirst({ where: eq(schema.whatsappConversations.id, conv.id) })) ?? conv;
   // a human may have replied from the WhatsApp Business app while the model was thinking
   if (!aiActive(account, fresh)) return;

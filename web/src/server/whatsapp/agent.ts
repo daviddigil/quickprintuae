@@ -17,6 +17,8 @@ export interface AgentResult {
   /** AI failed / declined / looped: flag the chat for the owner (reason code) */
   needsHuman?: string;
   engine: "claude" | "rule-based";
+  /** Claude tokens spent on this reply (for pay-as-you-go billing) */
+  tokens?: { in: number; out: number };
 }
 export interface HistoryMsg { role: "user" | "assistant"; content: string }
 export interface AgentContext { cart: CartStore; greeting?: string; firstMessage?: boolean }
@@ -75,6 +77,7 @@ export async function runAgent(tenant: Tenant, history: HistoryMsg[], ctx: Agent
   const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
   if (aiMode() !== "claude") return ruleBasedReply(tenant, lastUser, ctx);
 
+  const tok = { in: 0, out: 0 };
   let handoff = false;
   let checkout: { message: string; links: string[] } | null = null;
   const messages: Anthropic.Beta.Messages.BetaMessageParam[] = history.map((m) => ({ role: m.role, content: m.role === "user" ? sanitizeCustomerText(m.content) : m.content }));
@@ -82,7 +85,7 @@ export async function runAgent(tenant: Tenant, history: HistoryMsg[], ctx: Agent
     const model = text.trim();
     const reply = checkout ? (model && !checkout.links.some((l) => model.includes(l)) ? `${model}\n\n${checkout.message}` : checkout.message) : model;
     const cartNow = await ctx.cart.get().catch(() => []);
-    return { reply, handoff, links: checkout?.links ?? [], offerButtons: !checkout && cartNow.length > 0 && !handoff, engine: "claude" };
+    return { reply, handoff, links: checkout?.links ?? [], offerButtons: !checkout && cartNow.length > 0 && !handoff, engine: "claude", tokens: tok };
   };
 
   try {
@@ -91,6 +94,7 @@ export async function runAgent(tenant: Tenant, history: HistoryMsg[], ctx: Agent
         model: MODEL, max_tokens: 1500, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default",
         system: SYSTEM(tenant, ctx.greeting ?? ""), tools: TOOLS, output_config: { effort: "low" }, messages,
       });
+      tok.in += res.usage?.input_tokens ?? 0; tok.out += res.usage?.output_tokens ?? 0;
       if (res.stop_reason === "refusal") return { reply: POLITE_REFUSAL, handoff: false, links: [], needsHuman: "ai_refusal", engine: "claude" };
       if (res.stop_reason !== "tool_use") {
         const text = res.content.filter((b): b is Anthropic.Beta.Messages.BetaTextBlock => b.type === "text").map((b) => b.text).join("\n");

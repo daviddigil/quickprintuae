@@ -1,3 +1,4 @@
+import { recordUsage } from "@/server/usage";
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -35,6 +36,8 @@ async function post(account: WhatsappAccount, path: string, body: unknown) {
 async function record(conv: WhatsappConversation, source: "ai" | "admin", type: string, body: string, wamid: string | null, status: string, raw?: unknown) {
   await db.insert(schema.whatsappMessages).values({ conversationId: conv.id, waMessageId: wamid, direction: "out", source, type, body, status, raw: raw as object });
   await db.update(schema.whatsappConversations).set({ lastMessageAt: new Date() }).where(eq(schema.whatsappConversations.id, conv.id));
+  // meter delivered Meta API messages (fake/dev sends are recorded but never billed)
+  if (status === "sent") await recordUsage(conv.tenantId, "whatsapp_message_out", { ref: wamid ?? undefined, billable: !(raw as { fake?: boolean } | undefined)?.fake, meta: { source } });
 }
 
 export const OUTSIDE_WINDOW = "Outside the 24-hour customer service window — WhatsApp only allows an approved template message now.";

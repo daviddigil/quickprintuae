@@ -1,3 +1,4 @@
+import { recordUsage } from "@/server/usage";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { resolveTenant } from "@/lib/tenant";
@@ -51,5 +52,6 @@ export async function POST(req: Request) {
   if (limited(`${tenant.id}:${ip}`)) return NextResponse.json({ error: "Too many designs requested. Please wait a few minutes." }, { status: 429 });
 
   const result = await generateCardDesigns(details, { widthMm, heightMm, doubleSided });
+  if (result.source === "ai") await recordUsage(tenant.id, "ai_card_design");
   return NextResponse.json(result);
 }

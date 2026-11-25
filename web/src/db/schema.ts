@@ -37,6 +37,10 @@ export const plans = pgTable("plans", {
   priceMonthly: money("price_monthly").notNull().default(0), // AED
   priceYearly: money("price_yearly").notNull().default(0),
   orderFeePct: numeric("order_fee_pct", { precision: 5, scale: 2, mode: "number" }).notNull().default(0),
+  /** how shops on this plan pay: 'subscription' (monthly fee, no commission) | 'commission' (no monthly fee, commission per order) */
+  billingModel: text("billing_model").notNull().default("subscription"),
+  /** free monthly allowance of pay-as-you-go usage per kind, e.g. { ai_chat_turn: 200 } */
+  includedUsage: jsonb("included_usage").$type<Record<string, number>>().notNull().default({}),
   /** commission: optional flat fee per print job, and min/max fee per order (null max = no cap) */
   perJobFee: numeric("per_job_fee", { precision: 8, scale: 2, mode: "number" }).notNull().default(0),
   minOrderFee: numeric("min_order_fee", { precision: 8, scale: 2, mode: "number" }).notNull().default(0),
@@ -84,6 +88,9 @@ export const tenants = pgTable("tenants", {
   billingRef: jsonb("billing_ref").$type<Record<string, string>>().notNull().default({}),
   /** superadmin-set commission terms for this shop; null = follow the plan */
   commissionOverride: jsonb("commission_override").$type<CommissionOverride | null>(),
+  /** plan change requested by the owner; takes effect at the start of the next billing period */
+  pendingPlanId: uuid("pending_plan_id"),
+  pendingPlanAt: timestamp("pending_plan_at", { withTimezone: true }),
   autoRenew: boolean("auto_renew").notNull().default(true),
   settings: jsonb("settings").$type<TenantSettings>().notNull().default({} as TenantSettings),
   createdAt: createdAt(),
@@ -445,6 +452,33 @@ export const cardDesigns = pgTable("card_designs", {
 });
 
 /* ---------- SaaS billing ---------- */
+/** Platform rate card for pay-as-you-go usage (AED per unit). 0 = not billed. Edited by the superadmin. */
+export const usageRates = pgTable("usage_rates", {
+  id: id(),
+  kind: text("kind").notNull().unique(),
+  priceAed: numeric("price_aed", { precision: 10, scale: 4, mode: "number" }).notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Metered usage per shop. `ref` (e.g. a WhatsApp message id) makes recording idempotent so retries never double-bill. */
+export const usageEvents = pgTable("usage_events", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  tokensIn: integer("tokens_in"),
+  tokensOut: integer("tokens_out"),
+  /** false for owner test chats and fallbacks that cost us nothing */
+  billable: boolean("billable").notNull().default(true),
+  ref: text("ref"),
+  meta: jsonb("meta"),
+  createdAt: createdAt(),
+}, (t) => [
+  index("usage_events_tenant_idx").on(t.tenantId, t.kind, t.createdAt),
+  uniqueIndex("usage_events_ref_idx").on(t.tenantId, t.kind, t.ref).where(sql`${t.ref} is not null`),
+]);
+
 /** One row per paid order: the commission QuickPrint earns, with the rule that produced it (immutable audit trail). */
 export const orderCommissions = pgTable("order_commissions", {
   id: id(),
@@ -489,6 +523,9 @@ export const saasInvoices = pgTable("saas_invoices", {
   gateway: text("gateway").notNull().default("stripe"),
   gatewayRef: text("gateway_ref"),
   paymentUrl: text("payment_url"),
+  /** pay-as-you-go usage billed on this invoice (WhatsApp/Meta messages, AI) and the line detail */
+  usageAmount: money("usage_amount").notNull().default(0),
+  usageDetail: jsonb("usage_detail").$type<{ kind: string; label: string; unit: string; qty: number; included: number; billedQty: number; rate: number; amount: number }[]>().notNull().default([]),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   createdAt: createdAt(),
 });
@@ -512,6 +549,7 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
 export type Banner = typeof banners.$inferSelect;
 export type OrderCommission = typeof orderCommissions.$inferSelect;
+export type UsageRate = typeof usageRates.$inferSelect;
 export type PlatformGateway = typeof platformGateways.$inferSelect;
 export type WhatsappActivationRequest = typeof whatsappActivationRequests.$inferSelect;
 export type OrderSettlement = typeof orderSettlements.$inferSelect;

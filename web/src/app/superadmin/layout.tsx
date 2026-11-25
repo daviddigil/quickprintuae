@@ -9,6 +9,7 @@ const NAV = [
   { href: "/superadmin/tenants", label: "Print shops" },
   { href: "/superadmin/plans", label: "Plans" },
   { href: "/superadmin/commissions", label: "Commissions" },
+  { href: "/superadmin/usage", label: "Usage billing" },
   { href: "/superadmin/invoices", label: "SaaS invoices" },
   { href: "/superadmin/audit", label: "Audit log" },
   { href: "/superadmin/settings", label: "Platform health" },
