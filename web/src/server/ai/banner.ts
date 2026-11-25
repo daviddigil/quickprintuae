@@ -55,7 +55,7 @@ const esc = (s: string) => s.replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&g
 /** Offline template: gradient in the brand colour, geometric accents, headline + subtitle. */
 export function templateBanner(i: BannerInput): BannerResult {
   const w = i.aspect === "square" ? 1080 : 1536, h = i.aspect === "square" ? 1080 : 512;
-  const c = /^#[0-9a-f]{6}$/i.test(i.brandColor) ? i.brandColor : "#e11d48";
+  const c = /^#[0-9a-f]{6}$/i.test(i.brandColor) ? i.brandColor : "#3300ff";
   const title = esc((i.title || i.shopName).slice(0, 48)), sub = esc((i.subtitle || i.prompt).slice(0, 90));
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
 <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="#0f172a"/></linearGradient></defs>

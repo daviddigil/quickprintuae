@@ -14,36 +14,36 @@
   color-scheme: light;
 
   /* paper surfaces */
-  --md-surface: #fffdfc;
-  --md-surface-dim: #f3eeee;
+  --md-surface: #fbfbff;
+  --md-surface-dim: #eceaf6;
   --md-surface-container-lowest: #ffffff;
-  --md-surface-container-low: #fbf7f6;
-  --md-surface-container: #f6f0ef;
-  --md-surface-container-high: #efe8e7;
-  --md-surface-container-highest: #e8e0df;
-  --md-inverse-surface: #2f2829;
-  --md-inverse-on-surface: #f8eeef;
+  --md-surface-container-low: #f6f5fd;
+  --md-surface-container: #f0eff9;
+  --md-surface-container-high: #e9e8f4;
+  --md-surface-container-highest: #e2e1ef;
+  --md-inverse-surface: #1d1e3a;
+  --md-inverse-on-surface: #f1f0fb;
 
-  --md-on-surface: #201a1b;
-  --md-on-surface-variant: #5f5557; /* 7:1 on --md-surface */
-  --md-outline: #85787a;
-  --md-outline-variant: #dccfd0;
+  --md-on-surface: #1d1e3a;
+  --md-on-surface-variant: #545673; /* 7:1 on --md-surface */
+  --md-outline: #7a7c9a;
+  --md-outline-variant: #d6d7e8;
 
-  /* brand accent (seed #e11d48) */
-  --md-primary: #e11d48;            /* white on it = 4.7:1 */
+  /* brand accent (brand royal blue #3300FF; magenta #FF007F and teal #00FFCC accents, see docs/BRAND.md) */
+  --md-primary: #3300ff;            /* white on it = 4.7:1 */
   --md-on-primary: #ffffff;
-  --md-primary-container: #ffdadf;
-  --md-on-primary-container: #660d27;
+  --md-primary-container: #e5e0ff;
+  --md-on-primary-container: #10005c;
 
-  --md-secondary: #75565c;
+  --md-secondary: #c4006a;
   --md-on-secondary: #ffffff;
-  --md-secondary-container: #f4dde0;
-  --md-on-secondary-container: #2b1519;
+  --md-secondary-container: #ffd9e8;
+  --md-on-secondary-container: #3e0021;
 
-  --md-tertiary: #0b6e8a;
+  --md-tertiary: #006b58;
   --md-on-tertiary: #ffffff;
-  --md-tertiary-container: #c9ecf7;
-  --md-on-tertiary-container: #002e3d;
+  --md-tertiary-container: #b3fff0;
+  --md-on-tertiary-container: #00201a;
 
   /* semantic */
   --md-success: #1e7a4a;  --md-on-success: #ffffff;  --md-success-container: #d4f1df;  --md-on-success-container: #07351d;
@@ -52,56 +52,56 @@
   --md-info: #0b64b6;     --md-on-info: #ffffff;     --md-info-container: #d6e6fb;     --md-on-info-container: #001c3b;
 
   /* ink accents (CMYK) — small marks and category cues only */
-  --ink-cyan: #1aa3d6;
-  --ink-magenta: #e0407e;
+  --ink-cyan: #00c9a7;
+  --ink-magenta: #ff007f;
   --ink-yellow: #f4b81f;
-  --ink-key: #231f20;
+  --ink-key: #1d1e3a;
 
   --halftone-dot: rgb(133 120 122 / 0.28);
-  --shadow-ink: 32 26 27;
+  --shadow-ink: 29 30 58;
 }
 
 /* ---------- 2. Dark theme (own contrast care, not an invert) ---------------- */
 .dark {
   color-scheme: dark;
 
-  --md-surface: #171112;
-  --md-surface-dim: #120c0d;
-  --md-surface-container-lowest: #120c0d;
-  --md-surface-container-low: #1f1819;
-  --md-surface-container: #251d1e;
-  --md-surface-container-high: #302829;
-  --md-surface-container-highest: #3b3334;
-  --md-inverse-surface: #f1e5e6;
-  --md-inverse-on-surface: #2f2829;
+  --md-surface: #12132a;
+  --md-surface-dim: #0d0e20;
+  --md-surface-container-lowest: #0d0e20;
+  --md-surface-container-low: #181936;
+  --md-surface-container: #1d1e3a;
+  --md-surface-container-high: #272849;
+  --md-surface-container-highest: #323356;
+  --md-inverse-surface: #e8e8f6;
+  --md-inverse-on-surface: #1d1e3a;
 
-  --md-on-surface: #f1e5e6;
-  --md-on-surface-variant: #c9bcbd;
-  --md-outline: #9a8d8f;
-  --md-outline-variant: #4d4244;
+  --md-on-surface: #ebebf8;
+  --md-on-surface-variant: #c3c4dc;
+  --md-outline: #8e90b0;
+  --md-outline-variant: #3d3e60;
 
-  --md-primary: #ff8fa5;
-  --md-on-primary: #5e0b22;
-  --md-primary-container: #8a1735;
-  --md-on-primary-container: #ffd9df;
+  --md-primary: #b9b0ff;
+  --md-on-primary: #1a0070;
+  --md-primary-container: #3300ff;
+  --md-on-primary-container: #e5e0ff;
 
-  --md-secondary: #e4bdc3;
-  --md-on-secondary: #43292f;
-  --md-secondary-container: #5b3f45;
-  --md-on-secondary-container: #ffd9df;
+  --md-secondary: #ff9fc8;
+  --md-on-secondary: #5b0030;
+  --md-secondary-container: #8a0049;
+  --md-on-secondary-container: #ffd9e8;
 
-  --md-tertiary: #7fd3ee;
-  --md-on-tertiary: #003543;
-  --md-tertiary-container: #004d63;
-  --md-on-tertiary-container: #c9ecf7;
+  --md-tertiary: #00ffcc;
+  --md-on-tertiary: #00382d;
+  --md-tertiary-container: #005144;
+  --md-on-tertiary-container: #b3fff0;
 
   --md-success: #7bd9a1;  --md-on-success: #003920;  --md-success-container: #0f5233;  --md-on-success-container: #d4f1df;
   --md-warning: #ffc766;  --md-on-warning: #432c00;  --md-warning-container: #5e3b00;  --md-on-warning-container: #ffe7b8;
   --md-critical: #ffb4ab; --md-on-critical: #690010; --md-critical-container: #93000f; --md-on-critical-container: #ffdad9;
   --md-info: #a5c8ff;     --md-on-info: #00315f;     --md-info-container: #00458a;     --md-on-info-container: #d6e6fb;
 
-  --ink-cyan: #4cc3ee;
-  --ink-magenta: #ff6aa0;
+  --ink-cyan: #00ffcc;
+  --ink-magenta: #ff5aa5;
   --ink-yellow: #ffd04d;
   --ink-key: #f1e5e6;
 
@@ -115,43 +115,43 @@
   .theme-auto:not(.light) {
     color-scheme: dark;
 
-    --md-surface: #171112;
-    --md-surface-dim: #120c0d;
-    --md-surface-container-lowest: #120c0d;
-    --md-surface-container-low: #1f1819;
-    --md-surface-container: #251d1e;
-    --md-surface-container-high: #302829;
-    --md-surface-container-highest: #3b3334;
-    --md-inverse-surface: #f1e5e6;
-    --md-inverse-on-surface: #2f2829;
+    --md-surface: #12132a;
+    --md-surface-dim: #0d0e20;
+    --md-surface-container-lowest: #0d0e20;
+    --md-surface-container-low: #181936;
+    --md-surface-container: #1d1e3a;
+    --md-surface-container-high: #272849;
+    --md-surface-container-highest: #323356;
+    --md-inverse-surface: #e8e8f6;
+    --md-inverse-on-surface: #1d1e3a;
 
-    --md-on-surface: #f1e5e6;
-    --md-on-surface-variant: #c9bcbd;
-    --md-outline: #9a8d8f;
-    --md-outline-variant: #4d4244;
+    --md-on-surface: #ebebf8;
+    --md-on-surface-variant: #c3c4dc;
+    --md-outline: #8e90b0;
+    --md-outline-variant: #3d3e60;
 
-    --md-primary: #ff8fa5;
-    --md-on-primary: #5e0b22;
-    --md-primary-container: #8a1735;
-    --md-on-primary-container: #ffd9df;
+    --md-primary: #b9b0ff;
+    --md-on-primary: #1a0070;
+    --md-primary-container: #3300ff;
+    --md-on-primary-container: #e5e0ff;
 
-    --md-secondary: #e4bdc3;
-    --md-on-secondary: #43292f;
-    --md-secondary-container: #5b3f45;
-    --md-on-secondary-container: #ffd9df;
+    --md-secondary: #ff9fc8;
+    --md-on-secondary: #5b0030;
+    --md-secondary-container: #8a0049;
+    --md-on-secondary-container: #ffd9e8;
 
-    --md-tertiary: #7fd3ee;
-    --md-on-tertiary: #003543;
-    --md-tertiary-container: #004d63;
-    --md-on-tertiary-container: #c9ecf7;
+    --md-tertiary: #00ffcc;
+    --md-on-tertiary: #00382d;
+    --md-tertiary-container: #005144;
+    --md-on-tertiary-container: #b3fff0;
 
     --md-success: #7bd9a1;  --md-on-success: #003920;  --md-success-container: #0f5233;  --md-on-success-container: #d4f1df;
     --md-warning: #ffc766;  --md-on-warning: #432c00;  --md-warning-container: #5e3b00;  --md-on-warning-container: #ffe7b8;
     --md-critical: #ffb4ab; --md-on-critical: #690010; --md-critical-container: #93000f; --md-on-critical-container: #ffdad9;
     --md-info: #a5c8ff;     --md-on-info: #00315f;     --md-info-container: #00458a;     --md-on-info-container: #d6e6fb;
 
-    --ink-cyan: #4cc3ee;
-    --ink-magenta: #ff6aa0;
+    --ink-cyan: #00ffcc;
+    --ink-magenta: #ff5aa5;
     --ink-yellow: #ffd04d;
     --ink-key: #f1e5e6;
 

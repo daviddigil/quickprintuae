@@ -6,7 +6,7 @@ export const contentType = "image/png";
 export default function AppleIcon() {
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #e11d48, #9f1239)", color: "white", fontSize: 112, fontWeight: 800 }}>Q</div>
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #00ffcc, #ff007f 50%, #3300ff)", color: "white", fontSize: 112, fontWeight: 800 }}>Q</div>
     ),
     size,
   );

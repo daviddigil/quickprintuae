@@ -10,9 +10,9 @@ const chips = ["Walk-in QR queue", "WhatsApp AI orders", "Mamo Pay & Stripe", "U
 export default function OpengraphImage() {
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, color: "white", background: "linear-gradient(135deg, #e11d48 0%, #9f1239 45%, #0f172a 100%)", fontFamily: "sans-serif" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, color: "white", background: "linear-gradient(135deg, #3300ff 0%, #ff007f 55%, #1d1e3a 100%)", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <div style={{ width: 72, height: 72, borderRadius: 20, background: "white", color: "#e11d48", fontSize: 48, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>Q</div>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: "white", color: "#3300ff", fontSize: 48, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>Q</div>
           <div style={{ fontSize: 44, fontWeight: 800, display: "flex" }}>{SITE.name}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
