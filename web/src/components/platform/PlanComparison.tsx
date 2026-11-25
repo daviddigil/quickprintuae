@@ -1,12 +1,15 @@
 import type { PublicPlan } from "./PricingTable";
+import { getCopy, type Locale } from "@/lib/i18n";
+import { trFeature, trPlanName } from "./plan-text";
 
 const aed = (n: number) => `AED ${n.toLocaleString("en-AE")}`;
-const yes = <svg className="mx-auto size-4 text-success" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="Included"><path d="M3 8.5l3.2 3L13 4.5" /></svg>;
-const no = <span className="text-outline" aria-label="Not included">&ndash;</span>;
 
 /** Side-by-side comparison built from the plans table. Feature rows are the union of every plan's feature list. */
-export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
+export function PlanComparison({ plans, locale = "en" }: { plans: PublicPlan[]; locale?: Locale }) {
   if (!plans.length) return null;
+  const copy = getCopy(locale), k = copy.compare, pt = copy.priceTable;
+  const yes = <svg className="mx-auto size-4 text-success" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label={k.included}><path d="M3 8.5l3.2 3L13 4.5" /></svg>;
+  const no = <span className="text-outline" aria-label={k.notIncluded}>&ndash;</span>;
   // "Everything in Growth" means the plan includes Growth's features too, so resolve that into a full set per plan.
   const own = (p: PublicPlan) => p.features.filter((f) => !/^Everything in |^No monthly fee|^Commission only|pay as you go$/i.test(f));
   const resolved = new Map<string, Set<string>>();
@@ -31,22 +34,22 @@ export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
     </tr>
   );
   return (
-    <div className="overflow-x-auto rounded-shape-xl border border-outline-variant bg-surface-lowest">
+    <div className="overflow-x-auto rounded-shape-xl border border-outline-variant bg-surface-lowest" tabIndex={0} role="region" aria-label="Plan comparison table">
       <table className="w-full min-w-[36rem] text-sm">
-        <caption className="sr-only">Compare QuickPrint plans</caption>
+        <caption className="sr-only">{k.caption}</caption>
         <thead>
           <tr className="bg-surface-low">
-            <th scope="col" className="px-4 py-4 text-start text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Plan</th>
-            {plans.map((p) => <th key={p.code} scope="col" className="px-3 py-4 text-center text-base font-semibold">{p.name}</th>)}
+            <th scope="col" className="px-4 py-4 text-start text-xs font-semibold uppercase tracking-wide text-on-surface-variant">{k.plan}</th>
+            {plans.map((p) => <th key={p.code} scope="col" className="px-3 py-4 text-center text-base font-semibold">{trPlanName(pt, p.name)}</th>)}
           </tr>
         </thead>
         <tbody className="[&_th:first-child]:ps-4">
-          {row("Monthly price", (p) => aed(p.priceMonthly))}
-          {row("Yearly price", (p) => (p.billingModel === "commission" ? "None" : aed(p.priceYearly)))}
-          {row("Fee on paid orders", (p) => (p.billingModel === "commission" ? `${p.orderFeePct}%` : "None"))}
-          {row("Orders per month", (p) => (p.maxOrdersPerMonth == null ? "Unlimited" : p.maxOrdersPerMonth.toLocaleString("en-AE")))}
-          {row("Team members", (p) => (p.maxStaff == null ? "Unlimited" : p.maxStaff.toLocaleString("en-AE")))}
-          {features.map((f) => row(f, (p) => (resolved.get(p.code)!.has(f) ? yes : no)))}
+          {row(k.monthly, (p) => <span dir="ltr">{aed(p.priceMonthly)}</span>)}
+          {row(k.yearly, (p) => (p.billingModel === "commission" ? k.none : <span dir="ltr">{aed(p.priceYearly)}</span>))}
+          {row(k.fee, (p) => (p.billingModel === "commission" ? `${p.orderFeePct}%` : k.none))}
+          {row(k.orders, (p) => (p.maxOrdersPerMonth == null ? k.unlimited : p.maxOrdersPerMonth.toLocaleString("en-AE")))}
+          {row(k.team, (p) => (p.maxStaff == null ? k.unlimited : p.maxStaff.toLocaleString("en-AE")))}
+          {features.map((f) => row(trFeature(pt, f), (p) => (resolved.get(p.code)!.has(f) ? yes : no)))}
         </tbody>
       </table>
     </div>

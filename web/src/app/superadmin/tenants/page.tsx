@@ -26,7 +26,7 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
       {deleted && <p className="mb-4 rounded-lg bg-success-container px-4 py-2 text-sm text-success">Tenant deleted.</p>}
       <form className="mb-4 flex flex-wrap gap-2">
         <Input name="q" defaultValue={q} placeholder="Search name, slug or email" className="max-w-xs" />
-        <Select name="status" defaultValue={status ?? ""} className="max-w-[180px]">
+        <Select name="status" defaultValue={status ?? ""} className="max-w-[180px]" aria-label="Status">
           <option value="">All statuses</option>
           {Object.keys(TENANT_STATUS_TONE).map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
         </Select>

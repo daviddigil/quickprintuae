@@ -87,8 +87,8 @@ export default async function Dashboard() {
         </Card>
         <Card>
           <CardHeader title="Orders by status" />
+          {byStatus.length === 0 && <EmptyState title="No orders yet" />}
           <ul className="divide-y text-sm">
-            {byStatus.length === 0 && <EmptyState title="No orders yet" />}
             {byStatus.map((s) => (
               <li key={s.status} className="flex items-center justify-between px-5 py-2.5">
                 <Link href={`/admin/orders?status=${s.status}`}><Badge tone={ORDER_STATUS_TONE[s.status]}>{ORDER_STATUS_LABEL[s.status as OrderStatus]}</Badge></Link>

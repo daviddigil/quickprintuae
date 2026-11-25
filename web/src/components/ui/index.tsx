@@ -157,7 +157,7 @@ export function Stat({ label, value, sub, tone = "neutral", trend, spark }: { la
 
 export function Table({ head, children }: { head: ReactNode[]; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Data table">
       <table className="w-full text-start text-sm tabular-nums">
         <thead className="border-b border-outline-variant bg-surface-low text-xs uppercase tracking-wide text-on-surface-variant">
           <tr>{head.map((h, i) => <th key={i} className="px-4 py-3 text-start font-medium">{h}</th>)}</tr>

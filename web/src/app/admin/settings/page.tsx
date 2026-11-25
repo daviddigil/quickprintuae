@@ -46,7 +46,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <CardHeader title="Branding & storefront" />
             <div className="grid gap-4 p-5 md:grid-cols-2">
               <Field label="Logo URL"><Input name="logoUrl" defaultValue={tenant.logoUrl ?? ""} placeholder="https://…/logo.png" /></Field>
-              <Field label="Brand colour"><div className="flex gap-2"><input type="color" name="primaryColor" defaultValue={tenant.primaryColor} className="h-10 w-14 rounded border" /><span className="self-center text-sm text-on-surface-variant">Used for buttons and highlights</span></div></Field>
+              <Field label="Brand colour"><div className="flex gap-2"><input type="color" aria-label="Brand colour" name="primaryColor" defaultValue={tenant.primaryColor} className="h-10 w-14 rounded border" /><span className="self-center text-sm text-on-surface-variant">Used for buttons and highlights</span></div></Field>
               <Field label="Homepage headline"><Input name="heroTitle" defaultValue={s.heroTitle ?? ""} /></Field>
               <Field label="Homepage sub-headline"><Input name="heroSubtitle" defaultValue={s.heroSubtitle ?? ""} /></Field>
               <div className="md:col-span-2"><Field label="Announcement bar" hint="e.g. Eid holiday hours"><Textarea name="announcement" rows={2} defaultValue={s.announcement ?? ""} /></Field></div>

@@ -20,7 +20,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <PageHeader title="Products & pricing" subtitle="Turn products on/off, edit prices, option groups and quantity tiers."
         action={
           <form action={addProductFromTemplate} className="flex gap-2">
-            <Select name="template" className="w-56">{DEFAULT_PRODUCTS.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}</Select>
+            <Select name="template" className="w-56" aria-label="Product template">{DEFAULT_PRODUCTS.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}</Select>
             <Button>Add from template</Button>
           </form>
         } />

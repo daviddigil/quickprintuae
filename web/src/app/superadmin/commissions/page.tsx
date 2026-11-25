@@ -37,7 +37,7 @@ export default async function CommissionsPage({ searchParams }: { searchParams: 
   return (
     <div className="space-y-6">
       <PageTitle title="Commissions" subtitle="What QuickPrint earns on paid orders, per shop. Each order is priced with the shop's terms at the moment it was paid." />
-      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Month">
+      <div className="flex flex-wrap items-center gap-2" role="navigation" aria-label="Month">
         {months.map((x) => <Link key={x} href={`/superadmin/commissions?m=${x}`} className={`rounded-full border px-3 py-1 text-sm ${x === m ? "border-on-surface bg-inverse-surface text-white" : "border-outline-variant hover:bg-surface-low"}`}>{x}</Link>)}
         <a href={`/api/v1/superadmin/commissions/export?m=${m}`} className="ms-auto text-sm font-medium text-primary" data-testid="export-csv">Download CSV</a>
       </div>

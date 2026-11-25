@@ -1,21 +1,37 @@
+import type { Copy } from "@/lib/i18n/en";
+import { getCopy, hrefFor, SOLUTION_SLUGS, type Locale } from "@/lib/i18n";
+
 /** Single source for marketing navigation. Add a page here and it appears in the header, mobile menu and footer. */
-export interface NavLink { label: string; href: string }
+export interface NavLink { label: string; href: string; /** submenu (desktop dropdown, indented in the mobile menu) */ children?: NavLink[] }
 
-export const NAV_LINKS: NavLink[] = [
-  { label: "Features", href: "/#features" },
-  { label: "Solutions", href: "/#solutions" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Live demo", href: "/s/demo" },
-];
+const solutionLabel = (c: Copy, slug: (typeof SOLUTION_SLUGS)[number]) => (slug === "print-shops" ? c.nav.printShops : slug === "walk-in-queue" ? c.nav.walkIn : c.nav.whatsapp);
 
-export const FOOTER_COLUMNS: { title: string; links: NavLink[] }[] = [
-  { title: "Product", links: [{ label: "Features", href: "/#features" }, { label: "Solutions", href: "/#solutions" }, { label: "Pricing", href: "/pricing" }, { label: "Live demo store", href: "/s/demo" }] },
-  { title: "Start", links: [{ label: "Start free for 14 days", href: "/signup" }, { label: "Sign in", href: "/login" }, { label: "FAQ", href: "/#faq" }] },
-];
+/** Header links for a language. Storefront and sign-in pages (/s/demo, /login) exist once and are never prefixed. */
+export function navLinks(locale: Locale = "en"): NavLink[] {
+  const c = getCopy(locale), h = (p: string) => hrefFor(locale, p);
+  return [
+    { label: c.nav.features, href: h("/#features") },
+    { label: c.nav.solutions, href: h("/#solutions"), children: SOLUTION_SLUGS.map((s) => ({ label: solutionLabel(c, s), href: h(`/solutions/${s}`) })) },
+    { label: c.nav.pricing, href: h("/pricing") },
+    { label: c.nav.faq, href: h("/#faq") },
+    { label: c.nav.demo, href: "/s/demo" },
+  ];
+}
+
+export function footerColumns(locale: Locale = "en"): { title: string; links: NavLink[] }[] {
+  const c = getCopy(locale), h = (p: string) => hrefFor(locale, p);
+  return [
+    { title: c.footer.product, links: [{ label: c.nav.features, href: h("/#features") }, { label: c.nav.pricing, href: h("/pricing") }, { label: c.footer.liveDemo, href: "/s/demo" }] },
+    { title: c.footer.solutions, links: SOLUTION_SLUGS.map((s) => ({ label: solutionLabel(c, s), href: h(`/solutions/${s}`) })) },
+    { title: c.footer.start, links: [{ label: c.footer.startTrial, href: h("/signup") }, { label: c.nav.signIn, href: "/login" }, { label: c.nav.faq, href: h("/#faq") }] },
+  ];
+}
+
+export const NAV_LINKS: NavLink[] = navLinks("en");
+export const FOOTER_COLUMNS = footerColumns("en");
 
 /**
  * Languages that have real pages. The language switcher only shows when more than one is listed,
- * so there is never a link to a page that does not exist. Add "ar" when the /ar pages ship.
+ * so there is never a link to a page that does not exist.
  */
-export const LOCALES_AVAILABLE: readonly ("en" | "ar")[] = ["en"];
+export const LOCALES_AVAILABLE: readonly ("en" | "ar")[] = ["en", "ar"];

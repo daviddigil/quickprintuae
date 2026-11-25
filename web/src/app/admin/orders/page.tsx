@@ -35,11 +35,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       <Card className="mb-4 p-4">
         <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
           <Input name="q" placeholder="Order #, name, phone, email" defaultValue={sp.q} className="lg:col-span-2" />
-          <Select name="status" defaultValue={sp.status ?? ""}>
+          <Select name="status" defaultValue={sp.status ?? ""} aria-label="Status">
             <option value="">All statuses</option>
             {ORDER_STATUSES.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABEL[s]}</option>)}
           </Select>
-          <Select name="fulfillment" defaultValue={sp.fulfillment ?? ""}>
+          <Select name="fulfillment" defaultValue={sp.fulfillment ?? ""} aria-label="Fulfilment">
             <option value="">Pickup & delivery</option><option value="pickup">Pickup</option><option value="delivery">Delivery</option>
           </Select>
           <Select name="source" defaultValue={sp.source ?? ""} aria-label="Source">

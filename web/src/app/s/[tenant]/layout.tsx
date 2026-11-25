@@ -54,7 +54,7 @@ export default async function StoreLayout({ children, params }: P & { children: 
             <span className="text-lg">{tenant.name}</span>
           </Link>
           <div className="ml-auto flex items-center gap-1">
-            <Link href={`${base}/account`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium hover:bg-surface-container">
+            <Link href={`${base}/account`} aria-label={customer ? "My account" : "Sign in"} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium hover:bg-surface-container">
               <User className="h-5 w-5" /><span className="hidden sm:inline">{customer ? customer.name.split(" ")[0] : "Sign in"}</span>
             </Link>
             <CartBadge store={tenant.slug} />

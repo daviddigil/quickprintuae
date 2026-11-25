@@ -27,5 +27,5 @@ export function CountUp({ value, decimals = 0, prefix = "", suffix = "", duratio
     io.observe(el);
     return () => { io.disconnect(); cancelAnimationFrame(raf); };
   }, [value, durationMs]);
-  return <span ref={ref} className={className} style={{ fontVariantNumeric: "tabular-nums" }} aria-label={fmt(value)}><span aria-hidden>{fmt(shown)}</span></span>;
+  return <span ref={ref} className={className} style={{ fontVariantNumeric: "tabular-nums" }}><span aria-hidden>{fmt(shown)}</span><span className="sr-only">{fmt(value)}</span></span>;
 }

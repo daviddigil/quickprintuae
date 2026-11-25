@@ -15,7 +15,9 @@ export function Tabs({ tabs, defaultId, ariaLabel, className }: { tabs: TabItem[
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
   function onKey(e: KeyboardEvent, i: number) {
     const last = tabs.length - 1;
-    const to = e.key === "ArrowRight" ? (i + 1) % tabs.length : e.key === "ArrowLeft" ? (i - 1 + tabs.length) % tabs.length : e.key === "Home" ? 0 : e.key === "End" ? last : -1;
+    const rtl = getComputedStyle(e.currentTarget as HTMLElement).direction === "rtl"; // in RTL the "next" tab is to the left
+    const next = rtl ? "ArrowLeft" : "ArrowRight", prev = rtl ? "ArrowRight" : "ArrowLeft";
+    const to = e.key === next ? (i + 1) % tabs.length : e.key === prev ? (i - 1 + tabs.length) % tabs.length : e.key === "Home" ? 0 : e.key === "End" ? last : -1;
     if (to < 0) return;
     e.preventDefault(); setActive(tabs[to].id); refs.current[tabs[to].id]?.focus();
   }

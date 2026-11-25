@@ -330,7 +330,7 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
         </div>
         <input className={inp} placeholder="Address (optional)" value={details.address} onChange={set("address")} />
         <div className="grid grid-cols-2 gap-2">
-          <select className={inp} value={details.style} onChange={set("style")}>
+          <select aria-label="Design style" className={inp} value={details.style} onChange={set("style")}>
             {["modern", "minimal", "bold", "elegant", "corporate", "creative", "luxury"].map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
           </select>
           <button type="button" onClick={() => logoRef.current?.click()} className="truncate rounded-lg border border-dashed border-outline-variant px-2 py-1.5 text-on-surface-variant hover:bg-surface-low">
@@ -384,10 +384,10 @@ function ElementProps({ el, W, H, onChange }: { el: CardElement; W: number; H: n
         <div className="space-y-2">
           <textarea className="w-full rounded-lg border border-outline-variant px-2 py-1.5" rows={2} value={el.text} onChange={(e) => onChange({ text: e.target.value })} />
           <div className="grid grid-cols-2 gap-2">
-            <select className="rounded-lg border border-outline-variant px-2 py-1.5" value={el.fontFamily} onChange={(e) => onChange({ fontFamily: e.target.value })} style={{ fontFamily: el.fontFamily }}>
+            <select aria-label="Font" className="rounded-lg border border-outline-variant px-2 py-1.5" value={el.fontFamily} onChange={(e) => onChange({ fontFamily: e.target.value })} style={{ fontFamily: el.fontFamily }}>
               {CARD_FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
             </select>
-            <select className="rounded-lg border border-outline-variant px-2 py-1.5" value={el.fontWeight} onChange={(e) => onChange({ fontWeight: Number(e.target.value) as 400 })}>
+            <select aria-label="Font weight" className="rounded-lg border border-outline-variant px-2 py-1.5" value={el.fontWeight} onChange={(e) => onChange({ fontWeight: Number(e.target.value) as 400 })}>
               {[400, 500, 600, 700, 800].map((w) => <option key={w} value={w}>{({ 400: "Regular", 500: "Medium", 600: "Semibold", 700: "Bold", 800: "Extra bold" } as Record<number, string>)[w]}</option>)}
             </select>
           </div>
