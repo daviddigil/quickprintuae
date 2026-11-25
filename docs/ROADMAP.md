@@ -23,7 +23,7 @@ _QuickPrint UAE — Powered by Nexsofture Tech_
 
 ## v1.5: Months 4–6 (revenue expansion)
 - **B2B corporate accounts:** company profiles, multiple buyers, approval flow, credit terms, monthly statements
-- **WhatsApp ordering bot (built, switched off — "Coming soon"; enable with `WHATSAPP_ENABLED=1` after Meta app review):** WhatsApp Business coexistence, AI quotes and checkout links, human takeover. See `docs/WHATSAPP.md`.
+- **WhatsApp AI chat cart (LIVE; real numbers need a Meta app + review):** WhatsApp Business coexistence, AI quotes, conversational cart and checkout links, human takeover. See `docs/WHATSAPP.md`.
 - Multi-branch management: per-branch inventory of services, routing orders to the nearest branch
 - Re-order in one click, saved designs, brand kits for companies
 - Print-ready preflight (DPI check, bleed, CMYK warning) for uploads

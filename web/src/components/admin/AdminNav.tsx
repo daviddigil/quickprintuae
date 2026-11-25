@@ -13,7 +13,7 @@ const NAV = [
   { href: "/admin/fulfillment", label: "Pickup & delivery", icon: Truck },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/banners", label: "Hero slider", icon: Sparkles },
-  { href: "/admin/whatsapp", label: "WhatsApp (soon)", icon: MessageCircle },
+  { href: "/admin/whatsapp", label: "WhatsApp AI", icon: MessageCircle },
   { href: "/admin/settings", label: "Store settings", icon: Settings },
   { href: "/admin/customers", label: "Customers", icon: UserRound },
   { href: "/admin/staff", label: "Staff", icon: Users, ownerOnly: true },

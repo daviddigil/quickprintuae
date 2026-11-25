@@ -23,7 +23,7 @@ const FEATURES = [
   { title: "Instant, accurate quotes", text: "Your own pricing rules by paper size, colour, sides, stock and quantity tier. No more quoting on WhatsApp." },
   { title: "VAT-ready", text: "5% VAT on every order, your TRN on tax invoices, and reports ready for FTA filing." },
   { title: "Walk-in QR print queue", text: "Busy counter? Show a QR. Customers upload documents, pay on their phone and join a priority queue that prints automatically. Walk-ins are saved by phone number." },
-  { title: "WhatsApp ordering with AI", soon: true, text: "Connect your existing WhatsApp Business number (coexistence: keep using the app too). Customers chat, AI quotes and sends a checkout link, and you can take over any time." },
+  { title: "WhatsApp AI chat cart", text: "Connect your existing WhatsApp Business number (coexistence: keep using the app too). Customers chat, AI quotes and builds a cart, sends a checkout link, and you can take over any time." },
   { title: "Your brand, your domain", text: "yourshop.quickprint.ae on day one. Connect print.yourshop.ae whenever you're ready." },
 ];
 
@@ -96,7 +96,7 @@ export default async function Home() {
             {FEATURES.map((f) => (
               <div key={f.title}>
                 <div className="mb-3 h-1 w-10 rounded bg-brand-600" />
-                <h3 className="font-semibold">{f.title}{"soon" in f && f.soon && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 align-middle text-xs font-medium text-amber-800">Coming soon</span>}</h3>
+                <h3 className="font-semibold">{f.title}</h3>
                 <p className="mt-2 text-sm text-slate-600">{f.text}</p>
               </div>
             ))}

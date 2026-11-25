@@ -119,7 +119,7 @@ Sensitivities: each ±10 shops at month 12 moves MRR by about ±AED 6.2k. Shifti
 1. **Pilot (months 1–2):** 5 design-partner shops in Karama / Bur Dubai, free for 3 months in exchange for weekly feedback and a video testimonial. We do their onboarding: load their real price list and set up their Stripe or Mamo account.
 2. **Field sales in clusters:** Karama, Bur Dubai, Deira and Al Qusais (Dubai); Rolla, Al Nahda and Al Qasimia (Sharjah); Ajman; Hamdan and Electra St and Musaffah (Abu Dhabi). Walk-in demos on a tablet: "your store is live in 5 minutes."
 3. **Typing centres and PRO offices:** a huge flow of document, passport-photo and visa-photo printing. Offer them a reseller or referral margin.
-4. **WhatsApp first:** every storefront link is built to be shared on WhatsApp, Instagram bio and Google Business Profile. A WhatsApp ordering bot is on the roadmap.
+4. **WhatsApp first:** every storefront link is built to be shared on WhatsApp, Instagram bio and Google Business Profile. The WhatsApp AI chat cart (coexistence with the shop's existing number) is built; real-number onboarding needs a Meta app and review.
 5. **Local SEO for shops:** "passport photo near me Karama" and "print documents Dubai Marina delivery". Storefront pages are SEO-ready per shop.
 6. **Partnerships:** Mamo Pay (UAE SME payments) and courier aggregators for co-marketing. Free-zone business setup consultants can bundle "new licence → business cards" with a referral fee.
 7. **Seasonal campaigns:** National Day, Ramadan/Eid gifting, back-to-school, GITEX and exhibition season.
