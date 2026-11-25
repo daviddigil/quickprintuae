@@ -1,0 +1,58 @@
+# DEVELOPMENT in Docker: runs `npm run dev` (hot reload) in a container, with PostgreSQL in another.
+#   Start:  docker compose -f docker-compose.dev.yml up
+#   Stop:   docker compose -f docker-compose.dev.yml down        (add -v to also delete the dev database)
+# Edit files in ./web on your computer — the browser reloads automatically. App: http://localhost:5050
+# Prefer running `npm run dev` on your computer instead? Start only the database:
+#   docker compose -f docker-compose.dev.yml up -d db      then:  cd web && cp .env.example .env && npm install && npm run db:migrate && npm run db:seed && npm run dev
+#   (the database listens on localhost:5432 with user/password/db = qp/qp/quickprint, matching web/.env.example)
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qp
+      POSTGRES_PASSWORD: qp
+      POSTGRES_DB: quickprint
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qp -d quickprint"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://qp:qp@db:5432/quickprint
+      APP_URL: http://localhost:${WEB_PORT:-5050}
+      NEXT_TELEMETRY_DISABLED: "1"
+      # file watching over Docker bind mounts (needed on Windows/macOS)
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      # simulated payment + courier so the whole flow works without real keys (dev only)
+      PAYMENTS_FAKE: ${PAYMENTS_FAKE:-1}
+      DELIVERY_FAKE: ${DELIVERY_FAKE:-1}
+    ports:
+      - "${WEB_PORT:-5050}:3000"
+    volumes:
+      - ./web:/app
+      - web-node-modules:/app/node_modules   # keep Linux node_modules out of your computer's folder
+      - web-next-cache:/app/.next
+    command: >
+      sh -c "npm install --no-audit --no-fund &&
+             npm run db:migrate &&
+             npm run db:seed &&
+             npm run dev -- -H 0.0.0.0 -p 3000"
+
+volumes:
+  pgdata-dev:
+  web-node-modules:
+  web-next-cache:

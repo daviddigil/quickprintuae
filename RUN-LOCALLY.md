@@ -15,6 +15,19 @@ This trial mode **simulates payment and couriers** (no real money moves). Never 
 
 **If the page doesn't open:** check http://localhost:5050/api/health — it says if the database or setup is the problem. Or run `docker compose logs web` and send me the last lines.
 
+
+## Developer mode: `npm run dev` inside Docker (live reload)
+Use this when you want to change the code and see it update in the browser instantly.
+```
+docker compose -f docker-compose.dev.yml up
+```
+- Needs only Docker Desktop (no Node.js, no PostgreSQL on your computer). The first start installs packages, so wait ~2–3 minutes until the log says `Ready`.
+- Open **http://localhost:5050** (port: `WEB_PORT=5060 docker compose -f docker-compose.dev.yml up`). Same logins as above.
+- Edit files in the `web/` folder with your editor — the browser reloads by itself.
+- Stop: `Ctrl+C`, then `docker compose -f docker-compose.dev.yml down` (add `-v` to also delete the dev database).
+- Prefer running `npm run dev` directly on your computer? Start only the database in Docker: `docker compose -f docker-compose.dev.yml up -d db`, then `cd web && cp .env.example .env && npm install && npm run db:migrate && npm run db:seed && npm run dev -- -p 5050` (the database is on `localhost:5432`, user/password/db `qp`/`qp`/`quickprint`, matching `.env.example`).
+- Payment and couriers are simulated in this mode.
+
 ---
 ## Manual setup (without the scripts)
 ## 1. Install once
