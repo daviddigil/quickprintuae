@@ -491,11 +491,11 @@ await step("[Claude] CHAT CART end to end: add_to_cart x2 (with options) -> send
   const log = await anth(); eq(log.length, 3, "3 model turns: add x2 -> checkout -> text"); eq(log[1].prevTools, ["add_to_cart", "add_to_cart"], "turn 2 saw both adds"); ok(log[1].results.every((r) => r.ok), "adds accepted");
   const [c] = await sql`select cart from whatsapp_conversations where id=${convB.id}`; eq(c.cart.map((i) => [i.slug, i.quantity, i.subtotalAed]), [["business-cards", 500, 180], ["flyers", 100, 216]], "cart persisted with server-computed prices");
   await sleep(1500); eq((await texts(P2, CB)).length, before + 1, "exactly one message for this turn");
-  const links = body.match(/http:\/\/localhost:3111\/s\/demo\/p\/[a-z-]+\?cfg=[A-Za-z0-9_-]+/g); eq(links.length, 2, "one link per line");
-  const page = await (await br.newContext()).newPage(); await page.goto(links[0], { waitUntil: "networkidle" });
+  const links = body.match(/http:\/\/localhost:\d+\/s\/demo\/p\/[a-z-]+\?cfg=[A-Za-z0-9_-]+/g); eq(links.length, 2, "one link per line");
+  const page = await (await br.newContext()).newPage(); await page.goto(links[0].replace(/^http:\/\/localhost:\d+/, B), { waitUntil: "networkidle" });
   const picked = await page.evaluate(() => [...document.querySelectorAll("select")].map((s) => s.value).concat([...document.querySelectorAll("input[type=radio]:checked")].map((r) => r.value)));
   ok(picked.includes("400softtouch"), "product page opens with 400 gsm soft-touch preselected: " + picked.join(",")); ok(/500/.test(await page.locator("body").innerText()), "quantity 500 preselected");
-  await page.goto(links[1], { waitUntil: "networkidle" }); ok((await page.evaluate(() => [...document.querySelectorAll("select")].map((s) => s.value).concat([...document.querySelectorAll("input[type=radio]:checked")].map((r) => r.value)))).includes("A4"), "flyer link has A4 preselected");
+  await page.goto(links[1].replace(/^http:\/\/localhost:\d+/, B), { waitUntil: "networkidle" }); ok((await page.evaluate(() => [...document.querySelectorAll("select")].map((s) => s.value).concat([...document.querySelectorAll("input[type=radio]:checked")].map((r) => r.value)))).includes("A4"), "flyer link has A4 preselected");
 });
 
 await step("[Claude] prompt-injection style tool abuse is rejected server-side (bad slug, negative qty, fake option/price) — cart unchanged", async () => {
@@ -581,7 +581,7 @@ await step("owner panel with a connected number (screenshot)", async () => {
 
 
 /* =====================================================  PHASE 3 — env fallback + DB-first precedence (app C has META_* env)  ===================================================== */
-const hook = (who) => buildWebhook.text({ phoneId: P1, from: "971500000077", wamid: wamid("env"), text: "hi" });
+const hook = () => buildWebhook.text({ phoneId: P1, from: "971500000077", wamid: wamid("env"), text: "hi" });
 const ownerCenv = await api(C, { email: "owner@demo.ae", password: "owner12345" });
 await step("[env fallback] DB credentials removed, but app C (started with META_* env) still serves one-click and verifies webhooks with the ENV secret", async () => {
   const s = await json(await ownerCenv.get("/api/v1/admin/whatsapp/status")); eq(s.platform.ready, true, "ready from env"); eq(s.platform.appId, "9990001", "env app id"); eq(s.platform.configId, "9990002", "env config id");
