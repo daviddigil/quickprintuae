@@ -82,7 +82,7 @@ export function WhatsappConnectHero({ platform, requested, onConnected, onReques
   return (
     <section className="overflow-hidden rounded-3xl border border-success/50 bg-gradient-to-br from-success/10 via-surface to-surface p-6 shadow-sm sm:p-8" data-testid="wa-hero" aria-labelledby="wa-hero-title">
       <div className="flex flex-col gap-6 md:flex-row md:items-center">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#25D366] text-white shadow-md" aria-hidden><MessageCircle className="h-8 w-8" /></div>
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#25D366] text-[#06301a] shadow-md" aria-hidden><MessageCircle className="h-8 w-8" /></div>
         <div className="min-w-0 flex-1">
           <h2 id="wa-hero-title" className="text-2xl font-bold tracking-tight">Answer customers on WhatsApp — automatically</h2>
           <ul className="mt-3 space-y-1.5 text-sm text-on-surface-variant">
@@ -92,7 +92,7 @@ export function WhatsappConnectHero({ platform, requested, onConnected, onReques
           </ul>
         </div>
         <button type="button" onClick={start} disabled={busy} data-testid="connect-whatsapp" data-platform-ready={ready}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-7 py-4 text-base font-bold text-white shadow-lg shadow-success/25 transition hover:bg-[#1fb956] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success active:scale-[0.98] disabled:opacity-70 motion-reduce:transition-none">
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-7 py-4 text-base font-bold text-[#06301a] shadow-lg shadow-success/25 transition hover:bg-[#1fb956] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success active:scale-[0.98] disabled:opacity-70 motion-reduce:transition-none">
           {busy ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden /> : <MessageCircle className="h-5 w-5" aria-hidden />}{busy ? "Connecting…" : "Connect WhatsApp"}
         </button>
       </div>

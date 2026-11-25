@@ -210,7 +210,7 @@ export function CardDesigner(p: CardDesignerProps) {
           </svg>
         </div>
         <p className="text-center text-xs text-on-surface-variant">
-          {W} × {H} mm · <span className="text-secondary">red</span> = bleed (backgrounds extend here) · <span className="text-sky-500">blue</span> = safe area (keep text inside) · drag to move, arrows to nudge, Delete to remove
+          {W} × {H} mm · <span className="text-secondary">red</span> = bleed (backgrounds extend here) · <span className="text-sky-700">blue</span> = safe area (keep text inside) · drag to move, arrows to nudge, Delete to remove
         </p>
       </div>
 

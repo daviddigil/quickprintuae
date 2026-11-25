@@ -48,7 +48,7 @@ export function WhatsappActivationSheet({ requested, onRequested, onManualConnec
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-inverse-surface/50 p-0 backdrop-blur-sm sm:items-center sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} data-testid="wa-activation-backdrop">
       <div ref={boxRef} role="dialog" aria-modal="true" aria-labelledby="wa-act-title" className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl" data-testid="wa-activation-sheet">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#25D366] text-white" aria-hidden><MessageCircle className="h-6 w-6" /></div>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#25D366] text-[#06301a]" aria-hidden><MessageCircle className="h-6 w-6" /></div>
           <button ref={closeRef} type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container"><X className="h-5 w-5" /></button>
         </div>
         <h2 id="wa-act-title" className="mt-4 text-xl font-bold tracking-tight">We&apos;re activating one-click WhatsApp for your account</h2>

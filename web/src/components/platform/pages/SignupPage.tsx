@@ -20,7 +20,7 @@ export async function SignupPage({ locale, plan }: { locale: Locale; plan?: stri
             {t.bullets.map((b) => <li key={b}>✓ {b}</li>)}
           </ul>
         </div>
-        <p className="text-sm text-on-surface-variant">{t.haveAccount}<Link href="/login" className="text-white underline">{t.signIn}</Link></p>
+        <p className="text-sm text-inverse-on-surface/80">{t.haveAccount}<Link href="/login" className="text-white underline">{t.signIn}</Link></p>
       </section>
       <section className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-lg">
