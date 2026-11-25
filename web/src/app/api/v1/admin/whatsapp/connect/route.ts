@@ -4,9 +4,17 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { audit } from "@/lib/audit";
 import { encrypt } from "@/lib/crypto";
-import { embeddedSignupReady, whatsappFake } from "@/lib/whatsapp-flag";
+import { whatsappFake } from "@/lib/whatsapp-flag";
+import { getMetaPlatformConfig, readiness } from "@/server/whatsapp/platform-config";
 import { guard, publicAccount } from "@/server/whatsapp/guard";
 import { exchangeCode, fetchPhoneInfo, subscribeWaba } from "@/server/whatsapp/graph";
+
+/** Human wording for the most common Embedded Signup failures. */
+function friendlyConnectError(m: string) {
+  if (/expired|used|code/i.test(m) && /oauth|code/i.test(m)) return "That sign-in expired before it finished. Please tap Connect WhatsApp and try again.";
+  if (/reach/i.test(m)) return "We couldn't reach WhatsApp right now. Please try again in a minute.";
+  return m;
+}
 
 const Body = z.object({ code: z.string().min(5).max(2000), wabaId: z.string().regex(/^\d+$/), phoneNumberId: z.string().regex(/^\d+$/), mode: z.enum(["coexistence", "cloud"]).default("coexistence") });
 
@@ -14,7 +22,7 @@ const Body = z.object({ code: z.string().min(5).max(2000), wabaId: z.string().re
 export async function POST(req: Request) {
   const g = await guard({ ownerOnly: true });
   if (!g.ok) return g.res;
-  if (!whatsappFake() && !embeddedSignupReady()) return NextResponse.json({ error: "Embedded Signup isn't set up on this platform yet (the platform admin must configure the Meta app). You can connect your own Meta app with 'Manual connect' instead." }, { status: 409 });
+  if (!whatsappFake() && !readiness(await getMetaPlatformConfig()).embeddedSignupReady) return NextResponse.json({ error: "One-click connect isn't activated for your account yet. Tap “Notify me” and we'll tell you when it is, or use Manual connect with your own Meta app.", code: "platform_not_ready" }, { status: 409 });
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Invalid connection data" }, { status: 400 });
   const b = parsed.data;
@@ -29,7 +37,7 @@ export async function POST(req: Request) {
     await audit("whatsapp.connect", { phoneNumberId: b.phoneNumberId, mode: b.mode, method: "embedded" }, g.tenant.id);
     return NextResponse.json({ account: publicAccount(row) });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
+    return NextResponse.json({ error: friendlyConnectError((e as Error).message) }, { status: 502 });
   }
 }
 

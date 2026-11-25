@@ -1,21 +1,403 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   QuickPrint design system — Apple restraint + Material 3 structure, with
+   print-trade details (crop marks, halftone, ink accents, proof labels).
+   Docs: docs/DESIGN_SYSTEM.md
+   ========================================================================== */
+
+/* ---------- 1. Colour roles (light = base) ----------------------------------
+   Neutrals are tinted toward the rose brand, never flat grey.
+   Semantic colours (success / warning / critical / info) are separate from the accent. */
+:root,
+.light {
+  color-scheme: light;
+
+  /* paper surfaces */
+  --md-surface: #fffdfc;
+  --md-surface-dim: #f3eeee;
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low: #fbf7f6;
+  --md-surface-container: #f6f0ef;
+  --md-surface-container-high: #efe8e7;
+  --md-surface-container-highest: #e8e0df;
+  --md-inverse-surface: #2f2829;
+  --md-inverse-on-surface: #f8eeef;
+
+  --md-on-surface: #201a1b;
+  --md-on-surface-variant: #5f5557; /* 7:1 on --md-surface */
+  --md-outline: #85787a;
+  --md-outline-variant: #dccfd0;
+
+  /* brand accent (seed #e11d48) */
+  --md-primary: #e11d48;            /* white on it = 4.7:1 */
+  --md-on-primary: #ffffff;
+  --md-primary-container: #ffdadf;
+  --md-on-primary-container: #660d27;
+
+  --md-secondary: #75565c;
+  --md-on-secondary: #ffffff;
+  --md-secondary-container: #f4dde0;
+  --md-on-secondary-container: #2b1519;
+
+  --md-tertiary: #0b6e8a;
+  --md-on-tertiary: #ffffff;
+  --md-tertiary-container: #c9ecf7;
+  --md-on-tertiary-container: #002e3d;
+
+  /* semantic */
+  --md-success: #1e7a4a;  --md-on-success: #ffffff;  --md-success-container: #d4f1df;  --md-on-success-container: #07351d;
+  --md-warning: #8a5300;  --md-on-warning: #ffffff;  --md-warning-container: #ffe7b8;  --md-on-warning-container: #2e1c00;
+  --md-critical: #ba1a2b; --md-on-critical: #ffffff; --md-critical-container: #ffdad9; --md-on-critical-container: #410007;
+  --md-info: #0b64b6;     --md-on-info: #ffffff;     --md-info-container: #d6e6fb;     --md-on-info-container: #001c3b;
+
+  /* ink accents (CMYK) — small marks and category cues only */
+  --ink-cyan: #1aa3d6;
+  --ink-magenta: #e0407e;
+  --ink-yellow: #f4b81f;
+  --ink-key: #231f20;
+
+  --halftone-dot: rgb(133 120 122 / 0.28);
+  --shadow-ink: 32 26 27;
+}
+
+/* ---------- 2. Dark theme (own contrast care, not an invert) ---------------- */
+.dark {
+  color-scheme: dark;
+
+  --md-surface: #171112;
+  --md-surface-dim: #120c0d;
+  --md-surface-container-lowest: #120c0d;
+  --md-surface-container-low: #1f1819;
+  --md-surface-container: #251d1e;
+  --md-surface-container-high: #302829;
+  --md-surface-container-highest: #3b3334;
+  --md-inverse-surface: #f1e5e6;
+  --md-inverse-on-surface: #2f2829;
+
+  --md-on-surface: #f1e5e6;
+  --md-on-surface-variant: #c9bcbd;
+  --md-outline: #9a8d8f;
+  --md-outline-variant: #4d4244;
+
+  --md-primary: #ff8fa5;
+  --md-on-primary: #5e0b22;
+  --md-primary-container: #8a1735;
+  --md-on-primary-container: #ffd9df;
+
+  --md-secondary: #e4bdc3;
+  --md-on-secondary: #43292f;
+  --md-secondary-container: #5b3f45;
+  --md-on-secondary-container: #ffd9df;
+
+  --md-tertiary: #7fd3ee;
+  --md-on-tertiary: #003543;
+  --md-tertiary-container: #004d63;
+  --md-on-tertiary-container: #c9ecf7;
+
+  --md-success: #7bd9a1;  --md-on-success: #003920;  --md-success-container: #0f5233;  --md-on-success-container: #d4f1df;
+  --md-warning: #ffc766;  --md-on-warning: #432c00;  --md-warning-container: #5e3b00;  --md-on-warning-container: #ffe7b8;
+  --md-critical: #ffb4ab; --md-on-critical: #690010; --md-critical-container: #93000f; --md-on-critical-container: #ffdad9;
+  --md-info: #a5c8ff;     --md-on-info: #00315f;     --md-info-container: #00458a;     --md-on-info-container: #d6e6fb;
+
+  --ink-cyan: #4cc3ee;
+  --ink-magenta: #ff6aa0;
+  --ink-yellow: #ffd04d;
+  --ink-key: #f1e5e6;
+
+  --halftone-dot: rgb(201 188 189 / 0.22);
+  --shadow-ink: 0 0 0;
+}
+
+/* `.theme-auto` follows the system setting. Pages opt in (marketing, auth, design system);
+   storefront/admin stay light until they migrate to tokens. `.dark` forces dark anywhere. */
+@media (prefers-color-scheme: dark) {
+  .theme-auto:not(.light) {
+    color-scheme: dark;
+
+    --md-surface: #171112;
+    --md-surface-dim: #120c0d;
+    --md-surface-container-lowest: #120c0d;
+    --md-surface-container-low: #1f1819;
+    --md-surface-container: #251d1e;
+    --md-surface-container-high: #302829;
+    --md-surface-container-highest: #3b3334;
+    --md-inverse-surface: #f1e5e6;
+    --md-inverse-on-surface: #2f2829;
+
+    --md-on-surface: #f1e5e6;
+    --md-on-surface-variant: #c9bcbd;
+    --md-outline: #9a8d8f;
+    --md-outline-variant: #4d4244;
+
+    --md-primary: #ff8fa5;
+    --md-on-primary: #5e0b22;
+    --md-primary-container: #8a1735;
+    --md-on-primary-container: #ffd9df;
+
+    --md-secondary: #e4bdc3;
+    --md-on-secondary: #43292f;
+    --md-secondary-container: #5b3f45;
+    --md-on-secondary-container: #ffd9df;
+
+    --md-tertiary: #7fd3ee;
+    --md-on-tertiary: #003543;
+    --md-tertiary-container: #004d63;
+    --md-on-tertiary-container: #c9ecf7;
+
+    --md-success: #7bd9a1;  --md-on-success: #003920;  --md-success-container: #0f5233;  --md-on-success-container: #d4f1df;
+    --md-warning: #ffc766;  --md-on-warning: #432c00;  --md-warning-container: #5e3b00;  --md-on-warning-container: #ffe7b8;
+    --md-critical: #ffb4ab; --md-on-critical: #690010; --md-critical-container: #93000f; --md-on-critical-container: #ffdad9;
+    --md-info: #a5c8ff;     --md-on-info: #00315f;     --md-info-container: #00458a;     --md-on-info-container: #d6e6fb;
+
+    --ink-cyan: #4cc3ee;
+    --ink-magenta: #ff6aa0;
+    --ink-yellow: #ffd04d;
+    --ink-key: #f1e5e6;
+
+    --halftone-dot: rgb(201 188 189 / 0.22);
+    --shadow-ink: 0 0 0;
+  }
+}
+
+/* ---------- 3. Tailwind theme (utilities: bg-surface, text-on-surface-variant, rounded-shape-lg, shadow-elev-2 …) ---------- */
+@theme inline {
+  --color-surface: var(--md-surface);
+  --color-surface-dim: var(--md-surface-dim);
+  --color-surface-lowest: var(--md-surface-container-lowest);
+  --color-surface-low: var(--md-surface-container-low);
+  --color-surface-container: var(--md-surface-container);
+  --color-surface-high: var(--md-surface-container-high);
+  --color-surface-highest: var(--md-surface-container-highest);
+  --color-inverse-surface: var(--md-inverse-surface);
+  --color-inverse-on-surface: var(--md-inverse-on-surface);
+  --color-on-surface: var(--md-on-surface);
+  --color-on-surface-variant: var(--md-on-surface-variant);
+  --color-outline: var(--md-outline);
+  --color-outline-variant: var(--md-outline-variant);
+
+  --color-primary: var(--md-primary);
+  --color-on-primary: var(--md-on-primary);
+  --color-primary-container: var(--md-primary-container);
+  --color-on-primary-container: var(--md-on-primary-container);
+  --color-secondary: var(--md-secondary);
+  --color-on-secondary: var(--md-on-secondary);
+  --color-secondary-container: var(--md-secondary-container);
+  --color-on-secondary-container: var(--md-on-secondary-container);
+  --color-tertiary: var(--md-tertiary);
+  --color-on-tertiary: var(--md-on-tertiary);
+  --color-tertiary-container: var(--md-tertiary-container);
+  --color-on-tertiary-container: var(--md-on-tertiary-container);
+
+  --color-success: var(--md-success);
+  --color-on-success: var(--md-on-success);
+  --color-success-container: var(--md-success-container);
+  --color-on-success-container: var(--md-on-success-container);
+  --color-warning: var(--md-warning);
+  --color-on-warning: var(--md-on-warning);
+  --color-warning-container: var(--md-warning-container);
+  --color-on-warning-container: var(--md-on-warning-container);
+  --color-critical: var(--md-critical);
+  --color-on-critical: var(--md-on-critical);
+  --color-critical-container: var(--md-critical-container);
+  --color-on-critical-container: var(--md-on-critical-container);
+  --color-info: var(--md-info);
+  --color-on-info: var(--md-on-info);
+  --color-info-container: var(--md-info-container);
+  --color-on-info-container: var(--md-on-info-container);
+
+  --color-ink-cyan: var(--ink-cyan);
+  --color-ink-magenta: var(--ink-magenta);
+  --color-ink-yellow: var(--ink-yellow);
+  --color-ink-key: var(--ink-key);
+}
+
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Arabic", sans-serif;
+  /* legacy brand scale (kept: existing pages use bg-brand-600 etc.) */
   --color-brand-50: #fff1f2;
   --color-brand-100: #ffe4e6;
   --color-brand-500: #f43f5e;
   --color-brand-600: #e11d48;
   --color-brand-700: #be123c;
   --color-ink: #0f172a;
+
+  /* type: system fonts only (no network fonts; Apple SF first, then Google/Android/Windows, then Arabic-capable) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans Arabic", "Segoe UI Arabic", Tahoma, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI Variable Display", "Segoe UI", Roboto, "Noto Sans Arabic", "Segoe UI Arabic", Tahoma, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* scale: display / headline / title above the default body sizes */
+  --text-display: clamp(2.5rem, 1.55rem + 3.8vw, 4.5rem);
+  --text-display--line-height: 1.03;
+  --text-display--letter-spacing: -0.04em;
+  --text-headline: clamp(1.75rem, 1.25rem + 1.9vw, 2.875rem);
+  --text-headline--line-height: 1.08;
+  --text-headline--letter-spacing: -0.03em;
+  --text-title: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.015em;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1rem;
+  --text-label--letter-spacing: 0.04em;
+
+  /* shape scale (named, so existing rounded-lg / rounded-xl are untouched) */
+  --radius-shape-xs: 6px;
+  --radius-shape-sm: 10px;
+  --radius-shape-md: 14px;
+  --radius-shape-lg: 18px;
+  --radius-shape-xl: 24px;
+  --radius-shape-2xl: 32px;
+
+  /* elevation: tonal surface first, soft shadow second */
+  --shadow-elev-1: 0 1px 2px rgb(var(--shadow-ink) / 0.06), 0 1px 3px rgb(var(--shadow-ink) / 0.08);
+  --shadow-elev-2: 0 2px 4px rgb(var(--shadow-ink) / 0.05), 0 8px 20px -6px rgb(var(--shadow-ink) / 0.14);
+  --shadow-elev-3: 0 4px 8px rgb(var(--shadow-ink) / 0.05), 0 28px 56px -24px rgb(var(--shadow-ink) / 0.28);
+
+  /* motion */
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
 }
 
-html { -webkit-font-smoothing: antialiased; }
-body { @apply bg-slate-50 text-slate-900; }
+:root {
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 520ms;
+}
 
-/* storefront brand colour is injected per tenant as --store */
+/* ---------- 4. Base ---------------------------------------------------------- */
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+body {
+  /* legacy pages (storefront/admin) still rely on these */
+  @apply bg-slate-50 text-slate-900;
+  overflow-x: clip;
+}
+h1, h2, h3, h4 { text-wrap: balance; }
+p, li, dd, blockquote { text-wrap: pretty; }
+.measure { max-inline-size: 65ch; }
+.tabular, table { font-variant-numeric: tabular-nums; }
+
+/* visible keyboard focus everywhere (WCAG 2.2 AA) */
+:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+::selection { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+
+/* page wrapper for token-based pages */
+.theme-auto, .theme-light {
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+}
+
+/* ---------- 5. Storefront tenant colour (unchanged API) --------------------- */
 .btn-store { background: var(--store, #e11d48); color: white; }
 .btn-store:hover { filter: brightness(0.92); }
 .text-store { color: var(--store, #e11d48); }
 .border-store { border-color: var(--store, #e11d48); }
 .bg-store-soft { background: color-mix(in srgb, var(--store, #e11d48) 10%, white); }
+
+/* ---------- 6. Components ---------------------------------------------------- */
+@layer components {
+  /* state layer: hover 8%, focus/pressed 10% of the content colour */
+  .state-layer { position: relative; isolation: isolate; }
+  .state-layer::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+    background: currentColor; opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-1) linear;
+  }
+  .state-layer:hover::before { opacity: 0.08; }
+  .state-layer:focus-visible::before, .state-layer:active::before { opacity: 0.1; }
+
+  /* print motif 1: crop marks sit just outside the corners of a box */
+  .crop-marks { position: relative; --crop: var(--crop-color, var(--md-outline)); --gap: 12px; --len: 9px; }
+  .crop-marks::before {
+    content: ""; position: absolute; inset: calc(var(--gap) * -1 - var(--len)); pointer-events: none;
+    background:
+      linear-gradient(var(--crop), var(--crop)) 0 calc(var(--len) + var(--gap)) / var(--len) 1px no-repeat,
+      linear-gradient(var(--crop), var(--crop)) calc(var(--len) + var(--gap)) 0 / 1px var(--len) no-repeat,
+      linear-gradient(var(--crop), var(--crop)) 100% calc(var(--len) + var(--gap)) / var(--len) 1px no-repeat,
+      linear-gradient(var(--crop), var(--crop)) calc(100% - var(--len) - var(--gap)) 0 / 1px var(--len) no-repeat,
+      linear-gradient(var(--crop), var(--crop)) 0 calc(100% - var(--len) - var(--gap)) / var(--len) 1px no-repeat,
+      linear-gradient(var(--crop), var(--crop)) calc(var(--len) + var(--gap)) 100% / 1px var(--len) no-repeat,
+      linear-gradient(var(--crop), var(--crop)) 100% calc(100% - var(--len) - var(--gap)) / var(--len) 1px no-repeat,
+      linear-gradient(var(--crop), var(--crop)) calc(100% - var(--len) - var(--gap)) 100% / 1px var(--len) no-repeat;
+  }
+  /* inside-corner variant for focus states (marks hug the element) */
+  .crop-focus:focus-visible { outline: none; }
+  .crop-focus:focus-visible::after {
+    content: ""; position: absolute; inset: -4px; pointer-events: none; border-radius: inherit;
+    background:
+      linear-gradient(var(--md-primary), var(--md-primary)) 0 0 / 10px 2px no-repeat,
+      linear-gradient(var(--md-primary), var(--md-primary)) 0 0 / 2px 10px no-repeat,
+      linear-gradient(var(--md-primary), var(--md-primary)) 100% 0 / 10px 2px no-repeat,
+      linear-gradient(var(--md-primary), var(--md-primary)) 100% 0 / 2px 10px no-repeat,
+      linear-gradient(var(--md-primary), var(--md-primary)) 0 100% / 10px 2px no-repeat,
+      linear-gradient(var(--md-primary), var(--md-primary)) 0 100% / 2px 10px no-repeat,
+      linear-gradient(var(--md-primary), var(--md-primary)) 100% 100% / 10px 2px no-repeat,
+      linear-gradient(var(--md-primary), var(--md-primary)) 100% 100% / 2px 10px no-repeat;
+  }
+
+  /* print motif 2: halftone dots (texture, never behind small text) */
+  .halftone {
+    background-image: radial-gradient(circle at center, var(--halftone-dot) 1.1px, transparent 1.7px);
+    background-size: 9px 9px;
+  }
+  .halftone-fade { -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 85%); mask-image: linear-gradient(to bottom, #000 0%, transparent 85%); }
+  .halftone-fade-x { -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 90%); mask-image: linear-gradient(to right, #000 0%, transparent 90%); }
+  .halftone-magenta { --halftone-dot: color-mix(in srgb, var(--ink-magenta) 45%, transparent); }
+  .halftone-cyan { --halftone-dot: color-mix(in srgb, var(--ink-cyan) 45%, transparent); }
+
+  /* print motif 3: proof label */
+  .proof-label {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.125rem 0.5rem;
+    font-family: var(--font-mono); font-size: 0.6875rem; line-height: 1rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--md-on-surface-variant); border: 1px dashed var(--md-outline); border-radius: var(--radius-shape-xs);
+  }
+
+  /* print motif 4: registration mark (circle + crosshair) */
+  .reg-mark {
+    --c: var(--md-outline); display: inline-block; inline-size: 16px; block-size: 16px; border-radius: 50%;
+    border: 1px solid var(--c);
+    background:
+      linear-gradient(var(--c), var(--c)) 50% 50% / 1px 22px no-repeat,
+      linear-gradient(var(--c), var(--c)) 50% 50% / 22px 1px no-repeat;
+  }
+
+  /* hover spotlight (pointer position set by <SpotlightCard>) */
+  .spotlight { position: relative; overflow: hidden; }
+  .spotlight::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--dur-3) var(--ease-emphasized);
+    background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--md-primary) 11%, transparent), transparent 70%);
+  }
+  @media (hover: hover) { .spotlight:hover::after { opacity: 1; } }
+
+  /* marker-style underline in magenta ink */
+  .ink-underline { background-image: linear-gradient(transparent 64%, color-mix(in srgb, var(--ink-magenta) 32%, transparent) 64% 90%, transparent 90%); }
+
+  /* slow spec ticker (static when reduced motion) */
+  .ticker-track { display: flex; inline-size: max-content; gap: 3rem; animation: ticker 48s linear infinite; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+}
+
+/* ---------- 7. Motion (always from a visible resting state) ----------------- */
+@keyframes rise { from { transform: translateY(10px); } to { transform: none; } }
+@keyframes ticker { to { transform: translateX(calc(-50% - 1.5rem)); } }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 40%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }
+.rise-run { animation: rise var(--dur-4) var(--ease-decelerate) both; }
+.live-dot { animation: pulse-ring 1.8s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .ticker-track { animation: none; flex-wrap: wrap; inline-size: auto; }
+}

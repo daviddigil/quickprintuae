@@ -1,5 +1,5 @@
 import { requireStaff } from "@/lib/auth";
-import { embeddedSignupReady, metaConfig, whatsappEnabled } from "@/lib/whatsapp-flag";
+import { whatsappEnabled } from "@/lib/whatsapp-flag";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { WhatsappPanel } from "@/components/admin/WhatsappPanel";
 import { Alert } from "@/components/ui";
@@ -17,11 +17,10 @@ export default async function WhatsappPage() {
       </div>
     );
   }
-  const m = metaConfig();
   return (
     <div>
       <PageHeader title="WhatsApp orders" subtitle="Customers chat on WhatsApp, AI answers and builds their cart, and sends a checkout link — you stay in control and can reply from your phone at any time." />
-      <WhatsappPanel isOwner={user.role === "owner"} meta={{ appId: m.appId, configId: m.signupConfigId, graphVersion: m.graphVersion, embeddedReady: embeddedSignupReady() }} />
+      <WhatsappPanel isOwner={user.role === "owner"} />
     </div>
   );
 }

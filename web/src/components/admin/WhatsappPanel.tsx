@@ -1,8 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, Textarea, cn } from "@/components/ui";
-import { WhatsappConnect } from "./WhatsappConnect";
-import { WhatsappManualConnect } from "./WhatsappManualConnect";
+import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, Textarea } from "@/components/ui";
+import { WhatsappConnectHero } from "./WhatsappConnectHero";
+import { WhatsappWelcome } from "./WhatsappWelcome";
 import { WhatsappSetupStatus, type SetupStatus } from "./WhatsappSetupStatus";
 import { WhatsappTestChat } from "./WhatsappTestChat";
 
@@ -20,7 +20,7 @@ async function api<T>(url: string, method = "GET", body?: unknown): Promise<T> {
   return j as T;
 }
 
-export function WhatsappPanel({ isOwner, meta }: { isOwner: boolean; meta: { appId?: string; configId?: string; graphVersion: string; embeddedReady: boolean } }) {
+export function WhatsappPanel({ isOwner }: { isOwner: boolean }) {
   const [status, setStatus] = useState<(SetupStatus & { account: Account | null }) | null>(null);
   const [convs, setConvs] = useState<Conv[]>([]);
   const [open, setOpen] = useState<string | null>(null);
@@ -31,8 +31,7 @@ export function WhatsappPanel({ isOwner, meta }: { isOwner: boolean; meta: { app
   const [notice, setNotice] = useState<string | null>(null);
   const [greeting, setGreeting] = useState("");
   const [handoff, setHandoff] = useState(720);
-  const [method, setMethod] = useState<"facebook" | "manual">(meta.embeddedReady ? "facebook" : "manual");
-  const [manualResult, setManualResult] = useState<{ webhookUrl: string; verifyToken: string | null } | null>(null);
+  const [welcome, setWelcome] = useState<{ phone: string | null } | null>(null);
 
   const account = status?.account ?? null;
   const active = account?.status === "connected";
@@ -52,11 +51,21 @@ export function WhatsappPanel({ isOwner, meta }: { isOwner: boolean; meta: { app
     setMsgs(r.messages); setOpenConvData(r.conversation);
   }
   const guarded = (fn: () => Promise<unknown>) => fn().catch((e: Error) => setError(e.message));
+  const tryChat = () => document.getElementById("wa-test-chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
     <div className="space-y-6" data-testid="wa-panel">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="wa-error">{error}</div>}
       {notice && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div>}
+
+      {status && !active && isOwner && (
+        <WhatsappConnectHero platform={status.platform} requested={status.activationRequested}
+          onConnected={(phone) => { setWelcome({ phone }); setNotice(null); guarded(refresh); }}
+          onRequested={() => guarded(refresh)}
+          onManualConnected={() => { setNotice("Connected. Now add the webhook in your Meta app (details below)."); guarded(refresh); }}
+          onTryChat={tryChat} />
+      )}
+      {welcome && active && <WhatsappWelcome phone={welcome.phone ?? account?.displayPhone ?? null} onDismiss={() => setWelcome(null)} onTryChat={tryChat} />}
 
       {status && <WhatsappSetupStatus s={status} />}
 
@@ -80,32 +89,19 @@ export function WhatsappPanel({ isOwner, meta }: { isOwner: boolean; meta: { app
               {isOwner && (
                 <div className="flex gap-2">
                   <Button onClick={() => guarded(async () => { await api("/api/v1/admin/whatsapp/settings", "PATCH", { greeting, handoffMinutes: handoff }); setNotice("Settings saved."); await refresh(); })}>Save settings</Button>
-                  <Button variant="danger" data-testid="wa-disconnect" onClick={() => confirm("Disconnect WhatsApp? Stored credentials are deleted; chat history is kept.") && guarded(async () => { await api("/api/v1/admin/whatsapp/connect", "DELETE"); setManualResult(null); await refresh(); })}>Disconnect</Button>
+                  <Button variant="danger" data-testid="wa-disconnect" onClick={() => confirm("Disconnect WhatsApp? Stored credentials are deleted; chat history is kept.") && guarded(async () => { await api("/api/v1/admin/whatsapp/connect", "DELETE"); await refresh(); })}>Disconnect</Button>
                 </div>
               )}
             </>
           ) : !isOwner ? (
             <p className="text-sm text-slate-600">Only the shop owner can connect WhatsApp.</p>
           ) : (
-            <div className="space-y-4">
-              <div className="inline-flex rounded-lg bg-slate-100 p-1 text-sm font-medium">
-                <button type="button" onClick={() => setMethod("facebook")} className={cn("rounded-md px-3 py-1.5", method === "facebook" ? "bg-white shadow-sm" : "text-slate-600")} data-testid="wa-tab-facebook">Connect with Facebook</button>
-                <button type="button" onClick={() => setMethod("manual")} className={cn("rounded-md px-3 py-1.5", method === "manual" ? "bg-white shadow-sm" : "text-slate-600")} data-testid="wa-tab-manual">Manual connect (your own Meta app)</button>
-              </div>
-              {method === "facebook" ? (
-                meta.embeddedReady && meta.appId && meta.configId
-                  ? <WhatsappConnect appId={meta.appId} configId={meta.configId} graphVersion={meta.graphVersion} onConnected={() => guarded(refresh)} />
-                  : <div className="space-y-2"><Button disabled data-testid="connect-whatsapp">Connect WhatsApp Business</Button><p className="text-sm text-amber-700" data-testid="wa-connect-reason">“Connect with Facebook” isn&apos;t available yet: the platform administrator must set META_APP_ID, META_APP_SECRET, META_VERIFY_TOKEN and META_EMBEDDED_SIGNUP_CONFIG_ID (see the Setup status above). You can use Manual connect with your own Meta app right now.</p></div>
-              ) : (
-                <WhatsappManualConnect onConnected={(r) => { setManualResult(r); setNotice("Connected. Now add the webhook in your Meta app (details below)."); guarded(refresh); }} />
-              )}
-              {manualResult && <p className="text-xs text-slate-600">Webhook callback URL: <code>{manualResult.webhookUrl}</code></p>}
-            </div>
+            <p className="text-sm text-slate-600">Not connected yet. Use the green <b>Connect WhatsApp</b> button above — it takes about a minute.</p>
           )}
         </div>
       </Card>
 
-      <WhatsappTestChat />
+      <div id="wa-test-chat" className="scroll-mt-6"><WhatsappTestChat /></div>
 
       {active && (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">

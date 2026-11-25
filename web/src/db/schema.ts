@@ -160,7 +160,7 @@ export const files = pgTable("files", {
 /** Platform-level payment gateway (singleton per provider): collects SaaS subscriptions and platform-routed order payments. Secrets stored encrypted. */
 export const platformGateways = pgTable("platform_gateways", {
   id: id(),
-  provider: text("provider").notNull().unique(), // 'mamo'
+  provider: text("provider").notNull().unique(), // 'mamo' | 'meta_whatsapp'
   apiKeyEnc: text("api_key_enc"),
   webhookSecretEnc: text("webhook_secret_enc"),
   sandbox: boolean("sandbox").notNull().default(true),
@@ -171,7 +171,19 @@ export const platformGateways = pgTable("platform_gateways", {
   payoutHoldDays: integer("payout_hold_days").notNull().default(0),
   lastTestAt: timestamp("last_test_at", { withTimezone: true }),
   lastTestOk: boolean("last_test_ok"),
+  /** provider-specific non-secret settings. meta_whatsapp: { appId, configId, businessId, graphVersion, lastTestMessage }.
+   *  For meta_whatsapp the encrypted columns hold: apiKeyEnc = Meta APP SECRET, webhookSecretEnc = webhook VERIFY TOKEN. */
+  config: jsonb("config").$type<Record<string, string>>().notNull().default({}),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: createdAt(),
+});
+
+/** Shops that clicked "Connect WhatsApp" before the platform's Meta Tech Provider credentials were added ("notify me when it's ready"). */
+export const whatsappActivationRequests = pgTable("whatsapp_activation_requests", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }).unique(),
+  requestedBy: uuid("requested_by").references(() => users.id, { onDelete: "set null" }),
+  notifiedAt: timestamp("notified_at", { withTimezone: true }),
   createdAt: createdAt(),
 });
 
@@ -466,6 +478,7 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
 export type Banner = typeof banners.$inferSelect;
 export type PlatformGateway = typeof platformGateways.$inferSelect;
+export type WhatsappActivationRequest = typeof whatsappActivationRequests.$inferSelect;
 export type OrderSettlement = typeof orderSettlements.$inferSelect;
 export type PrintJob = typeof printJobs.$inferSelect;
 export type PrintAgent = typeof printAgents.$inferSelect;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE, abs, type Locale } from "./site";
+import { isTranslated } from "./paths";
 
 /** English lives at /x, Arabic at /ar/x. `path` is always the English path (e.g. "/pricing", "/"). */
 export const localizedPath = (path: string, locale: Locale) => {
@@ -13,7 +14,7 @@ export interface PageMetaInput {
   /** English path of this page, e.g. "/", "/pricing" */
   path: string;
   locale?: Locale;
-  /** set false for pages that have no translation (no hreflang alternates) */
+  /** default: taken from MARKETING_PATHS (hreflang alternates only for pages whose Arabic version exists). true/false overrides. */
   translated?: boolean;
   noindex?: boolean;
   /** absolute or site-relative OG image; defaults to the generated /opengraph-image */
@@ -26,7 +27,7 @@ export function pageMetadata(i: PageMetaInput): Metadata {
   const locale = i.locale ?? "en";
   const canonical = abs(localizedPath(i.path, locale));
   const languages: Record<string, string> = {};
-  if (i.translated !== false) {
+  if (i.translated ?? isTranslated(i.path)) {
     for (const l of SITE.locales) languages[SITE.hreflang[l]] = abs(localizedPath(i.path, l));
     languages["x-default"] = abs(localizedPath(i.path, "en"));
   }

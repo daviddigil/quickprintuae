@@ -6,6 +6,7 @@ import { formatAED } from "@/lib/pricing";
 import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/types";
 import { Badge, Card, CardHeader, EmptyState, ORDER_STATUS_TONE, Stat, Table } from "@/components/ui";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { WhatsappDashboardCard } from "@/components/admin/WhatsappDashboardCard";
 import { hasFeature } from "@/server/billing";
 import { walkInCounts } from "@/app/admin/walk-in/data";
 import { dubai, slotLabel } from "@/components/admin/format";
@@ -54,6 +55,7 @@ export default async function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader title={`Welcome back`} subtitle={`Here's what's happening at ${tenant.name} today.`} />
+      <WhatsappDashboardCard tenantId={tenant.id} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Orders today" value={agg.todayOrders} />
         <Stat label="Revenue today" value={formatAED(agg.todayRevenue)} sub="paid orders, incl. VAT" />

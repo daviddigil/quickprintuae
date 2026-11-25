@@ -2,13 +2,14 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { decrypt } from "@/lib/crypto";
-import { metaConfig, whatsappFake } from "@/lib/whatsapp-flag";
+import { whatsappFake } from "@/lib/whatsapp-flag";
+import { getMetaPlatformConfig } from "./platform-config";
 import type { WhatsappAccount, WhatsappConversation } from "@/db/schema";
 import { SERVICE_WINDOW_MS } from "./graph-window";
 export { SERVICE_WINDOW_MS };
 
 /** Graph base + version are read at call time (META_GRAPH_BASE lets tests point at a mock server). */
-const graph = (path: string) => { const m = metaConfig(); return `${m.graphBase}/${m.graphVersion}${path}`; };
+const graph = async (path: string) => { const m = await getMetaPlatformConfig(); return `${m.graphBase}/${m.graphVersion}${path}`; };
 
 /** Free-form messages are only allowed within 24h of the customer's last message (otherwise a template is required — see docs/WHATSAPP.md). */
 export const withinServiceWindow = (c: Pick<WhatsappConversation, "lastCustomerMessageAt">, now = Date.now()) =>
@@ -28,7 +29,7 @@ async function graphFetch(url: string, init: RequestInit & { token: string }) {
 
 async function post(account: WhatsappAccount, path: string, body: unknown) {
   const token = decrypt(account.accessTokenEnc) ?? "";
-  return graphFetch(graph(path), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), token }) as Promise<{ messages?: { id: string }[] }>;
+  return graphFetch(await graph(path), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), token }) as Promise<{ messages?: { id: string }[] }>;
 }
 
 async function record(conv: WhatsappConversation, source: "ai" | "admin", type: string, body: string, wamid: string | null, status: string, raw?: unknown) {
@@ -76,9 +77,9 @@ export async function markRead(account: WhatsappAccount, wamid: string) {
 
 /* ---------- onboarding helpers ---------- */
 export async function exchangeCode(code: string): Promise<string> {
-  const m = metaConfig();
-  if (!m.appId || !m.appSecret) throw new GraphError("META_APP_ID / META_APP_SECRET are not configured on this platform");
-  const url = new URL(graph("/oauth/access_token"));
+  const m = await getMetaPlatformConfig();
+  if (!m.appId || !m.appSecret) throw new GraphError("The platform's Meta app isn't configured yet");
+  const url = new URL(await graph("/oauth/access_token"));
   url.search = new URLSearchParams({ client_id: m.appId, client_secret: m.appSecret, code }).toString();
   let res: Response;
   try { res = await fetch(url, { signal: AbortSignal.timeout(20_000) }); } catch (e) { throw new GraphError(`Could not reach the Meta Graph API (${(e as Error).message})`); }
@@ -88,11 +89,18 @@ export async function exchangeCode(code: string): Promise<string> {
 }
 
 export async function subscribeWaba(wabaId: string, token: string) {
-  await graphFetch(graph(`/${wabaId}/subscribed_apps`), { method: "POST", token });
+  await graphFetch(await graph(`/${wabaId}/subscribed_apps`), { method: "POST", token });
 }
 
 /** Verifies a token + phone number id against Graph and returns the number's display name (used by both connect flows). */
 export async function fetchPhoneInfo(phoneNumberId: string, token: string): Promise<{ displayPhone: string | null; verifiedName: string | null }> {
-  const j = await graphFetch(graph(`/${phoneNumberId}?fields=display_phone_number,verified_name`), { token }) as { display_phone_number?: string; verified_name?: string };
+  const j = await graphFetch(await graph(`/${phoneNumberId}?fields=display_phone_number,verified_name`), { token }) as { display_phone_number?: string; verified_name?: string };
   return { displayPhone: j.display_phone_number ?? null, verifiedName: j.verified_name ?? null };
+}
+
+/** "Send a test message to my phone": WhatsApp's pre-approved `hello_world` template (works outside the 24h window). Recipient = the owner's PERSONAL number. */
+export async function sendTemplateTest(account: WhatsappAccount, to: string): Promise<{ id: string | null }> {
+  if (whatsappFake()) return { id: "fake" };
+  const j = await post(account, `/${account.phoneNumberId}/messages`, { messaging_product: "whatsapp", to, type: "template", template: { name: "hello_world", language: { code: "en_US" } } });
+  return { id: j.messages?.[0]?.id ?? null };
 }

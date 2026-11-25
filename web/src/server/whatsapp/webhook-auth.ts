@@ -3,7 +3,7 @@ import { createHash, timingSafeEqual } from "crypto";
 import { eq, inArray, isNotNull, and } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { decrypt } from "@/lib/crypto";
-import { metaConfig } from "@/lib/whatsapp-flag";
+import { getMetaPlatformConfig } from "./platform-config";
 import { verifySignature } from "./signature";
 
 export type WebhookAuth = { ok: true; via: "platform" | "account" } | { ok: false; status: 401 | 503; error: string };
@@ -28,7 +28,7 @@ function phoneIds(raw: string): string[] {
  * Nothing unsigned is ever processed. With no platform secret and no matching shop secret → 503 "not configured".
  */
 export async function authenticateWebhook(raw: string, signature: string | null): Promise<WebhookAuth> {
-  const platform = metaConfig().appSecret;
+  const platform = (await getMetaPlatformConfig()).appSecret;
   if (platform && verifySignature(raw, signature, platform)) return { ok: true, via: "platform" };
 
   const ids = phoneIds(raw);
@@ -43,7 +43,7 @@ export async function authenticateWebhook(raw: string, signature: string | null)
 /** GET handshake: the platform token, or a verify token generated for a manual-connect shop. */
 export async function verifyTokenValid(token: string | null): Promise<boolean> {
   if (!token) return false;
-  const platform = metaConfig().verifyToken;
+  const platform = (await getMetaPlatformConfig()).verifyToken;
   if (platform && safeEq(platform, token)) return true;
   const row = await db.query.whatsappAccounts.findFirst({ where: eq(schema.whatsappAccounts.verifyToken, token) });
   return !!row;

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import Link from "next/link";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { PageTitle } from "@/components/platform/PageTitle";
 
@@ -17,7 +18,7 @@ const VARS: { name: string; purpose: string; required?: boolean }[] = [
   { name: "PLATFORM_STRIPE_WEBHOOK_SECRET", purpose: "Verifies platform Stripe webhooks" },
   { name: "CRON_SECRET", purpose: "Protects cron endpoints", required: true },
   { name: "DELIVERY_FAKE", purpose: "Simulate courier APIs (dev/staging only)" },
-  { name: "META_APP_ID", purpose: "WhatsApp: Meta app for 'Connect with Facebook' (Embedded Signup)" },
+  { name: "META_APP_ID", purpose: "WhatsApp (fallback — normally saved in the Tech Provider page): Meta app id" },
   { name: "META_APP_SECRET", purpose: "WhatsApp: verifies Meta webhooks + exchanges signup codes" },
   { name: "META_VERIFY_TOKEN", purpose: "WhatsApp: webhook verification token you paste into Meta" },
   { name: "META_EMBEDDED_SIGNUP_CONFIG_ID", purpose: "WhatsApp: Embedded Signup (coexistence) configuration id" },
@@ -33,6 +34,10 @@ export default async function PlatformSettings() {
   return (
     <>
       <PageTitle title="Platform health" subtitle="Values are never displayed — only whether they are configured." />
+      <Card className="mb-6">
+        <CardHeader title="WhatsApp Tech Provider (Meta)" subtitle="One-click “Connect WhatsApp” for shop owners — paste your Meta app credentials here, no redeploy needed."
+          action={<Link href="/superadmin/settings/whatsapp" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" data-testid="sa-wa-link">Configure</Link>} />
+      </Card>
       <Card className="mb-6">
         <CardHeader title="Runtime" />
         <dl className="grid grid-cols-2 gap-y-2 px-5 py-4 text-sm sm:grid-cols-4">

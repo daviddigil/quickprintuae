@@ -4,6 +4,10 @@ import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { requireStorefrontTenant } from "@/lib/tenant";
 import { Configurator, type ConfiguratorInitial } from "@/components/store/configurator";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { productLd, breadcrumbLd } from "@/lib/seo/jsonld";
+import { absoluteAsset, aed, isIndexableTenant, productNoun, shopLd, storefrontUrl, trim } from "@/lib/seo/storefront";
+import { startingPrice } from "@/components/store/price";
 
 type P = { params: Promise<{ tenant: string; slug: string }>; searchParams: Promise<{ cfg?: string }> };
 
@@ -18,8 +22,18 @@ async function load(p: P["params"]) {
 }
 
 export async function generateMetadata({ params }: P): Promise<Metadata> {
-  const { product } = await load(params);
-  return { title: product.name, description: product.description };
+  const { tenant, product } = await load(params);
+  const noun = productNoun(product), from = startingPrice(product);
+  const title = `${noun} in ${tenant.emirate}`;
+  const description = trim(`${noun} in ${tenant.emirate}${from != null ? ` from ${aed(from)}` : ""}. ${product.description}`, 158);
+  const url = storefrontUrl(tenant, `/p/${product.slug}`);
+  const image = absoluteAsset(tenant, product.imageUrl) ?? storefrontUrl(tenant, "/og.png");
+  return {
+    title, description, alternates: { canonical: url },
+    robots: isIndexableTenant(tenant) ? undefined : { index: false, follow: false },
+    openGraph: { type: "website", url, title: `${title} | ${tenant.name}`, description, images: [{ url: image }] },
+    twitter: { card: "summary_large_image", title: `${title} | ${tenant.name}`, description, images: [image] },
+  };
 }
 
 function parseCfg(cfg?: string): ConfiguratorInitial | undefined {
@@ -34,8 +48,16 @@ function parseCfg(cfg?: string): ConfiguratorInitial | undefined {
 export default async function ProductPage({ params, searchParams }: P) {
   const { tenant, product } = await load(params);
   const { cfg } = await searchParams;
+  const url = storefrontUrl(tenant, `/p/${product.slug}`);
+  const shop = await shopLd(tenant);
+  const ld = [
+    shop,
+    productLd({ url, name: product.name, description: product.description, category: productNoun(product), image: absoluteAsset(tenant, product.imageUrl) ?? absoluteAsset(tenant, tenant.logoUrl), shopId: String((shop as { "@id": string })["@id"]), shopName: tenant.name, lowPrice: startingPrice(product), vatIncluded: !!tenant.settings?.pricesIncludeVat }),
+    breadcrumbLd([{ name: tenant.name, url: storefrontUrl(tenant) }, { name: product.name, url }]),
+  ];
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
+      <JsonLd data={ld} />
       <nav className="mb-4 text-sm text-slate-500"><a href={`/s/${tenant.slug}`} className="hover:text-slate-900">Home</a> / {product.name}</nav>
       <h1 className="text-3xl font-extrabold tracking-tight">{product.name}</h1>
       <p className="mt-2 max-w-2xl text-slate-600">{product.description}</p>

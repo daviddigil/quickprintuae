@@ -9,6 +9,15 @@ import { enabledProviders } from "@/server/payments";
 import { ProductIcon } from "@/components/store/product-icon";
 import { HeroSlider } from "@/components/store/HeroSlider";
 import type { Product } from "@/db/schema";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { isIndexableTenant, shopLd, storefrontUrl, trim } from "@/lib/seo/storefront";
+
+export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
+  const t = await requireStorefrontTenant((await params).tenant);
+  const description = trim(t.settings?.heroSubtitle || `Order printing online from ${t.name} in ${t.emirate}: documents, photos, business cards and more. Pickup or delivery.`, 158);
+  return { title: { absolute: `${t.name} — online printing in ${t.emirate}` }, description, alternates: { canonical: storefrontUrl(t) }, robots: isIndexableTenant(t) ? undefined : { index: false, follow: false } };
+}
 
 export default async function StoreHome({ params }: { params: Promise<{ tenant: string }> }) {
   const tenant = await requireStorefrontTenant((await params).tenant);
@@ -26,8 +35,11 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
   const providers = enabledProviders(tenant);
   const s = tenant.settings;
 
+  const ld = await shopLd(tenant);
   return (
     <>
+      <JsonLd data={ld} />
+      {banners.length > 0 && <h1 className="sr-only">{s?.heroTitle || `${tenant.name} — online printing in ${tenant.emirate}`}</h1>}
       <HeroSlider shopName={tenant.name} slides={banners.map((b) => ({ id: b.id, version: b.version, title: b.title, subtitle: b.subtitle, linkUrl: b.linkUrl, ctaLabel: b.ctaLabel, source: b.source }))} />
       {banners.length > 0 && (
         <div className="mx-auto flex max-w-6xl flex-wrap gap-3 px-4 pt-4">

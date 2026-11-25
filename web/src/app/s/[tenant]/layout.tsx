@@ -7,12 +7,27 @@ import { getCustomer } from "@/lib/auth";
 import { requireStorefrontTenant } from "@/lib/tenant";
 import { CartBadge } from "@/components/store/cart-badge";
 import { PoweredBy } from "@/components/PoweredBy";
+import { absoluteAsset, isIndexableTenant, storefrontHostOrigin, storefrontUrl, trim } from "@/lib/seo/storefront";
 
 type P = { params: Promise<{ tenant: string }> };
 
 export async function generateMetadata({ params }: P): Promise<Metadata> {
   const t = await requireStorefrontTenant((await params).tenant);
-  return { title: { default: `${t.name} — Online printing`, template: `%s · ${t.name}` }, description: t.settings?.heroSubtitle };
+  const indexable = isIndexableTenant(t);
+  const title = `${t.name} — online printing in ${t.emirate}`;
+  const description = trim(t.settings?.heroSubtitle || `Order printing online from ${t.name} in ${t.emirate}: documents, photos, business cards and more. Pickup or delivery.`, 158);
+  const logo = absoluteAsset(t, t.logoUrl);
+  return {
+    metadataBase: new URL(storefrontHostOrigin(t)),
+    title: { default: title, template: `%s | ${t.name}` },
+    description,
+    applicationName: t.name,
+    robots: indexable ? { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } : { index: false, follow: false },
+    openGraph: { type: "website", siteName: t.name, locale: "en_AE", title, description, images: [{ url: storefrontUrl(t, "/og.png"), width: 1200, height: 630, alt: t.name }] },
+    twitter: { card: "summary_large_image", title, description, images: [storefrontUrl(t, "/og.png")] },
+    icons: logo ? { icon: logo, apple: logo } : undefined,
+    alternates: { types: { "text/plain": [{ url: storefrontUrl(t, "/llms.txt"), title: `${t.name} (llms.txt)` }], "application/json": [{ url: storefrontUrl(t, "/products.json"), title: `${t.name} catalogue` }] } },
+  };
 }
 
 export default async function StoreLayout({ children, params }: P & { children: React.ReactNode }) {

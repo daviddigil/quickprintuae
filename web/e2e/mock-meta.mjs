@@ -49,6 +49,13 @@ export function startMockMeta(port = MOCK_META_PORT) {
       if (failNext > 0) { failNext--; return gerr(res, 500, "Mock transient failure", 2); }
       return json(res, 200, { messaging_product: "whatsapp", contacts: [{ wa_id: body?.to }], messages: [{ id: `wamid.MOCKOUT${++counter}` }] });
     }
+    // GET /<app-id>?fields=id,name&access_token=<app-id>|<app-secret>   (superadmin "Test credentials")
+    if (a && !b && req.method === "GET" && entry.query.access_token?.includes("|")) {
+      const [tid, tsec] = entry.query.access_token.split("|");
+      if (a !== APP_ID) return gerr(res, 400, `Unsupported get request. Object with ID '${a}' does not exist, cannot be loaded due to missing permissions, or does not support this operation.`, 100);
+      if (tid !== APP_ID || tsec !== APP_SECRET) return gerr(res, 400, "Error validating client secret.", 1);
+      return json(res, 200, { id: APP_ID, name: "QuickPrint Test App" });
+    }
     // GET /<phone>?fields=...
     if (a && !b && req.method === "GET") {
       if (!validToken(auth)) return gerr(res, 400, "Invalid OAuth access token.");
