@@ -298,7 +298,7 @@ await step("after connecting: 'Send a test message to my phone' sends WhatsApp's
 
 await step("EMBEDDED SIGNUP code exchange: bad code rejected by Meta; good code connects, token stored ENCRYPTED, WABA subscribed", async () => {
   const bad = await ownerA.post("/api/v1/admin/whatsapp/connect", { data: { code: "not-a-valid-code", wabaId: "700000000001", phoneNumberId: P1 } });
-  eq(bad.status(), 502, "bad code status"); ok((await json(bad)).error.includes("Invalid verification code"), "Meta's error surfaced");
+  eq(bad.status(), 502, "bad code status"); ok(/sign-in expired|Invalid verification code/.test((await json(bad)).error), "a clear, friendly error is returned");
   const res = await ownerA.post("/api/v1/admin/whatsapp/connect", { data: { code: "mock-code-abc123", wabaId: "700000000001", phoneNumberId: P1 } });
   eq(res.status(), 200, "connect"); const body = await res.text();
   ok(!body.includes("mock-token"), "token not in the response"); const acc = JSON.parse(body).account;
