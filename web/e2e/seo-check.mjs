@@ -76,9 +76,9 @@ await check("private areas send X-Robots-Tag: noindex", async () => {
 
 /* ============================== platform: marketing pages ============================== */
 for (const url of [...new Set(sitemapUrls.filter((u) => !/\/s\//.test(u)))]) {
-  const path = pathOf(url);
+  const path = pathOf(url).replace(/^\/ar(?=\/|$)/, "") || "/"; // English path; /ar pages are checked against their English counterpart
   await check(`marketing ${path}: canonical, one h1, title/description length, JSON-LD`, async () => {
-    const { r, t: h } = await text(path); eq(r.status, 200, "status");
+    const { r, t: h } = await text(pathOf(url)); eq(r.status, 200, "status");
     const t = title(h) ?? "", d = desc(h) ?? "", c = canonical(h);
     truthy(c, "canonical missing"); truthy(c.replace(/\/$/, "") === url.replace(/\/$/, ""), `canonical ${c} ≠ ${url}`);
     eq(h1s(h), 1, "number of <h1>");
@@ -98,6 +98,16 @@ for (const url of [...new Set(sitemapUrls.filter((u) => !/\/s\//.test(u)))]) {
     }
   });
 }
+await check("Arabic pages: lang/dir rtl, self canonical, hreflang en/ar/x-default, every sitemap alternate exists", async () => {
+  const arUrls = sitemapUrls.filter((u) => /^\/ar(\/|$)/.test(pathOf(u)));
+  truthy(arUrls.length >= 6, "expected /ar, /ar/pricing, /ar/signup and 3 solution pages in the sitemap");
+  for (const u of arUrls) {
+    const { r, t: h } = await text(pathOf(u)); eq(r.status, 200, u);
+    truthy(/<html lang="ar" dir="rtl"/.test(h), `${u}: html lang/dir`); eq(canonical(h), u, `${u}: canonical`); eq(h1s(h), 1, `${u}: h1 count`);
+    truthy(/hrefLang="en-AE"/i.test(h) && /hrefLang="ar-AE"/i.test(h) && /x-default/.test(h), `${u}: hreflang set`);
+    for (const m of h.matchAll(/<link rel="alternate" hrefLang="[^"]+" href="([^"]+)"/gi)) { const x = await get(pathOf(m[1])); if (x.status !== 200) throw new Error(`${u}: alternate ${m[1]} → ${x.status}`); }
+  }
+});
 await check("html lang/dir and viewport/theme-color are set", async () => { const { t: h } = await text("/"); truthy(/<html lang="en" dir="ltr"/.test(h), "html lang/dir"); truthy(/name="theme-color"/.test(h) && /name="viewport"/.test(h), "viewport/theme-color"); });
 
 /* ============================== storefront: temp shop ============================== */

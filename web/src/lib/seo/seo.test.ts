@@ -1,4 +1,9 @@
 import { test } from "node:test";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { en } from "@/lib/i18n/en";
+import { ar } from "@/lib/i18n/ar";
+import { SOLUTION_SLUGS, isSolutionSlug } from "@/lib/i18n";
 import assert from "node:assert/strict";
 import { jsonLdString, printShopLd, productLd, faqLd, breadcrumbLd, softwareApplicationLd } from "./jsonld";
 import { pageMetadata, localizedPath } from "./metadata";
@@ -12,19 +17,65 @@ test("JSON-LD cannot break out of its <script> tag", () => {
   assert.equal(JSON.parse(s).name, evil, "round-trips exactly");
 });
 
+const appDir = join(process.cwd(), "src/app");
+/** Does the Next.js route for this URL path exist (static page.tsx, or a [slug] route that serves it)? */
+function routeExists(urlPath: string): boolean {
+  const parts = urlPath.split("/").filter(Boolean);
+  let dir = appDir;
+  for (const part of parts) {
+    if (existsSync(join(dir, part))) { dir = join(dir, part); continue; }
+    const dyn = existsSync(dir) && readdirSync(dir).find((d) => /^\[[^\]]+\]$/.test(d));
+    if (!dyn) return false;
+    dir = join(dir, dyn);
+  }
+  return existsSync(join(dir, "page.tsx"));
+}
+
+test("every marketing path has an English page, and translated:true means the /ar page really exists", () => {
+  for (const m of MARKETING_PATHS) {
+    assert.ok(routeExists(m.path), `missing English page for ${m.path}`);
+    assert.equal(routeExists(localizedPath(m.path, "ar")), m.translated, `${m.path}: translated flag (${m.translated}) disagrees with the /ar page on disk`);
+  }
+  // the three solution pages are registered in both languages
+  for (const s of SOLUTION_SLUGS) assert.ok(isTranslated(`/solutions/${s}`), s);
+});
+
 test("hreflang alternates only for pages whose Arabic version exists", () => {
-  const before = MARKETING_PATHS.find((m) => m.path === "/pricing")!;
-  assert.equal(isTranslated("/pricing"), false);
-  assert.equal(pageMetadata({ title: "Pricing", description: "x".repeat(80), path: "/pricing" }).alternates?.languages, undefined);
-  before.translated = true; // simulate the content agent adding /ar/pricing
-  try {
-    const m = pageMetadata({ title: "Pricing", description: "x".repeat(80), path: "/pricing" });
-    assert.deepEqual(Object.keys(m.alternates!.languages as object).sort(), ["ar-AE", "en-AE", "x-default"]);
-    assert.ok(String((m.alternates!.languages as Record<string, string>)["ar-AE"]).endsWith("/ar/pricing"));
-  } finally { before.translated = false; }
+  const m = pageMetadata({ title: "Pricing", description: "x".repeat(80), path: "/pricing" });
+  assert.deepEqual(Object.keys(m.alternates!.languages as object).sort(), ["ar-AE", "en-AE", "x-default"]);
+  const langs = m.alternates!.languages as Record<string, string>;
+  assert.ok(langs["ar-AE"].endsWith("/ar/pricing") && langs["en-AE"].endsWith("/pricing") && !langs["en-AE"].includes("/ar/"));
+  assert.ok(String(m.alternates!.canonical).endsWith("/pricing"));
+  const ar = pageMetadata({ title: "t", description: "d".repeat(80), path: "/pricing", locale: "ar" });
+  assert.ok(String(ar.alternates!.canonical).endsWith("/ar/pricing"));
+  assert.equal((ar.openGraph as { locale: string }).locale, "ar_AE");
+  // an unregistered / untranslated path emits no alternates
+  assert.equal(pageMetadata({ title: "x", description: "d".repeat(80), path: "/nope" }).alternates?.languages, undefined);
+  // simulate a page whose Arabic version does not exist yet
+  const entry = MARKETING_PATHS.find((x) => x.path === "/signup")!;
+  entry.translated = false;
+  try { assert.equal(pageMetadata({ title: "x", description: "d".repeat(80), path: "/signup" }).alternates?.languages, undefined); } finally { entry.translated = true; }
   assert.equal(localizedPath("/", "ar"), "/ar");
   assert.equal(localizedPath("/pricing", "ar"), "/ar/pricing");
   assert.equal(pageMetadata({ title: "t", description: "d", path: "/x", noindex: true }).robots && (pageMetadata({ title: "t", description: "d", path: "/x", noindex: true }).robots as { index: boolean }).index, false);
+});
+
+test("Arabic and English dictionaries: same shape, meta lengths, billing figures unchanged", () => {
+  const shape = (o: unknown): unknown => (Array.isArray(o) ? o.map(shape) : o && typeof o === "object" ? Object.fromEntries(Object.entries(o).filter(([k]) => !["planNames", "features", "kinds", "emirates"].includes(k)).map(([k, v]) => [k, shape(v)])) : typeof o === "number" ? "n" : typeof o === "string" ? "s" : o);
+  const ks = (o: unknown, pre = ""): string[] => (o && typeof o === "object" ? Object.entries(o).flatMap(([k, v]) => ks(v, `${pre}.${k}`)) : [pre]);
+  // identical key paths (array lengths included)
+  assert.deepEqual(ks(shape(ar)).sort(), ks(shape(en)).sort());
+  const metas = [en.home.meta, ar.home.meta, en.pricingPage.meta, ar.pricingPage.meta, en.signup.meta, ar.signup.meta, ...SOLUTION_SLUGS.flatMap((s) => [en.solutions.pages[s].meta, ar.solutions.pages[s].meta])];
+  for (const m of metas) assert.ok(m.description.length >= 70 && m.description.length <= 160, `description ${m.description.length}: ${m.description}`);
+  for (const m of [ar.pricingPage.meta, ar.signup.meta, ...SOLUTION_SLUGS.map((s) => ar.solutions.pages[s].meta)]) assert.ok(m.title.length + " | QuickPrint".length <= 65 && m.title.length >= 17, m.title);
+  // billing figures stay exactly as in English
+  const figures = (c: typeof en) => JSON.stringify([c.home.faq, c.pricingPage.faq, c.billing, c.home.pricing, c.priceTable.paygLine, c.signup.form]).match(/\b\d[\d,.]*%?/g)!.map((x) => x.replace(/[,.]$/, "")).sort();
+  assert.deepEqual(figures(ar), figures(en));
+  assert.match(JSON.stringify(ar.billing), /AED 499/); assert.match(JSON.stringify(ar.billing.payg), /\{pct\}%/);
+  // Arabic copy never uses Arabic-Indic digits (numbers stay as is)
+  assert.ok(!/[\u0660-\u0669]/.test(JSON.stringify(ar)));
+  // every solution page references valid FAQ indices and related pages
+  for (const s of SOLUTION_SLUGS) for (const c of [en, ar]) { const p = c.solutions.pages[s]; assert.ok(p.faq.every((i) => c.home.faq[i])); assert.ok(p.related.every((r) => isSolutionSlug(r) && r !== s)); }
 });
 
 test("print shop + product structured data (no ratings, AED offer, opening hours)", () => {

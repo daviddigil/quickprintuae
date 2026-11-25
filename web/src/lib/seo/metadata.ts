@@ -16,6 +16,8 @@ export interface PageMetaInput {
   locale?: Locale;
   /** default: taken from MARKETING_PATHS (hreflang alternates only for pages whose Arabic version exists). true/false overrides. */
   translated?: boolean;
+  /** use the title as is (no "| QuickPrint" suffix), e.g. for the home page */
+  absoluteTitle?: boolean;
   noindex?: boolean;
   /** absolute or site-relative OG image; defaults to the generated /opengraph-image */
   image?: string;
@@ -34,7 +36,7 @@ export function pageMetadata(i: PageMetaInput): Metadata {
   const image = i.image ? (i.image.startsWith("http") ? i.image : abs(i.image)) : abs("/opengraph-image");
   return {
     metadataBase: new URL(abs("/")),
-    title: i.title,
+    title: i.absoluteTitle ? { absolute: i.title } : i.title,
     description: i.description,
     alternates: { canonical, ...(Object.keys(languages).length ? { languages } : {}) },
     robots: i.noindex ? { index: false, follow: false } : { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },

@@ -393,6 +393,8 @@ p, li, dd, blockquote { text-wrap: pretty; }
 /* ---------- 7. Motion (always from a visible resting state) ----------------- */
 @keyframes rise { from { transform: translateY(10px); } to { transform: none; } }
 @keyframes ticker { to { transform: translateX(calc(-50% - 1.5rem)); } }
+@keyframes ticker-rtl { to { transform: translateX(calc(50% + 1.5rem)); } }
+[dir="rtl"] .ticker-track { animation-name: ticker-rtl; }
 @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 40%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }
 .rise-run { animation: rise var(--dur-4) var(--ease-decelerate) both; }
 .live-dot { animation: pulse-ring 1.8s ease-out infinite; }

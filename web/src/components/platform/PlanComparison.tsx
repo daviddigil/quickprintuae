@@ -34,7 +34,7 @@ export function PlanComparison({ plans, locale = "en" }: { plans: PublicPlan[]; 
     </tr>
   );
   return (
-    <div className="overflow-x-auto rounded-shape-xl border border-outline-variant bg-surface-lowest" tabIndex={0} role="region" aria-label="Plan comparison table">
+    <div className="overflow-x-auto rounded-shape-xl border border-outline-variant bg-surface-lowest" tabIndex={0} role="region" aria-label={k.caption}>
       <table className="w-full min-w-[36rem] text-sm">
         <caption className="sr-only">{k.caption}</caption>
         <thead>

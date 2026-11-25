@@ -12,9 +12,12 @@ export interface MarketingPath {
 }
 
 export const MARKETING_PATHS: MarketingPath[] = [
-  { path: "/", priority: 1, changeFrequency: "weekly", translated: false },
-  { path: "/pricing", priority: 0.9, changeFrequency: "weekly", translated: false },
-  { path: "/signup", priority: 0.7, changeFrequency: "monthly", translated: false },
+  { path: "/", priority: 1, changeFrequency: "weekly", translated: true },
+  { path: "/pricing", priority: 0.9, changeFrequency: "weekly", translated: true },
+  { path: "/solutions/print-shops", priority: 0.8, changeFrequency: "monthly", translated: true },
+  { path: "/solutions/walk-in-queue", priority: 0.8, changeFrequency: "monthly", translated: true },
+  { path: "/solutions/whatsapp-ordering", priority: 0.8, changeFrequency: "monthly", translated: true },
+  { path: "/signup", priority: 0.7, changeFrequency: "monthly", translated: true },
 ];
 
 const norm = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p) || "/";
