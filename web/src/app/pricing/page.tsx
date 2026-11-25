@@ -8,8 +8,8 @@ import { getPublicPlans, getPublicUsageRates } from "@/server/billing/public-pla
 
 export const dynamic = "force-dynamic";
 export const metadata = pageMetadata({
-  title: "Print shop software pricing in AED: subscription or pay per order",
-  description: "QuickPrint UAE plans for print shops: a monthly subscription with no fee on orders, or pay per order with no monthly fee. WhatsApp and AI usage is pay as you go.",
+  title: "Pricing in AED: subscription or pay per order",
+  description: "QuickPrint UAE plans for print shops: a monthly subscription with no fee on orders, or pay per order with no monthly fee. WhatsApp and AI are pay as you go.",
   path: "/pricing",
 });
 

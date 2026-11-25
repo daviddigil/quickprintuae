@@ -13,7 +13,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
   return (
     <main className="min-h-screen bg-surface-low lg:grid lg:grid-cols-2">
       <section className="hidden bg-inverse-surface p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <Logo />
+        <Logo onDark />
         <div>
           <h1 className="text-4xl font-extrabold leading-tight">Your print shop, open online 24/7.</h1>
           <ul className="mt-8 space-y-3 text-outline">
