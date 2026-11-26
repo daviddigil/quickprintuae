@@ -76,8 +76,9 @@ export function OfferForm({ initial, plans, isNew }: { initial: FormOffer; plans
           {hasValue && (
             <Field label="Lasts (months)" hint="(blank = for as long as they stay)">
               <Input name="durationMonths" type="number" min="1" max="36" step="1" value={f.durationMonths ?? ""} onChange={(e) => set("durationMonths", e.target.value === "" ? null : Number(e.target.value))} data-testid="f-duration" />
-            </Field>{fe("durationMonths")}
+            </Field>
           )}
+          {hasValue && fe("durationMonths")}
           <Field label="Audience">
             <Select name="audience" value={f.audience} onChange={(e) => set("audience", e.target.value as "new" | "all")} data-testid="f-audience">
               <option value="new">New signups only</option><option value="all">All shops (existing shops can claim it)</option>
