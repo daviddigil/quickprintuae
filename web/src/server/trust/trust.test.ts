@@ -1,4 +1,5 @@
 /** DB-backed. Run via `npm test`. Guard rails, seller verification, card-on-file state machine, gating, document isolation. */
+import { getTrialDays } from "@/server/platform-settings";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, rmSync, statSync } from "node:fs";
@@ -203,7 +204,7 @@ test("licence expiry: expired licences flip to 'expired' (payouts/listing stop) 
 });
 
 /* ------------------------------ signup state machine ------------------------------ */
-test("signup: incomplete -> trial only when the card is on file; trial is 14 days; repeating is idempotent", async () => {
+test("signup: incomplete -> trial only when the card is on file; trial length follows the superadmin setting (default 7); repeating is idempotent", async () => {
   const s = await shop({ incomplete: true });
   let t = await tenantOf(s.tenant.id);
   assert.equal(t.status, "incomplete"); assert.equal(t.cardStatus, "pending"); assert.equal(t.trialEndsAt, null);
@@ -214,7 +215,8 @@ test("signup: incomplete -> trial only when the card is on file; trial is 14 day
   t = await tenantOf(s.tenant.id);
   assert.equal(t.status, "trial"); assert.equal(t.cardStatus, "on_file");
   const days = (t.trialEndsAt!.getTime() - Date.now()) / 86400_000;
-  assert.ok(days > 13.9 && days <= 14.01, `trial length ${days}`);
+  const expected = await getTrialDays();
+  assert.ok(days > expected - 0.1 && days <= expected + 0.01, `trial length ${days}, expected ${expected}`);
   assert.equal(t.cardFingerprintHash, hashCardFingerprint(card.fingerprint));
   assert.equal(t.billingRef.cardLast4, "4242");
   const ends = t.trialEndsAt!.getTime();

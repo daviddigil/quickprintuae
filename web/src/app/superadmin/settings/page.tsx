@@ -38,6 +38,10 @@ export default async function PlatformSettings() {
         <CardHeader title="WhatsApp Tech Provider (Meta)" subtitle="One-click “Connect WhatsApp” for shop owners — paste your Meta app credentials here, no redeploy needed."
           action={<Link href="/superadmin/settings/whatsapp" className="rounded-lg bg-inverse-surface px-4 py-2 text-sm font-semibold text-white hover:bg-inverse-surface" data-testid="sa-wa-link">Configure</Link>} />
       </Card>
+      <Card className="mb-6" data-testid="trial-setting-link">
+        <CardHeader title="Free trial length" subtitle="Days of free use for every new shop (all plans)."
+          action={<Link href="/superadmin/settings/trial" className="rounded-lg bg-inverse-surface px-4 py-2 text-sm font-semibold text-white">Set trial length</Link>} />
+      </Card>
       <Card className="mb-6">
         <CardHeader title="Runtime" />
         <dl className="grid grid-cols-2 gap-y-2 px-5 py-4 text-sm sm:grid-cols-4">

@@ -127,6 +127,13 @@
       "when": 1795699785684,
       "tag": "0017_verification_trn_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795718182606,
+      "tag": "0018_unusual_nighthawk",
+      "breakpoints": true
     }
   ]
 }

@@ -18,6 +18,15 @@ export const DEFAULT_PLANS = [
     billingModel: "commission", flags: ["walk_in_queue"], features: ["No monthly fee", "Commission only on paid orders", "Everything in Growth", "Meta API & AI pay as you go"] },
 ];
 
+/** Free-trial length set by the superadmin (platform_settings.trialDays), default 7. Reads through the given client so the seed script can reuse provisioning. */
+async function configuredTrialDays(db: DB): Promise<number> {
+  try {
+    const row = await db.query.platformSettings.findFirst({ where: eq(schema.platformSettings.key, "trialDays") });
+    const v = Math.round(Number(row?.value));
+    return Number.isFinite(v) ? Math.min(60, Math.max(0, v)) : 7;
+  } catch { return 7; }
+}
+
 export async function ensurePlans(db: DB) {
   for (const p of DEFAULT_PLANS) {
     const exists = await db.query.plans.findFirst({ where: eq(schema.plans.code, p.code) });
@@ -57,7 +66,7 @@ export async function provisionTenant(db: DB, input: ProvisionInput) {
       status: input.incomplete ? "incomplete" : "trial",
       cardStatus: input.incomplete ? "pending" : "none",
       verificationStatus: input.verified ? "verified" : "unverified",
-      trialEndsAt: input.incomplete ? null : new Date(Date.now() + (input.trialDays ?? 14) * 86400_000),
+      trialEndsAt: input.incomplete ? null : new Date(Date.now() + (input.trialDays ?? await configuredTrialDays(db)) * 86400_000),
       settings: { ...DEFAULT_TENANT_SETTINGS, orderPrefix: input.slug.slice(0, 3).toUpperCase() },
     }).returning();
     const [owner] = await tx.insert(schema.users).values({

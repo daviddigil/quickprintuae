@@ -211,6 +211,59 @@ export const files = pgTable("files", {
 
 /* ---------- orders ---------- */
 /** Platform-level payment gateway (singleton per provider): collects SaaS subscriptions and platform-routed order payments. Secrets stored encrypted. */
+/** Superadmin-controlled platform settings (key/value), e.g. { trialDays: 7 }. Read through src/server/platform-settings.ts. */
+export const platformSettings = pgTable("platform_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").$type<unknown>().notNull(),
+  updatedBy: uuid("updated_by"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Seasonal subscription offers for shop owners (Black Friday, Winter, Summer, Ramadan...), created by the superadmin. */
+export const offers = pgTable("offers", {
+  id: id(),
+  name: text("name").notNull(),
+  /** optional promo code the owner types at signup; blank = campaign (auto-applied) */
+  code: text("code"),
+  headline: text("headline").notNull().default(""),
+  description: text("description").notNull().default(""),
+  theme: text("theme").notNull().default("custom"), // black_friday | winter | summer | ramadan | eid | national_day | custom
+  /** percent | amount (AED off the subscription per month) | free_months | trial_extension (extra trial days) */
+  kind: text("kind").notNull(),
+  value: numeric("value", { precision: 10, scale: 2, mode: "number" }).notNull().default(0),
+  /** how many billing months the discount runs for (percent/amount); null = for as long as they stay */
+  durationMonths: integer("duration_months"),
+  /** plan codes the offer applies to; empty = all plans */
+  planCodes: jsonb("plan_codes").$type<string[]>().notNull().default([]),
+  /** billing cycles it applies to */
+  cycles: jsonb("cycles").$type<string[]>().notNull().default(["monthly", "yearly"]),
+  /** 'new' = new signups only, 'all' = existing shops can claim it too */
+  audience: text("audience").notNull().default("new"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  maxRedemptions: integer("max_redemptions"),
+  redeemedCount: integer("redeemed_count").notNull().default(0),
+  /** show a banner on the home, pricing and signup pages while active */
+  showBanner: boolean("show_banner").notNull().default(true),
+  status: text("status").notNull().default("draft"), // draft | active | paused
+  createdBy: uuid("created_by"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("offers_code_idx").on(sql`upper(${t.code})`).where(sql`${t.code} is not null`), index("offers_status_idx").on(t.status, t.startsAt, t.endsAt)]);
+
+export const offerRedemptions = pgTable("offer_redemptions", {
+  id: id(),
+  offerId: uuid("offer_id").notNull().references(() => offers.id, { onDelete: "cascade" }),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  planCode: text("plan_code"),
+  /** snapshot of the terms at redemption, so later edits to the offer never change what a shop was promised */
+  terms: jsonb("terms").$type<{ name: string; kind: string; value: number; durationMonths: number | null }>().notNull(),
+  monthsRemaining: integer("months_remaining"), // null = unlimited
+  totalDiscount: money("total_discount").notNull().default(0),
+  status: text("status").notNull().default("active"), // active | completed | cancelled
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex("offer_redemptions_once_idx").on(t.offerId, t.tenantId), index("offer_redemptions_tenant_idx").on(t.tenantId, t.status)]);
+
 export const platformGateways = pgTable("platform_gateways", {
   id: id(),
   provider: text("provider").notNull().unique(), // 'mamo' | 'meta_whatsapp'
@@ -695,6 +748,9 @@ export const saasInvoices = pgTable("saas_invoices", {
   paymentUrl: text("payment_url"),
   /** pay-as-you-go usage billed on this invoice (WhatsApp/Meta messages, AI) and the line detail */
   usageAmount: money("usage_amount").notNull().default(0),
+  /** subscription discount from a superadmin offer (Black Friday etc.), net of VAT */
+  discountAmount: money("discount_amount").notNull().default(0),
+  discountDetail: jsonb("discount_detail").$type<{ offerId: string; name: string; kind: string; amount: number }[]>().notNull().default([]),
   usageDetail: jsonb("usage_detail").$type<{ kind: string; label: string; unit: string; qty: number; included: number; billedQty: number; rate: number; amount: number }[]>().notNull().default([]),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   createdAt: createdAt(),
@@ -731,6 +787,8 @@ export const gatewaySetupEvents = pgTable("gateway_setup_events", {
 });
 
 export type Tenant = typeof tenants.$inferSelect;
+export type Offer = typeof offers.$inferSelect;
+export type OfferRedemption = typeof offerRedemptions.$inferSelect;
 export type SellerVerification = typeof sellerVerifications.$inferSelect;
 export type PayoutAccount = typeof payoutAccounts.$inferSelect;
 export type PayoutBatch = typeof payoutBatches.$inferSelect;

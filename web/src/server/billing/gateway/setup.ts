@@ -6,8 +6,8 @@ import { GuardError, hashCardFingerprint } from "@/lib/trust/verification";
 import { isBlocked } from "@/server/trust/guards";
 import { recordTrustAudit } from "@/server/trust/audit";
 import type { CardInfo } from "./types";
+import { getTrialDays } from "@/server/platform-settings";
 
-export const TRIAL_DAYS = 14;
 
 export type SetupResult =
   | { ok: true; started: boolean; tenant: Tenant }
@@ -46,7 +46,7 @@ export async function completeCardSetup(tenantId: string, card: CardInfo, source
   delete (ref as Record<string, string | undefined>).cardError;
   const [row] = await db.update(schema.tenants).set({
     cardStatus: "on_file", cardFingerprintHash: hash, billingRef: ref,
-    ...(starts ? { status: "trial" as const, trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86400_000) } : {}),
+    ...(starts ? { status: "trial" as const, trialEndsAt: new Date(Date.now() + (await getTrialDays()) * 86400_000) } : {}),
   }).where(and(eq(schema.tenants.id, tenantId), starts ? eq(schema.tenants.status, "incomplete") : ne(schema.tenants.status, "cancelled"))).returning();
   const final = row ?? (await db.query.tenants.findFirst({ where: eq(schema.tenants.id, tenantId) }))!;
   // a concurrent webhook + return-URL pair: only the call that flipped incomplete -> trial counts as "started"
