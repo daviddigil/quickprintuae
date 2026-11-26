@@ -13,6 +13,9 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { faqLd } from "@/lib/seo/jsonld";
 import { getCopy, hrefFor, type Locale } from "@/lib/i18n";
 import { primeTrialDays } from "@/server/platform-settings";
+import { toPricingOffer } from "@/components/offers/OfferPrice";
+import { OfferBanner } from "@/components/offers/OfferBanner";
+import { loadBannerOffers } from "@/server/offers";
 import { getPublicPlans, getPublicUsageRates } from "@/server/billing/public-plans";
 
 /** Marketing home page, shared by "/" (en) and "/ar" (ar). */
@@ -20,10 +23,12 @@ export async function HomePage({ locale }: { locale: Locale }) {
   const trialDays = await primeTrialDays();
   const copy = getCopy(locale), p = copy.home.pricing, h = (x: string) => hrefFor(locale, x);
   const [plans, usageRates] = await Promise.all([getPublicPlans(), getPublicUsageRates()]);
+  const [offer] = await loadBannerOffers();
   return (
     <div className="theme-auto min-h-screen">
       <JsonLd data={faqLd(copy.home.faq)} />
       <MarketingNav locale={locale} />
+      {offer && <OfferBanner offer={offer} locale={locale} />}
       <main id="main">
         <Hero copy={copy} />
         <Showcase copy={copy} />
@@ -36,7 +41,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
             <p className="measure mt-4 text-lg text-on-surface-variant">{p.lead}</p>
           </div>
           <Reveal className="mt-10">
-            {plans.length ? <PricingTable plans={plans} locale={locale} trialDays={trialDays} /> : <p className="text-on-surface-variant">{p.updating}<Link href={h("/signup")} className="font-semibold text-primary underline">{p.trial}</Link>{p.to}</p>}
+            {plans.length ? <PricingTable plans={plans} locale={locale} trialDays={trialDays} offer={offer ? toPricingOffer(offer) : null} /> : <p className="text-on-surface-variant">{p.updating}<Link href={h("/signup")} className="font-semibold text-primary underline">{p.trial}</Link>{p.to}</p>}
           </Reveal>
           {plans.length > 0 && (
             <Reveal className="mt-12">

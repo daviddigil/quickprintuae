@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Segmented } from "@/components/ui";
 import { fill, getCopy, hrefFor, type Locale } from "@/lib/i18n";
+import { OfferPrice, type PricingOffer } from "@/components/offers/OfferPrice";
 import { trFeature, trPlanName } from "./plan-text";
 
 export interface PublicPlan {
@@ -19,7 +20,7 @@ export interface PublicUsageRate { kind: string; label: string; unit: string; pr
 const aed = (n: number) => `AED ${n.toLocaleString("en-AE")}`;
 
 /** Plan cards with a monthly/yearly switch. The popular plan (middle of three) is the only filled card. */
-export function PricingTable({ plans, locale = "en", trialDays }: { plans: PublicPlan[]; locale?: Locale; trialDays?: number }) {
+export function PricingTable({ plans, locale = "en", trialDays, offer }: { plans: PublicPlan[]; locale?: Locale; trialDays?: number; offer?: PricingOffer | null }) {
   const t = getCopy(locale, trialDays).priceTable, signup = hrefFor(locale, "/signup");
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   const yearly = period === "yearly";
@@ -46,6 +47,7 @@ export function PricingTable({ plans, locale = "en", trialDays }: { plans: Publi
               <p className={`mt-1 text-xs tabular-nums ${popular ? "text-inverse-on-surface/70" : "text-on-surface-variant"}`}>
                 {yearly ? fill(t.billedYear, { amount: aed(p.priceYearly) }) : t.billedMonth}. {t.noFee}
               </p>
+              <OfferPrice offer={offer} planCode={p.code} listCharge={yearly ? p.priceYearly : p.priceMonthly} cycle={period} locale={locale} />
               <ul className="mt-6 flex-1 space-y-2.5 text-sm">
                 {p.features.map((f) => (
                   <li key={f} className="flex gap-2.5">

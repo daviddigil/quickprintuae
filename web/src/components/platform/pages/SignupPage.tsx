@@ -6,6 +6,7 @@ import { PoweredBy } from "@/components/PoweredBy";
 import { primeTrialDays } from "@/server/platform-settings";
 import { getCopy, hrefFor, type Locale } from "@/lib/i18n";
 import { setupMode } from "@/server/billing/gateway";
+import { LiveOfferBanner } from "@/components/offers/LiveOfferBanner";
 import { WaitlistForm } from "@/components/platform/WaitlistForm";
 
 /** Sign-up page, shared by "/signup" (en) and "/ar/signup" (ar). The form posts to the same API in both languages. */
@@ -16,6 +17,8 @@ export async function SignupPage({ locale, plan }: { locale: Locale; plan?: stri
   const mode = await setupMode(); // production with no live gateway: waitlist instead of signup
   const home = hrefFor(locale, "/");
   return (
+    <>
+    <LiveOfferBanner locale={locale} />
     <main className="min-h-screen bg-surface-low lg:grid lg:grid-cols-2">
       <section className="hidden bg-inverse-surface p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <Logo onDark href={home} label={copy.common.homeAria} />
@@ -41,5 +44,6 @@ export async function SignupPage({ locale, plan }: { locale: Locale; plan?: stri
         </div>
       </section>
     </main>
+    </>
   );
 }

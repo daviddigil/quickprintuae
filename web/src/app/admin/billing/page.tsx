@@ -13,6 +13,7 @@ import { usageForPeriod } from "@/server/usage";
 import { ensurePlans } from "@/server/provision";
 import { effectiveRuleForTenant, ensureCommissionsForPeriod } from "@/server/commission";
 import { setupMode } from "@/server/billing/gateway";
+import { OffersCard } from "./offers-card";
 import { CardSection } from "./card-section";
 
 export const metadata = { title: "Plan & billing" };
@@ -135,15 +136,17 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           </div>
         </Card>
       )}
+      <OffersCard tenant={tenant} />
       <Card>
         <CardHeader title="Invoices" />
         {invoices.length === 0 ? <EmptyState title="No invoices yet" /> : (
-          <Table head={["Invoice", "Period", "Subscription", "Order fees", "Usage", "VAT", "Total", "Status"]}>
+          <Table head={["Invoice", "Period", "Subscription", "Discount", "Order fees", "Usage", "VAT", "Total", "Status"]}>
             {invoices.map((i) => (
               <tr key={i.id}>
                 <td className="px-4 py-3 font-medium">{i.number}</td>
                 <td className="px-4 py-3 text-xs">{dubai(i.periodStart, "d MMM")} – {dubai(i.periodEnd, "d MMM yyyy")}</td>
                 <td className="px-4 py-3">{formatAED(i.subscriptionAmount)}</td>
+                <td className="px-4 py-3" data-testid="invoice-discount">{i.discountAmount > 0 ? <span className="text-success">−{formatAED(i.discountAmount)}<span className="block text-xs text-on-surface-variant">{i.discountDetail.map((d) => d.name).join(", ")}</span></span> : "—"}</td>
                 <td className="px-4 py-3">{formatAED(i.orderFeeAmount)}</td>
                 <td className="px-4 py-3">{formatAED(i.usageAmount)}</td>
                 <td className="px-4 py-3">{formatAED(i.vat)}</td>

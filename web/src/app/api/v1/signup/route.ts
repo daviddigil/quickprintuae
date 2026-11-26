@@ -9,6 +9,7 @@ import { rateLimit } from "@/server/billing/rate-limit";
 import { setupMode } from "@/server/billing/gateway";
 import { assertSignupAllowed, guardErrorFromDb, recordSignupIp } from "@/server/trust/guards";
 import { clientIp } from "@/server/trust/request";
+import { findOfferForSignup, OFFER_FAILURE_MESSAGE } from "@/server/offers";
 import { RESERVED_SLUGS, SignupBody } from "./schema";
 
 /**
@@ -33,12 +34,17 @@ export async function POST(req: Request) {
   if (await db.query.tenants.findFirst({ where: eq(schema.tenants.slug, b.slug), columns: { id: true } }))
     return NextResponse.json({ error: "This store address is already taken" }, { status: 409 });
 
+  // promo code (or the running campaign): validated now, redeemed only when the card step completes
+  const offer = await findOfferForSignup({ planCode: b.plan, cycle: "monthly", code: b.promoCode || null });
+  if (!offer.ok && b.promoCode) return NextResponse.json({ error: OFFER_FAILURE_MESSAGE[offer.reason], code: "offer_" + offer.reason }, { status: 400 });
+
   try {
     await assertSignupAllowed({ email: b.email, phone: b.phone });
     const { tenant, owner } = await provisionTenant(db, {
       shopName: b.shopName, slug: b.slug, ownerName: b.ownerName, ownerEmail: b.email,
       ownerPassword: b.password, phone: b.phone, emirate: b.emirate, planCode: b.plan, incomplete: true,
     });
+    if (offer.ok) await db.update(schema.tenants).set({ billingRef: { ...tenant.billingRef, pendingOffer: offer.offer.id } }).where(eq(schema.tenants.id, tenant.id));
     await createSession({ uid: owner.id, role: "owner", tid: tenant.id });
     await audit("tenant.signup", { slug: tenant.slug, plan: b.plan }, tenant.id);
     await recordSignupIp(tenant.id, ip === "local" ? null : ip);

@@ -38,13 +38,14 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
       </form>
       <Card>
         {rows.length === 0 ? <EmptyState title="No invoices yet">Generate them for a month above, or wait for the daily billing cron.</EmptyState> : (
-          <Table head={["Invoice", "Shop", "Period", "Subscription", "Order fees", "VAT", "Total", "Status", ""]}>
+          <Table head={["Invoice", "Shop", "Period", "Subscription", "Discount", "Order fees", "VAT", "Total", "Status", ""]}>
             {rows.map(({ i, tenant }) => (
               <tr key={i.id}>
                 <td className="px-4 py-3 font-mono text-xs">{i.number}</td>
                 <td className="px-4 py-3"><Link className="hover:underline" href={`/superadmin/tenants/${i.tenantId}`}>{tenant}</Link></td>
                 <td className="px-4 py-3 text-xs">{fmtDate(i.periodStart)}</td>
                 <td className="px-4 py-3">{formatAED(i.subscriptionAmount)}</td>
+                <td className="px-4 py-3" data-testid="invoice-discount">{i.discountAmount > 0 ? <span className="text-success">−{formatAED(i.discountAmount)}<div className="text-xs text-on-surface-variant">{i.discountDetail.map((d) => d.name).join(", ")}</div></span> : "—"}</td>
                 <td className="px-4 py-3">{formatAED(i.orderFeeAmount)}<div className="text-xs text-outline">GMV {formatAED(i.gmv)}</div></td>
                 <td className="px-4 py-3">{formatAED(i.vat)}</td>
                 <td className="px-4 py-3 font-semibold">{formatAED(i.total)}</td>

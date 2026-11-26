@@ -6,6 +6,7 @@ import { GuardError, hashCardFingerprint } from "@/lib/trust/verification";
 import { isBlocked } from "@/server/trust/guards";
 import { recordTrustAudit } from "@/server/trust/audit";
 import type { CardInfo } from "./types";
+import { redeemPendingOffer } from "@/server/offers";
 import { getTrialDays } from "@/server/platform-settings";
 
 
@@ -52,6 +53,8 @@ export async function completeCardSetup(tenantId: string, card: CardInfo, source
   // a concurrent webhook + return-URL pair: only the call that flipped incomplete -> trial counts as "started"
   const startedNow = starts && !!row;
   if (!same) await recordTrustAudit(startedNow ? "billing.trial_started" : "billing.card_updated", { gateway: source.gateway, brand: card.brand, last4: card.last4, eventId: source.eventId ?? null }, { tenantId });
+  // the signup promo/campaign offer is redeemed only now, when the trial really starts (abandoned signups burn nothing)
+  if (startedNow) { await redeemPendingOffer(tenantId); return { ok: true, started: true, tenant: (await db.query.tenants.findFirst({ where: eq(schema.tenants.id, tenantId) })) ?? final }; }
   return { ok: true, started: startedNow, tenant: final };
 }
 

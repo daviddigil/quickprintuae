@@ -7,6 +7,9 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { faqLd } from "@/lib/seo/jsonld";
 import { getCopy, type Locale } from "@/lib/i18n";
 import { primeTrialDays } from "@/server/platform-settings";
+import { toPricingOffer } from "@/components/offers/OfferPrice";
+import { OfferBanner } from "@/components/offers/OfferBanner";
+import { loadBannerOffers } from "@/server/offers";
 import { getPublicPlans, getPublicUsageRates } from "@/server/billing/public-plans";
 
 /** Pricing page, shared by "/pricing" (en) and "/ar/pricing" (ar). */
@@ -14,17 +17,19 @@ export async function PricingPage({ locale }: { locale: Locale }) {
   const trialDays = await primeTrialDays();
   const copy = getCopy(locale), t = copy.pricingPage;
   const [plans, usageRates] = await Promise.all([getPublicPlans(), getPublicUsageRates()]);
+  const [offer] = await loadBannerOffers();
   return (
     <div className="theme-auto min-h-screen">
       <JsonLd data={faqLd(t.faq)} />
       <MarketingNav locale={locale} />
+      {offer && <OfferBanner offer={offer} locale={locale} />}
       <main id="main">
         <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 md:py-20">
           <p className="proof-label">{t.label}</p>
           <h1 className="mt-5 max-w-3xl font-display text-display font-bold">{t.h1}</h1>
           <p className="measure mt-5 text-lg text-on-surface-variant">{t.lead}</p>
           <div className="mt-10">
-            {plans.length ? <PricingTable plans={plans} locale={locale} trialDays={trialDays} /> : <p className="text-on-surface-variant">{t.updating}</p>}
+            {plans.length ? <PricingTable plans={plans} locale={locale} trialDays={trialDays} offer={offer ? toPricingOffer(offer) : null} /> : <p className="text-on-surface-variant">{t.updating}</p>}
           </div>
         </section>
         {plans.length > 0 && (

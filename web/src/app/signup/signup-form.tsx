@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Alert, Button, Field, Input, Select } from "@/components/ui";
+import { Alert, Button, Field, Input, Label, Select } from "@/components/ui";
 import { EMIRATES } from "@/lib/types";
 import { fill, getCopy, type Locale } from "@/lib/i18n";
+import { describeOfferL, offerCopy } from "@/lib/i18n/offers";
 import { CardStep } from "@/components/platform/CardStep";
 
 const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
@@ -19,6 +20,28 @@ export function SignupForm({ plans, defaultPlan, locale = "en", live, fake, tria
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"account" | "card">("account");
   const [email, setEmail] = useState("");
+  // promo code (optional): validated against the server, redeemed only when the card step completes
+  const oc = offerCopy(locale);
+  const [planCode, setPlanCode] = useState(plans.some((p) => p.code === defaultPlan) ? defaultPlan! : "growth");
+  const [promo, setPromo] = useState("");
+  const [applied, setApplied] = useState<{ text: string; list: number; discounted: number; auto: boolean; kind: string; value: number; durationMonths: number | null } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  async function checkPromo(code: string, plan: string) {
+    setPromoError(null);
+    const res = await fetch("/api/v1/offers/validate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: code.trim() || undefined, plan, cycle: "monthly" }) }).catch(() => null);
+    const d = res ? await res.json().catch(() => ({})) : {};
+    if (d.ok && d.offer) { setApplied({ ...d.offer, auto: !!d.auto }); return; }
+    setApplied(null);
+    if (d.ok === false) setPromoError(oc.failures[d.reason as keyof typeof oc.failures] ?? oc.failures.invalid);
+  }
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const c = q.get("code") ?? q.get("offer") ?? "";
+    const code = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(c) ? "" : c; // an offer id means "the campaign": applied automatically
+    if (code) setPromo(code);
+    void checkPromo(code, planCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => { if (!slugTouched) setSlug(slugify(shopName)); }, [shopName, slugTouched]);
   useEffect(() => {
@@ -100,10 +123,26 @@ export function SignupForm({ plans, defaultPlan, locale = "en", live, fake, tria
           <Field label={t.email}><Input name="email" type="email" required autoComplete="email" {...ltr} /></Field>
           <Field label={t.password} hint={t.passwordHint}><Input name="password" type="password" minLength={8} required autoComplete="new-password" {...ltr} /></Field>
           <Field label={t.plan}>
-            <Select name="plan" defaultValue={plans.some((p) => p.code === defaultPlan) ? defaultPlan : "growth"}>
+            <Select name="plan" value={planCode} onChange={(e) => { setPlanCode(e.target.value); if (applied || promo) void checkPromo(applied?.auto ? "" : promo, e.target.value); }}>
               {plans.map((p) => <option key={p.code} value={p.code}>{planLabel(p)}</option>)}
             </Select>
           </Field>
+          <div>
+            <Label hint={oc.promoHint} htmlFor="promo-code">{oc.promoLabel}</Label>
+            <div className="flex gap-2">
+              <Input id="promo-code" name="promoCode" value={promo} onChange={(e) => { setPromo(e.target.value); setPromoError(null); }} autoComplete="off" autoCapitalize="characters" dir="ltr" data-testid="promo-input" />
+              <Button type="button" variant="secondary" onClick={() => void checkPromo(promo, planCode)} data-testid="promo-apply">{oc.apply}</Button>
+            </div>
+          </div>
+          <div aria-live="polite" data-testid="promo-status">
+            {promoError && <p className="text-sm text-critical" data-testid="promo-error">{promoError}</p>}
+            {applied && (
+              <p className="rounded-shape-md bg-success-container px-3 py-2 text-sm text-on-success-container" data-testid="promo-applied">
+                <strong>{applied.auto ? oc.autoApplied : oc.applied}:</strong> {describeOfferL(applied, locale)}.
+                {applied.discounted < applied.list && <> <s dir="ltr" className="tabular-nums">AED {applied.list.toLocaleString("en-AE")}</s> <strong dir="ltr" className="tabular-nums">AED {applied.discounted.toLocaleString("en-AE")}</strong> {oc.firstPeriod}. {oc.after}</>}
+              </p>
+            )}
+          </div>
           <p className="text-xs text-on-surface-variant">{t.note}</p>
         </div>
       </fieldset>

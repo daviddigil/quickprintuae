@@ -15,6 +15,7 @@ import { commissionsToInvoice, ensureCommissionsForPeriod } from "@/server/commi
 import { resolveRule } from "@/lib/commission";
 import { usageForPeriod } from "@/server/usage";
 import { applyPendingPlanChanges } from "./plan-change";
+import { planInvoiceDiscount, consumeRedemption } from "@/server/offers/billing";
 import { chargeWithCardOnFile, platformStripeFromGateway } from "./gateway/charge";
 
 export function platformStripe() {
@@ -89,19 +90,26 @@ export async function generateInvoicesForPeriod(date: Date, opts: { tenantId?: s
     const led = await commissionsToInvoice(t.id, end);
     const rule = resolveRule(plan, t.commissionOverride);
     const usage = await usageForPeriod(t.id, start, end, plan.includedUsage ?? {});
-    const m = computeSaasInvoice({
+    const base = {
       usageAmount: usage.total,
       priceMonthly: plan.priceMonthly, priceYearly: plan.priceYearly, billingCycle: t.billingCycle,
       orderFeePct: plan.orderFeePct, gmv, orderFeeAmount: r2(led.accrued - led.credits), subscriptionWaived: rule.subscriptionWaived,
       isYearlyBillingMonth: anchor.getUTCMonth() === start.getUTCMonth(),
-    });
-    if (m.total <= 0) continue;
+    };
+    // seasonal offer: discount on the subscription line only, applied before VAT
+    const disc = await planInvoiceDiscount(t.id, computeSaasInvoice(base).subscription, t.billingCycle);
+    const m = computeSaasInvoice({ ...base, discountAmount: disc?.amount });
+    if (m.subscription + m.orderFee + m.usage <= 0) continue;
+    const free = m.total <= 0; // fully discounted: nothing to charge, recorded as paid
     const [{ n }] = await db.select({ n: count() }).from(schema.saasInvoices).where(eq(schema.saasInvoices.periodStart, start));
     const inv = await db.transaction(async (tx) => {
       const [row] = await tx.insert(schema.saasInvoices).values({
         tenantId: t.id, number: invoiceNumber(start, Number(n) + 1), periodStart: start, periodEnd: end,
-        subscriptionAmount: m.subscription, orderFeeAmount: m.orderFee, usageAmount: m.usage, usageDetail: usage.lines, gmv, vat: m.vat, total: m.total, status: "open",
+        subscriptionAmount: m.subscription, orderFeeAmount: m.orderFee, usageAmount: m.usage, usageDetail: usage.lines, gmv, vat: m.vat, total: m.total,
+        discountAmount: m.discount, discountDetail: disc ? [disc.detail] : [],
+        status: free ? "paid" : "open", ...(free ? { paidAt: new Date() } : {}),
       }).returning();
+      if (disc) await consumeRedemption(tx, disc);
       if (led.accruedIds.length) await tx.update(schema.orderCommissions).set({ status: "invoiced", invoiceId: row.id, updatedAt: new Date() }).where(inArray(schema.orderCommissions.id, led.accruedIds));
       if (led.creditIds.length) await tx.update(schema.orderCommissions).set({ creditedInvoiceId: row.id, updatedAt: new Date() }).where(inArray(schema.orderCommissions.id, led.creditIds));
       return row;
@@ -115,6 +123,7 @@ export async function generateInvoicesForPeriod(date: Date, opts: { tenantId?: s
 export async function collectInvoice(invoiceId: string): Promise<{ status: "paid" | "link" | "skipped" | "failed"; url?: string; error?: string }> {
   const inv = await db.query.saasInvoices.findFirst({ where: eq(schema.saasInvoices.id, invoiceId) });
   if (!inv || inv.status !== "open") return { status: "skipped" };
+  if (inv.total <= 0) { await markInvoicePaid(inv.id); return { status: "paid" }; } // fully discounted: never charge
   const tenant = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, inv.tenantId) });
   if (!tenant) return { status: "skipped" };
   // card on file (SubscriptionGateway): charged automatically, e.g. the first invoice when the trial ends

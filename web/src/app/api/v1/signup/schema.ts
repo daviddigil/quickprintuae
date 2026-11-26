@@ -17,4 +17,6 @@ export const SignupBody = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   emirate: z.enum(EMIRATES as [string, ...string[]]),
   plan: z.enum(["starter", "growth", "enterprise"]).default("growth"),
+  /** optional promo code; blank = the running campaign (if any) applies automatically */
+  promoCode: z.string().trim().max(40).optional(),
 });
