@@ -49,7 +49,7 @@ services:
       start_period: 40s
       retries: 3
 
-  # Runs billing (daily), walk-in queue sweep + orphan cleanup (hourly) and file retention purge (daily).
+  # Runs billing (daily), walk-in queue sweep + orphan cleanup and payout-ledger promotion (hourly) and file retention purge (daily).
   # Replace with your scheduler of choice in production.
   cron:
     image: alpine:3.20
@@ -61,6 +61,7 @@ services:
       sh -c 'echo "15 2 * * * wget -q -O /dev/null \"http://web:3000/api/v1/superadmin/cron/billing?secret=$$CRON_SECRET\"" > /etc/crontabs/root &&
       echo "30 3 * * * wget -q -O /dev/null \"http://web:3000/api/cron/purge?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
       echo "5 * * * * wget -q -O /dev/null \"http://web:3000/api/cron/walk-in?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
+      echo "10 * * * * wget -q -O /dev/null \"http://web:3000/api/cron/payouts?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
       crond -f -l 8'
 
 volumes:

@@ -37,10 +37,14 @@ export async function recordOrderCommission(orderId: string) {
   return row ?? (await db.query.orderCommissions.findFirst({ where: eq(schema.orderCommissions.orderId, orderId) })) ?? null;
 }
 
-/** Order refunded/cancelled after payment: the commission is reversed. If it was already invoiced it is credited on the next invoice. */
+/**
+ * Order refunded/cancelled after payment: the commission is reversed. If it was already invoiced it is credited on the next invoice.
+ * A commission that was netted from the shop's payout ('settled') is marked refunded too; the payout ledger carries the reversal
+ * (it has no invoice, so nothing is credited on an invoice).
+ */
 export async function reverseOrderCommission(orderId: string) {
   const rows = await db.update(schema.orderCommissions).set({ status: "refunded", updatedAt: new Date() })
-    .where(and(eq(schema.orderCommissions.orderId, orderId), inArray(schema.orderCommissions.status, ["accrued", "invoiced"]))).returning();
+    .where(and(eq(schema.orderCommissions.orderId, orderId), inArray(schema.orderCommissions.status, ["accrued", "invoiced", "settled"]))).returning();
   return rows[0] ?? null;
 }
 

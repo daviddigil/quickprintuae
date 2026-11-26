@@ -1,4 +1,5 @@
 /** DB-backed tests for merchandise ordering: server-side personalisation checks, artwork required, no `internal` leak, chat cart redirect. Run via `npm test`. */
+process.env.PAYMENTS_FAKE = "1"; // checkout needs a payment provider: platform gateways are simulated in tests
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { and, eq } from "drizzle-orm";

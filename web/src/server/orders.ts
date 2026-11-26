@@ -21,7 +21,11 @@ export async function setOrderStatus(orderId: string, status: OrderStatus, messa
   const [o] = await db.update(schema.orders).set({ status, updatedAt: new Date() }).where(eq(schema.orders.id, orderId)).returning();
   await db.insert(schema.orderEvents).values({ orderId, status, message, actorId: actorId ?? null });
   if (o && ["delivered", "picked_up", "cancelled", "refunded"].includes(status)) await scheduleConfidentialPurge(o.id, o.tenantId);
-  if (o && ["cancelled", "refunded"].includes(status)) await (await import("@/server/commission")).reverseOrderCommission(o.id).catch((e) => console.error("commission reversal failed", e));
+  if (o && ["cancelled", "refunded"].includes(status)) {
+    await (await import("@/server/commission")).reverseOrderCommission(o.id).catch((e) => console.error("commission reversal failed", e));
+    // a paid order that is refunded/cancelled: post a reversing (negative) ledger row so the shop's payout is reduced
+    if (o.paidAt) await (await import("@/server/payouts/ledger")).applyRefund(o.id, o.total).catch((e) => console.error("ledger refund failed", e));
+  }
   return o;
 }
 
@@ -29,7 +33,7 @@ export async function setOrderStatus(orderId: string, status: OrderStatus, messa
  * Idempotent: called by payment webhooks and the return-URL verifier.
  * Returns true if this call transitioned the order to paid.
  */
-export async function markOrderPaid(orderId: string, provider: "stripe" | "mamo", providerRef: string, raw?: unknown) {
+export async function markOrderPaid(orderId: string, provider: "stripe" | "mamo", providerRef: string, raw?: unknown, opts: { gatewayFee?: number } = {}) {
   const order = await db.query.orders.findFirst({ where: eq(schema.orders.id, orderId) });
   if (!order || order.status !== "pending_payment") return false;
   await db.update(schema.payments).set({ status: "succeeded", raw: raw as object }).where(and(eq(schema.payments.orderId, orderId), eq(schema.payments.providerRef, providerRef)));
@@ -37,6 +41,8 @@ export async function markOrderPaid(orderId: string, provider: "stripe" | "mamo"
   await db.insert(schema.orderEvents).values({ orderId, status: "paid", message: `Payment received via ${provider}` });
   // the platform's commission on this order, priced with the shop's terms at the moment it was paid (never blocks the payment)
   await (await import("@/server/commission")).recordOrderCommission(orderId).catch((e) => console.error("commission record failed", e));
+  // the payout ledger: gross, gateway fee, commission (netted) and what the shop is owed (cron backfills if this fails)
+  await (await import("@/server/payouts/ledger")).recordSettlementForOrder(orderId, { provider, providerRef, gatewayFee: opts.gatewayFee }).catch((e) => console.error("settlement record failed", e));
   // walk-in QR orders: payment is what releases their files into the print queue
   if (order.source === "walk_in") await (await import("@/server/walk-in/queue")).enqueueOrderJobs(orderId);
   return true;

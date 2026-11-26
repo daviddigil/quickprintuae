@@ -1,4 +1,5 @@
 /** Run: NODE_OPTIONS=--conditions=react-server npx tsx --tsconfig tsconfig.json --test --test-force-exit src/server/walk-in/checkout.test.ts */
+process.env.PAYMENTS_FAKE = "1"; // checkout needs a payment provider: platform gateways are simulated in tests
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { and, eq } from "drizzle-orm";

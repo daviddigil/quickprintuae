@@ -191,28 +191,7 @@ export async function saveDeliveryProvider(fd: FormData) {
 }
 
 /* ---------- payments ---------- */
-export async function savePayments(fd: FormData) {
-  const { tenant } = await requireStaff({ ownerOnly: true });
-  const s = tenant.settings;
-  const p = s.payments ?? {};
-  const which = str(fd, "provider");
-  if (which === "stripe") {
-    const pk = str(fd, "publishableKey"), sk = str(fd, "secretKey"), wh = str(fd, "webhookSecret");
-    if (sk && !/^(sk|rk)_(test|live)_/.test(sk)) back("/admin/payments", "Stripe secret key should start with sk_live_ / sk_test_", true);
-    if (pk && !/^pk_(test|live)_/.test(pk)) back("/admin/payments", "Stripe publishable key should start with pk_live_ / pk_test_", true);
-    p.stripe = { ...p.stripe, enabled: bool(fd, "enabled"), publishableKey: pk || p.stripe?.publishableKey,
-      ...(sk ? { secretKeyEnc: encrypt(sk) } : {}), ...(wh ? { webhookSecretEnc: encrypt(wh) } : {}) };
-    if (p.stripe.enabled && !p.stripe.secretKeyEnc) back("/admin/payments", "Add a secret key before enabling Stripe", true);
-  } else if (which === "mamo") {
-    const key = str(fd, "apiKey"), wh = str(fd, "webhookSecret");
-    p.mamo = { ...p.mamo, enabled: bool(fd, "enabled"), sandbox: bool(fd, "sandbox"),
-      ...(key ? { apiKeyEnc: encrypt(key) } : {}), ...(wh ? { webhookSecretEnc: encrypt(wh) } : {}) };
-    if (p.mamo.enabled && !p.mamo.apiKeyEnc) back("/admin/payments", "Add an API key before enabling Mamo Pay", true);
-  } else back("/admin/payments", "Unknown provider", true);
-  await saveSettings(tenant.id, s, { payments: p });
-  await audit("settings.payments", { provider: which, enabled: bool(fd, "enabled") }, tenant.id);
-  back("/admin/payments", "Payment settings saved");
-}
+// Gateway keys are platform-only (superadmin /superadmin/gateways). Shops only set their payout bank details: see /admin/payouts/actions.ts.
 
 /* ---------- store settings ---------- */
 export async function saveStoreSettings(fd: FormData) {

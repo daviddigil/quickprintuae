@@ -3,32 +3,36 @@ import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Order, Tenant } from "@/db/schema";
 import { createStripeCheckout, testStripeKey, verifyStripe } from "./stripe";
+import { activeGateways } from "./platform";
 import { createMamoCheckout, testMamoKey, verifyMamo } from "./mamo";
 
 /**
- * Create a hosted checkout session for an order with the tenant's own Stripe or Mamo Pay account,
- * insert a `payments` row (status pending) and return the URL to redirect the customer to.
+ * Customer payments are collected on the PLATFORM's gateway accounts (Stripe and/or Mamo Pay, configured by the superadmin
+ * in /superadmin/gateways). Shops never hold gateway keys; they are paid out from the ledger in payout batches.
+ * createCheckout inserts a `payments` row (status pending) and returns the hosted URL to redirect the customer to.
  * successUrl/cancelUrl are absolute URLs; success should land on the order page which calls verifyPayment.
  */
 export type ProviderCode = "stripe" | "mamo";
 
 export interface CheckoutResult { url: string; providerRef: string }
 
-export function enabledProviders(tenant: Tenant): ProviderCode[] {
-  const p = tenant.settings.payments ?? {};
-  const out: ProviderCode[] = [];
-  if (p.stripe?.enabled && p.stripe.secretKeyEnc) out.push("stripe");
-  if (p.mamo?.enabled && p.mamo.apiKeyEnc) out.push("mamo");
-  // Demo mode: offer both simulated providers when the shop has none configured.
-  if (!out.length && fakeMode(tenant)) return ["stripe", "mamo"];
-  return out;
+/** Demo mode: PAYMENTS_FAKE=1 simulates the gateways so the full flow can be tested without keys. */
+const fakeFlag = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
+
+/** Whichever platform gateways are live (enabled + keyed). Falls back to simulated providers in fake mode / local development. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so every platform gateway can later be filtered per shop
+export async function enabledProviders(_tenant?: Tenant): Promise<ProviderCode[]> {
+  const active = await activeGateways();
+  if (active.length) return active;
+  if (await fakeMode()) return ["stripe", "mamo"];
+  return [];
 }
 
-/** Demo mode: PAYMENTS_FAKE=1 simulates a provider so the full flow can be tested without keys. */
-const fakeFlag = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
-/** Simulated checkout: explicit PAYMENTS_FAKE flag, or — in local development ONLY — when the shop has no real provider configured. Never automatic in production. */
-const fakeMode = (tenant?: Tenant) => fakeFlag() || (process.env.NODE_ENV === "development" && !!tenant && !hasRealProvider(tenant));
-const hasRealProvider = (t: Tenant) => { const p = t.settings.payments ?? {}; return !!((p.stripe?.enabled && p.stripe.secretKeyEnc) || (p.mamo?.enabled && p.mamo.apiKeyEnc)); };
+/** Simulated checkout: explicit PAYMENTS_FAKE flag, or, in local development ONLY, when no platform gateway is configured. Never automatic in production. */
+async function fakeMode(): Promise<boolean> {
+  if (fakeFlag()) return true;
+  return process.env.NODE_ENV === "development" && (await activeGateways()).length === 0;
+}
 
 export async function createCheckout(
   tenant: Tenant, order: Order, provider: ProviderCode, urls: { successUrl: string; cancelUrl: string },
@@ -37,11 +41,11 @@ export async function createCheckout(
   if (order.total <= 0) throw new Error("Order total must be greater than zero");
 
   let result: CheckoutResult;
-  if (fakeMode(tenant)) {
+  if (await fakeMode()) {
     const ref = `fake_${provider}_${order.id.slice(0, 8)}_${Date.now()}`;
     result = { providerRef: ref, url: `${urls.successUrl}${urls.successUrl.includes("?") ? "&" : "?"}fake_payment=${ref}` };
   } else {
-    if (!enabledProviders(tenant).includes(provider)) throw new Error(`${provider} is not enabled for this store`);
+    if (!(await activeGateways()).includes(provider)) throw new Error(`${provider} is not available right now`);
     result = provider === "stripe" ? await createStripeCheckout(tenant, order, urls) : await createMamoCheckout(tenant, order, urls);
   }
 
@@ -66,7 +70,7 @@ export async function verifyPayment(tenant: Tenant, order: Order): Promise<boole
   for (const p of attempts) {
     try {
       if (p.providerRef.startsWith("fake_")) {
-        if (!fakeMode(tenant)) continue;
+        if (!(await fakeMode())) continue;
         const { markOrderPaid } = await import("@/server/orders");
         if (await markOrderPaid(order.id, p.provider, p.providerRef, { fake: true })) return true;
         continue;
@@ -80,11 +84,12 @@ export async function verifyPayment(tenant: Tenant, order: Order): Promise<boole
   return false;
 }
 
-/** For the admin "Test connection" button. Never throws; returns a friendly message. */
+/** For the superadmin "Test credentials" button. Never throws; returns a friendly message. */
 export async function testPaymentCredentials(
   provider: ProviderCode,
   keys: { secretKey?: string; apiKey?: string; sandbox?: boolean },
 ): Promise<{ ok: boolean; message: string }> {
+  if (fakeFlag()) return { ok: true, message: "Fake mode (PAYMENTS_FAKE=1): credentials were not sent to the gateway" };
   try {
     if (provider === "stripe") {
       if (!keys.secretKey?.startsWith("sk_") && !keys.secretKey?.startsWith("rk_")) return { ok: false, message: "Stripe secret key must start with sk_ or rk_" };

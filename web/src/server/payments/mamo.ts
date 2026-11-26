@@ -1,7 +1,7 @@
 import "server-only";
 import type { Order, Tenant } from "@/db/schema";
-import { decrypt } from "@/lib/crypto";
 import { markOrderPaid } from "@/server/orders";
+import { getPlatformGateway } from "./platform";
 
 /**
  * Mamo Pay Business API (UAE).
@@ -16,11 +16,11 @@ export const MAMO_BASE = {
 
 type Json = Record<string, unknown>;
 
-export function mamoConfig(tenant: Tenant) {
-  const m = tenant.settings.payments?.mamo;
-  const apiKey = decrypt(m?.apiKeyEnc);
-  if (!apiKey) throw new Error("Mamo Pay is not configured for this store");
-  return { apiKey, base: m?.sandbox ? MAMO_BASE.sandbox : MAMO_BASE.live };
+/** Mamo credentials always come from the platform gateway (superadmin screen); shops hold none. */
+export async function mamoConfig() {
+  const g = await getPlatformGateway("mamo");
+  if (!g.secretKey) throw new Error("Mamo Pay is not configured");
+  return { apiKey: g.secretKey, base: g.sandbox ? MAMO_BASE.sandbox : MAMO_BASE.live };
 }
 
 async function mamoFetch(cfg: { apiKey: string; base: string }, path: string, init: RequestInit = {}): Promise<Json> {
@@ -40,7 +40,7 @@ async function mamoFetch(cfg: { apiKey: string; base: string }, path: string, in
 }
 
 export async function createMamoCheckout(tenant: Tenant, order: Order, urls: { successUrl: string; cancelUrl: string }) {
-  const cfg = mamoConfig(tenant);
+  const cfg = await mamoConfig();
   const link = await mamoFetch(cfg, "/links", {
     method: "POST",
     body: JSON.stringify({
@@ -72,7 +72,8 @@ const PAID = new Set(["captured", "succeeded", "paid", "completed", "success"]);
 
 /** Re-fetch charges for the payment link and mark paid if a captured charge matches the order amount. */
 export async function verifyMamo(tenant: Tenant, order: Order, linkId: string) {
-  const cfg = mamoConfig(tenant);
+  if (order.tenantId !== tenant.id) return false;
+  const cfg = await mamoConfig();
   const charges: Json[] = [];
   try {
     const link = await mamoFetch(cfg, `/links/${encodeURIComponent(linkId)}`);
@@ -92,13 +93,14 @@ export async function verifyMamo(tenant: Tenant, order: Order, linkId: string) {
     return PAID.has(status) && Math.abs(amount - order.total) < 0.01 && String(linkRef) === linkId;
   });
   if (!match) return false;
-  await markOrderPaid(order.id, "mamo", linkId, { chargeId: match.id, status: match.status, amount: match.amount });
+  const fee = Number(match.fee ?? match.processing_fee ?? match.gateway_fee ?? NaN);
+  await markOrderPaid(order.id, "mamo", linkId, { chargeId: match.id, status: match.status, amount: match.amount }, { gatewayFee: Number.isFinite(fee) ? fee : undefined });
   return true;
 }
 
 /** Look up a charge by id (used by webhook). Returns the link id it belongs to when paid. */
-export async function fetchMamoCharge(tenant: Tenant, chargeId: string) {
-  const cfg = mamoConfig(tenant);
+export async function fetchMamoCharge(chargeId: string) {
+  const cfg = await mamoConfig();
   return mamoFetch(cfg, `/charges/${encodeURIComponent(chargeId)}`);
 }
 

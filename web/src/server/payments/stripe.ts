@@ -3,14 +3,14 @@ import Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Order, Tenant } from "@/db/schema";
-import { decrypt } from "@/lib/crypto";
 import { markOrderPaid } from "@/server/orders";
+import { getPlatformGateway } from "./platform";
 
-/** Stripe client bound to the tenant's own account (each print shop gets paid directly). */
-export function tenantStripe(tenant: Tenant): Stripe {
-  const key = decrypt(tenant.settings.payments?.stripe?.secretKeyEnc);
-  if (!key) throw new Error("Stripe is not configured for this store");
-  return new Stripe(key);
+/** Stripe client bound to the PLATFORM account. Customer money always lands there; shops never hold keys. */
+export async function platformStripeClient(): Promise<Stripe> {
+  const g = await getPlatformGateway("stripe");
+  if (!g.secretKey) throw new Error("Stripe is not configured");
+  return new Stripe(g.secretKey);
 }
 
 /** AED is a 2-decimal currency → fils. */
@@ -19,7 +19,7 @@ export const toMinor = (aed: number) => Math.round(aed * 100);
 export async function createStripeCheckout(
   tenant: Tenant, order: Order, urls: { successUrl: string; cancelUrl: string },
 ) {
-  const stripe = tenantStripe(tenant);
+  const stripe = await platformStripeClient();
   const items = await db.query.orderItems.findMany({ where: eq(schema.orderItems.orderId, order.id) });
 
   // Itemised lines when they reconcile with the order total, otherwise one total line (safer for discounts/VAT-inclusive).
@@ -56,12 +56,23 @@ export async function createStripeCheckout(
   return { url: session.url, providerRef: session.id };
 }
 
+/** The real processing fee (AED) Stripe charged for a payment intent, or undefined when it cannot be read yet. Best effort. */
+export async function stripeFeeForIntent(stripe: Stripe, paymentIntentId: string | null | undefined): Promise<number | undefined> {
+  if (!paymentIntentId) return undefined;
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["latest_charge.balance_transaction"] });
+    const bt = (pi.latest_charge as Stripe.Charge | null)?.balance_transaction as Stripe.BalanceTransaction | null | undefined;
+    return bt && typeof bt === "object" && typeof bt.fee === "number" ? bt.fee / 100 : undefined;
+  } catch { return undefined; }
+}
+
 export async function verifyStripe(tenant: Tenant, order: Order, sessionId: string) {
-  const stripe = tenantStripe(tenant);
+  const stripe = await platformStripeClient();
   const s = await stripe.checkout.sessions.retrieve(sessionId);
-  if (s.metadata?.orderId !== order.id) return false;
+  if (s.metadata?.orderId !== order.id || (s.metadata?.tenantId && s.metadata.tenantId !== tenant.id)) return false;
   if (s.payment_status === "paid" && s.amount_total === toMinor(order.total)) {
-    await markOrderPaid(order.id, "stripe", s.id, { id: s.id, payment_intent: s.payment_intent, amount_total: s.amount_total });
+    const pi = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id;
+    await markOrderPaid(order.id, "stripe", s.id, { id: s.id, payment_intent: pi, amount_total: s.amount_total }, { gatewayFee: await stripeFeeForIntent(stripe, pi) });
     return true;
   }
   return false;

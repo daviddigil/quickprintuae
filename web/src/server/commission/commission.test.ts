@@ -20,11 +20,12 @@ async function ensureTestPlan() {
   planId = p.id;
 }
 
+/** These tests cover the legacy "own" payout mode (commission invoiced). Platform mode (commission netted from payouts) is covered in src/server/payouts/payouts.test.ts. */
 async function shop(opts: { status?: "trial" | "active"; override?: unknown } = {}) {
   await ensureTestPlan();
   const { tenant: t } = await provisionTenant(createDb().db, { shopName: `C ${suffix}`, slug: `c${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: PLAN });
   created.push(t.id);
-  await db.update(schema.tenants).set({ status: opts.status ?? "active", commissionOverride: (opts.override ?? null) as never }).where(eq(schema.tenants.id, t.id));
+  await db.update(schema.tenants).set({ status: opts.status ?? "active", payoutMode: "own", commissionOverride: (opts.override ?? null) as never }).where(eq(schema.tenants.id, t.id));
   return (await db.query.tenants.findFirst({ where: eq(schema.tenants.id, t.id) }))!;
 }
 let n = 0;
