@@ -4,6 +4,7 @@ import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { Alert, Badge, Button, Card, CardHeader, Field, Input, Select, Stat, Table } from "@/components/ui";
 import { PageTitle, TENANT_STATUS_TONE, fmtDate, fmtDateTime } from "@/components/platform/PageTitle";
+import { VerificationBadge } from "@/components/superadmin/VerificationBadge";
 import { formatAED } from "@/lib/pricing";
 import { getPlanUsage, hasFeature, tenantWalkInStats } from "@/server/billing";
 import { agentOnline } from "@/server/walk-in/agents";
@@ -68,6 +69,8 @@ export default async function TenantDetail({ params, searchParams }: { params: P
         <Card>
           <CardHeader title="Business details" />
           <dl className="grid grid-cols-3 gap-y-2 px-5 py-4 text-sm">
+            <dt className="text-on-surface-variant">Verification</dt><dd className="col-span-2 flex items-center gap-2"><VerificationBadge status={t.verificationStatus} /><Link href="/superadmin/verifications" className="text-xs text-primary hover:underline">Review queue</Link></dd>
+            <dt className="text-on-surface-variant">Card on file</dt><dd className="col-span-2">{t.cardStatus === "on_file" ? `${t.billingRef?.cardBrand ?? "Card"} •••• ${t.billingRef?.cardLast4 ?? ""}` : t.cardStatus}</dd>
             <dt className="text-on-surface-variant">Legal name</dt><dd className="col-span-2">{t.legalName ?? "—"}</dd>
             <dt className="text-on-surface-variant">TRN</dt><dd className="col-span-2">{t.trn ?? "—"}</dd>
             <dt className="text-on-surface-variant">Email</dt><dd className="col-span-2">{t.email ?? "—"}</dd>

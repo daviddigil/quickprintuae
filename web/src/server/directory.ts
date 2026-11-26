@@ -7,7 +7,7 @@ import { filterShops, type DirectoryShop } from "@/lib/directory";
 /** Only fields a shop already shows on its public storefront. Never email, TRN, billing or settings. */
 export async function loadDirectoryShops(now = new Date()): Promise<DirectoryShop[]> {
   const rows = await db.query.tenants.findMany({
-    where: and(inArray(schema.tenants.status, ["trial", "active"]), eq(schema.tenants.directoryListed, true)),
+    where: and(inArray(schema.tenants.status, ["trial", "active"]), eq(schema.tenants.directoryListed, true), eq(schema.tenants.verificationStatus, "verified")),
     orderBy: [asc(schema.tenants.name)],
     limit: 2000,
   });

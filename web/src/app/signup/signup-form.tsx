@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { Alert, Button, Field, Input, Select } from "@/components/ui";
 import { EMIRATES } from "@/lib/types";
 import { fill, getCopy, type Locale } from "@/lib/i18n";
+import { CardStep } from "@/components/platform/CardStep";
 
 const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
 
-export function SignupForm({ plans, defaultPlan, locale = "en" }: { plans: { code: string; name: string; price: number; feePct?: number; commission?: boolean }[]; defaultPlan?: string; locale?: Locale }) {
+export function SignupForm({ plans, defaultPlan, locale = "en", live, fake }: { plans: { code: string; name: string; price: number; feePct?: number; commission?: boolean }[]; defaultPlan?: string; locale?: Locale; live: boolean; fake: boolean }) {
   const copy = getCopy(locale), t = copy.signup.form, ar = locale === "ar";
   // Latin-only fields (email, phone, slug, password) stay left-to-right inside an Arabic form
   const ltr = ar ? ({ dir: "ltr" } as const) : {};
@@ -16,6 +17,8 @@ export function SignupForm({ plans, defaultPlan, locale = "en" }: { plans: { cod
   const [slugState, setSlugState] = useState<{ available: boolean; reason?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<"account" | "card">("account");
+  const [email, setEmail] = useState("");
 
   useEffect(() => { if (!slugTouched) setSlug(slugify(shopName)); }, [shopName, slugTouched]);
   useEffect(() => {
@@ -35,7 +38,9 @@ export function SignupForm({ plans, defaultPlan, locale = "en" }: { plans: { cod
     const res = await fetch("/api/v1/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...fd, shopName, slug }) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { setLoading(false); setError(data.error ?? t.failed); return; }
-    window.location.href = data.redirect ?? "/admin";
+    // step 2: the shop exists as 'incomplete' and the owner is signed in; the trial starts when the card is on file
+    setEmail(String(fd.email ?? "")); setLoading(false); setStep("card");
+    window.scrollTo({ top: 0 });
   }
 
   const shopDone = shopName.trim().length > 1 && slug.length >= 3 && slugState?.available !== false;
@@ -48,13 +53,24 @@ export function SignupForm({ plans, defaultPlan, locale = "en" }: { plans: { cod
   const dot = (n: number, done: boolean) => (
     <span className={`grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold ${done ? "bg-success text-on-success" : "bg-primary text-on-primary"}`}>{done ? "✓" : n}</span>
   );
+  const progress = (
+      <ol aria-label={t.progress} className="flex items-center gap-3 text-sm font-medium">
+        <li className="flex items-center gap-2" aria-current={step === "account" ? "step" : undefined}>{dot(1, step === "card" || shopDone)}<span>{t.stepAccount}</span></li>
+        <li aria-hidden className="h-px flex-1 bg-outline-variant" />
+        <li className="flex items-center gap-2" aria-current={step === "card" ? "step" : undefined}>{dot(2, false)}<span>{t.stepCard}</span></li>
+      </ol>
+  );
+  if (step === "card") {
+    return (
+      <div className="space-y-5">
+        {progress}
+        <CardStep locale={locale} live={live} fake={fake} email={email} />
+      </div>
+    );
+  }
   return (
     <form onSubmit={submit} className="space-y-5">
-      <ol aria-label={t.progress} className="flex items-center gap-3 text-sm font-medium">
-        <li className="flex items-center gap-2">{dot(1, shopDone)}<span>{t.step1}</span></li>
-        <li aria-hidden className="h-px flex-1 bg-outline-variant" />
-        <li className="flex items-center gap-2">{dot(2, false)}<span>{t.step2}</span></li>
-      </ol>
+      {progress}
       {error && <Alert>{error}</Alert>}
 
       <fieldset className={section}>

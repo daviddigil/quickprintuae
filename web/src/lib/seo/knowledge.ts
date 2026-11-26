@@ -99,7 +99,7 @@ export async function buildLlmsFull(): Promise<string> {
     "## Quick facts", "",
     `- Product: ${SITE.name} (${siteUrl()})`, `- Company: ${SITE.legalName}`, "- Market: United Arab Emirates (AED, 5% VAT)",
     "- Customers of the platform: print shops; their end customers order from the shop's storefront",
-    "- Free trial: 14 days, no card required",
+    "- Free trial: 14 days; a card is added at signup and charged when the trial ends",
     "- Payments: Stripe and Mamo Pay into the shop's own account; all orders prepaid; no cash on delivery",
     "- Fulfilment: pickup or scheduled delivery (own drivers, Jeebly, Quiqup, Careem Box, Aramex)",
     "- Languages: English storefront and admin" + (MARKETING_PATHS.some((m) => m.translated) ? "; Arabic marketing pages" : ""),

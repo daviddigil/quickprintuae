@@ -4,11 +4,14 @@ import { getPublicPlans } from "@/server/billing/public-plans";
 import { SignupForm } from "@/app/signup/signup-form";
 import { PoweredBy } from "@/components/PoweredBy";
 import { getCopy, hrefFor, type Locale } from "@/lib/i18n";
+import { setupMode } from "@/server/billing/gateway";
+import { WaitlistForm } from "@/components/platform/WaitlistForm";
 
 /** Sign-up page, shared by "/signup" (en) and "/ar/signup" (ar). The form posts to the same API in both languages. */
 export async function SignupPage({ locale, plan }: { locale: Locale; plan?: string }) {
   const copy = getCopy(locale), t = copy.signup;
   const plans = await getPublicPlans();
+  const mode = await setupMode(); // production with no live gateway: waitlist instead of signup
   const home = hrefFor(locale, "/");
   return (
     <main className="min-h-screen bg-surface-low lg:grid lg:grid-cols-2">
@@ -25,9 +28,13 @@ export async function SignupPage({ locale, plan }: { locale: Locale; plan?: stri
       <section className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-lg">
           <div className="mb-6 lg:hidden"><Logo href={home} label={copy.common.homeAria} /></div>
-          <h2 className="text-2xl font-bold">{t.createH}</h2>
-          <p className="mb-6 text-sm text-on-surface-variant">{t.sub}</p>
-          <SignupForm plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.priceMonthly, feePct: p.orderFeePct, commission: p.billingModel === "commission" }))} defaultPlan={plan} locale={locale} />
+          {mode.open ? (
+            <>
+              <h2 className="text-2xl font-bold">{t.createH}</h2>
+              <p className="mb-6 text-sm text-on-surface-variant">{t.sub}</p>
+              <SignupForm plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.priceMonthly, feePct: p.orderFeePct, commission: p.billingModel === "commission" }))} defaultPlan={plan} locale={locale} live={!!mode.live} fake={mode.fake} />
+            </>
+          ) : <WaitlistForm locale={locale} />}
           <PoweredBy className="mt-8" label={copy.common.poweredBy} />
         </div>
       </section>

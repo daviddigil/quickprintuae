@@ -12,7 +12,7 @@ const created: string[] = [];
 async function shop(name: string, patch: Partial<typeof schema.tenants.$inferInsert> = {}) {
   const { tenant: t } = await provisionTenant(createDb().db, { shopName: name, slug: `dr${suffix}${created.length}`, ownerName: "O", ownerEmail: `d${created.length}${suffix}@t.ae`, ownerPassword: "pw123456" });
   created.push(t.id);
-  await db.update(schema.tenants).set({ status: "active", ...patch }).where(eq(schema.tenants.id, t.id));
+  await db.update(schema.tenants).set({ status: "active", verificationStatus: "verified", ...patch }).where(eq(schema.tenants.id, t.id));
   return t.slug;
 }
 after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); });
@@ -22,10 +22,14 @@ test("directory lists live shops only, hides opted-out/suspended/expired, and ex
   const hidden = await shop(`Hidden ${suffix}`, { directoryListed: false });
   const suspended = await shop(`Susp ${suffix}`, { status: "suspended" });
   const expired = await shop(`Exp ${suffix}`, { status: "trial", trialEndsAt: new Date(Date.now() - 86400_000), currentPeriodEnd: null });
+  const unverified = await shop(`Unver ${suffix}`, { verificationStatus: "unverified" });
+  const pending = await shop(`Pend ${suffix}`, { verificationStatus: "pending_review" });
+  const expiredLicence = await shop(`ExpL ${suffix}`, { verificationStatus: "expired" });
+  const incomplete = await shop(`Inc ${suffix}`, { status: "incomplete" });
   const list = await loadDirectoryShops();
   const slugs = list.map((s) => s.slug);
   assert.ok(slugs.includes(live));
-  for (const s of [hidden, suspended, expired, "demo"]) assert.ok(!slugs.includes(s), `${s} must not be listed`);
+  for (const s of [hidden, suspended, expired, "demo", unverified, pending, expiredLicence, incomplete]) assert.ok(!slugs.includes(s), `${s} must not be listed`);
   const row = list.find((s) => s.slug === live)!;
   assert.equal(row.area, "Al Majaz"); assert.equal(row.whatsapp, "971501112222"); assert.ok(row.url.endsWith(`/s/${live}`));
   const keys = Object.keys(row).sort();

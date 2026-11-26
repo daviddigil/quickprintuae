@@ -10,10 +10,15 @@ import type { ProductKind } from "@/lib/types";
 import { siteUrl } from "./site";
 import { printShopLd, type LdNode } from "./jsonld";
 
-/** Demo/test shops and shops that are suspended, cancelled or on an expired trial are never indexed. Extra slugs: env SEO_NOINDEX_SLUGS=a,b */
-export function isIndexableTenant(t: Pick<Tenant, "slug" | "status" | "trialEndsAt" | "currentPeriodEnd">, now = new Date()) {
+/**
+ * Who may be indexed or listed: only VERIFIED sellers (trade licence approved) with an active or running-trial status.
+ * Demo/test shops, 'incomplete' (no card yet), unverified, rejected, expired, suspended and cancelled shops, and expired trials are never indexed.
+ * Extra slugs: env SEO_NOINDEX_SLUGS=a,b
+ */
+export function isIndexableTenant(t: Pick<Tenant, "slug" | "status" | "trialEndsAt" | "currentPeriodEnd" | "verificationStatus">, now = new Date()) {
   const blocked = new Set(["demo", ...(process.env.SEO_NOINDEX_SLUGS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)]);
   if (blocked.has(t.slug.toLowerCase())) return false;
+  if (t.verificationStatus !== "verified") return false;
   if (t.status !== "trial" && t.status !== "active") return false;
   if (t.status === "trial" && t.trialEndsAt && t.trialEndsAt < now && !t.currentPeriodEnd) return false;
   return true;
@@ -56,13 +61,13 @@ export async function shopPlaces(t: Pick<Tenant, "id">) {
   return { pickups, zones };
 }
 
-export const paymentLabels = (t: Tenant) => enabledProviders(t).map((p) => (p === "stripe" ? "Card, Apple Pay & Google Pay (Stripe)" : "Mamo Pay"));
+export const paymentLabels = async (t: Tenant) => (await enabledProviders(t)).map((p) => (p === "stripe" ? "Card, Apple Pay & Google Pay (Stripe)" : "Mamo Pay"));
 
 export async function shopLd(t: Tenant): Promise<LdNode> {
   const [catalog, { zones }] = await Promise.all([shopCatalog(t), shopPlaces(t)]);
   const prices = catalog.map((c) => c.from).filter((n): n is number => typeof n === "number");
   const d = deliveryCfg(t);
-  const pay = paymentLabels(t);
+  const pay = await paymentLabels(t);
   return printShopLd({
     id: `${storefrontUrl(t)}#shop`, url: storefrontUrl(t), name: t.name,
     description: trim(t.settings?.heroSubtitle || `${t.name} — online printing in ${t.emirate}: documents, photos, business cards and more. Pickup or delivery.`, 300),

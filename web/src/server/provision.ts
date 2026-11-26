@@ -5,6 +5,7 @@ import type { DB } from "@/db/client";
 import * as schema from "@/db/schema";
 import { DEFAULT_PRODUCTS, DEFAULT_TENANT_SETTINGS } from "@/lib/catalog-defaults";
 import { EMIRATES } from "@/lib/types";
+import { ownerKeys } from "@/server/trust/keys";
 
 export const DEFAULT_PLANS = [
   { code: "starter", name: "Starter", priceMonthly: 199, priceYearly: 1990, orderFeePct: 0, maxOrdersPerMonth: 300, maxStaff: 2, sortOrder: 1,
@@ -34,6 +35,10 @@ export interface ProvisionInput {
   emirate?: string;
   planCode?: string;
   trialDays?: number;
+  /** signup flow: no trial yet; the shop is 'incomplete' until a card is on file (see src/server/billing/gateway/setup.ts) */
+  incomplete?: boolean;
+  /** mark the seller as verified straight away (demo shop, tests). Real shops go through /admin/verification. */
+  verified?: boolean;
 }
 
 export async function provisionTenant(db: DB, input: ProvisionInput) {
@@ -49,13 +54,15 @@ export async function provisionTenant(db: DB, input: ProvisionInput) {
       phone: input.phone,
       emirate,
       planId: plan?.id,
-      status: "trial",
-      trialEndsAt: new Date(Date.now() + (input.trialDays ?? 14) * 86400_000),
+      status: input.incomplete ? "incomplete" : "trial",
+      cardStatus: input.incomplete ? "pending" : "none",
+      verificationStatus: input.verified ? "verified" : "unverified",
+      trialEndsAt: input.incomplete ? null : new Date(Date.now() + (input.trialDays ?? 14) * 86400_000),
       settings: { ...DEFAULT_TENANT_SETTINGS, orderPrefix: input.slug.slice(0, 3).toUpperCase() },
     }).returning();
     const [owner] = await tx.insert(schema.users).values({
       tenantId: tenant.id, role: "owner", email: input.ownerEmail.toLowerCase(), name: input.ownerName,
-      phone: input.phone, passwordHash: await bcrypt.hash(input.ownerPassword, 10),
+      phone: input.phone, ...ownerKeys(input.ownerEmail, input.phone), passwordHash: await bcrypt.hash(input.ownerPassword, 10),
     }).returning();
     await tx.insert(schema.products).values(DEFAULT_PRODUCTS.map((p, i) => ({ ...p, tenantId: tenant.id, sortOrder: i, featured: !!p.featured })));
     await tx.insert(schema.pickupLocations).values({ tenantId: tenant.id, name: `${input.shopName} – Main branch`, address: "Update your address in Settings", emirate });

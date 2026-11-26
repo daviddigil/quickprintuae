@@ -20,7 +20,8 @@ export const resolveTenant = cache(async (param: string) => {
 
 export async function requireStorefrontTenant(param: string) {
   const t = await resolveTenant(param);
-  if (!t || t.status === "suspended" || t.status === "cancelled") notFound();
+  // "incomplete" = signed up but no card yet: not served until the trial starts
+  if (!t || t.status === "suspended" || t.status === "cancelled" || t.status === "incomplete") notFound();
   return t;
 }
 

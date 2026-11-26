@@ -21,7 +21,7 @@ async function ensureNoFlagPlan() {
 
 async function shop(opts: { plan?: string; walkIn?: Record<string, unknown> | false } = {}) {
   if (opts.plan === NOFLAG) await ensureNoFlagPlan();
-  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `W ${suffix}`, slug: `w${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: opts.plan ?? "growth" });
+  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `W ${suffix}`, slug: `w${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: opts.plan ?? "growth", verified: true });
   created.push(t.id);
   const settings = { ...t.settings, payments: { stripe: { enabled: true, secretKeyEnc: "x" } }, walkIn: opts.walkIn === false ? undefined : { enabled: true, ...(opts.walkIn ?? {}) } };
   const [row] = await db.update(schema.tenants).set({ settings: settings as never }).where(eq(schema.tenants.id, t.id)).returning();

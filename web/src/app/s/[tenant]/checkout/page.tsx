@@ -5,12 +5,15 @@ import { requireStorefrontTenant } from "@/lib/tenant";
 import { enabledProviders } from "@/server/payments";
 import { deliverySettings } from "@/server/checkout";
 import { CheckoutForm } from "@/components/store/checkout-form";
+import { NotOpenNotice } from "@/components/store/not-open";
+import { orderingState } from "@/server/trust/gating";
 
 export const metadata = { title: "Checkout" };
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage({ params }: { params: Promise<{ tenant: string }> }) {
   const tenant = await requireStorefrontTenant((await params).tenant);
+  if (!(await orderingState(tenant)).open) return <NotOpenNotice slug={tenant.slug} title="Checkout" />;
   const [locations, zones, products, customer] = await Promise.all([
     db.select().from(schema.pickupLocations).where(and(eq(schema.pickupLocations.tenantId, tenant.id), eq(schema.pickupLocations.active, true))),
     db.select().from(schema.deliveryZones).where(and(eq(schema.deliveryZones.tenantId, tenant.id), eq(schema.deliveryZones.active, true))),
@@ -25,7 +28,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ tenan
         vatRate={tenant.settings?.vatRate ?? 5}
         pricesIncludeVat={!!tenant.settings?.pricesIncludeVat}
         delivery={deliverySettings(tenant)}
-        providers={enabledProviders(tenant)}
+        providers={await enabledProviders(tenant)}
         turnaround={Object.fromEntries(products.map((p) => [p.id, p.t]))}
         pickupLocations={locations.map((l) => ({ id: l.id, name: l.name, address: l.address, emirate: l.emirate, hours: l.hours }))}
         zones={zones.map((z) => ({ emirate: z.emirate, fee: z.fee, freeAbove: z.freeAbove, minLeadHours: z.minLeadHours }))}

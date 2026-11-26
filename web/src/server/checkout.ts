@@ -15,6 +15,7 @@ import { getWalkInProduct, isWalkInExtension, walkInGate } from "./walk-in/custo
 import { walkInSettings } from "./walk-in/settings";
 import { storefrontColumns } from "./storefront-products";
 import { createPrintJobs, nextTicketNo } from "./walk-in/queue";
+import { NOT_OPEN_MESSAGE, orderingState } from "./trust/gating";
 
 export class CheckoutError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -33,6 +34,8 @@ export function verifyOrderToken(orderId: string, token?: string | null) {
 
 /** Plan / status gate before accepting new orders. */
 export async function assertTenantCanTakeOrders(tenant: Tenant) {
+  // seller verification: no live customer payments before the superadmin approves the trade licence (owner TEST orders only with PAYMENTS_FAKE=1)
+  if (!(await orderingState(tenant)).open) throw new CheckoutError(NOT_OPEN_MESSAGE, 403);
   if (tenant.status === "suspended" || tenant.status === "cancelled")
     throw new CheckoutError("This shop is not accepting orders right now.", 403);
   if (tenant.status === "trial" && tenant.trialEndsAt && tenant.trialEndsAt.getTime() < Date.now() && !tenant.currentPeriodEnd)
@@ -93,7 +96,7 @@ function isDesign(d: unknown): d is CardDesign {
 /** Creates the order (pending_payment) and returns it. Prices are recomputed server-side. */
 export async function createOrder(tenant: Tenant, input: CheckoutInputT, customerId: string | null) {
   await assertTenantCanTakeOrders(tenant);
-  if (!enabledProviders(tenant).includes(input.provider as ProviderCode))
+  if (!(await enabledProviders(tenant)).includes(input.provider as ProviderCode))
     throw new CheckoutError("Selected payment method is not available.");
 
   const ds = deliverySettings(tenant);
@@ -226,7 +229,7 @@ export async function createWalkInOrder(tenant: Tenant, input: WalkInCheckoutInp
   if (new Set(input.files.map((f) => f.fileId)).size !== input.files.length) throw new CheckoutError("The same file was added twice.");
   const phone = normalizePhone(input.phone);
   if (!phone) throw new CheckoutError("Please enter a valid mobile number.");
-  if (!enabledProviders(tenant).includes(input.provider as ProviderCode)) throw new CheckoutError("Selected payment method is not available.");
+  if (!(await enabledProviders(tenant)).includes(input.provider as ProviderCode)) throw new CheckoutError("Selected payment method is not available.");
 
   const product = await getWalkInProduct(tenant);
   if (!product || product.kind !== "document") throw new CheckoutError("Walk-in printing isn't set up at this shop yet.", 403);

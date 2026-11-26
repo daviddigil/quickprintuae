@@ -7,6 +7,7 @@ import { getCustomer } from "@/lib/auth";
 import { requireStorefrontTenant } from "@/lib/tenant";
 import { CartBadge } from "@/components/store/cart-badge";
 import { PoweredBy } from "@/components/PoweredBy";
+import { orderingState } from "@/server/trust/gating";
 import { absoluteAsset, isIndexableTenant, storefrontHostOrigin, storefrontUrl, trim } from "@/lib/seo/storefront";
 
 type P = { params: Promise<{ tenant: string }> };
@@ -38,9 +39,16 @@ export default async function StoreLayout({ children, params }: P & { children: 
     getCustomer(tenant.id),
   ]);
   const base = `/s/${tenant.slug}`;
+  const ordering = await orderingState(tenant);
   const wa = tenant.whatsapp?.replace(/[^\d]/g, "");
   return (
     <div style={{ ["--store" as string]: tenant.primaryColor }} className="flex min-h-screen flex-col bg-white">
+      {ordering.preview && tenant.verificationStatus !== "verified" && (
+        <div role="status" data-testid="preview-banner" className="bg-warning-container px-4 py-2 text-center text-sm font-medium text-on-warning-container">
+          Preview: only you can see this store. Customers cannot order or pay until your business is verified.{" "}
+          <a href="/admin/verification" className="font-semibold underline">Verify your business</a>
+        </div>
+      )}
       {tenant.settings?.announcement && (
         <div className="btn-store px-4 py-2 text-center text-xs font-medium sm:text-sm">{tenant.settings.announcement}</div>
       )}

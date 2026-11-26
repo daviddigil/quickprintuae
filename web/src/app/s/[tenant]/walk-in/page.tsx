@@ -5,6 +5,7 @@ import { getWalkInProduct, walkInGate } from "@/server/walk-in/customers";
 import { walkInSettings } from "@/server/walk-in/settings";
 import { WalkInFlow } from "@/components/store/walk-in/WalkInFlow";
 import { WalkInUnavailable } from "@/components/store/walk-in/Unavailable";
+import { orderingState } from "@/server/trust/gating";
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }) {
   const t = await requireStorefrontTenant((await params).tenant);
@@ -18,12 +19,12 @@ export default async function WalkInPage({ params }: { params: Promise<{ tenant:
   const base = `/s/${tenant.slug}`;
   const gate = await walkInGate(tenant);
   const product = gate.ok ? await getWalkInProduct(tenant) : null;
-  if (!gate.ok || !product) return <WalkInUnavailable shopName={tenant.name} base={base} />;
+  if (!gate.ok || !product || !(await orderingState(tenant)).open) return <WalkInUnavailable shopName={tenant.name} base={base} />;
   const s = walkInSettings(tenant);
   return (
     <WalkInFlow
       store={tenant.slug} shopName={tenant.name} config={product.config} maxFiles={s.maxFilesPerVisit}
-      vatRate={tenant.settings?.vatRate ?? 5} pricesIncludeVat={!!tenant.settings?.pricesIncludeVat} providers={enabledProviders(tenant)}
+      vatRate={tenant.settings?.vatRate ?? 5} pricesIncludeVat={!!tenant.settings?.pricesIncludeVat} providers={await enabledProviders(tenant)}
     />
   );
 }

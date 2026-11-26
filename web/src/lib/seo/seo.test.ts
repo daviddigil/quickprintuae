@@ -110,7 +110,7 @@ test("commission plan: AED 0 subscription, commission in the terms; subscription
 
 test("who is indexable: demo, suspended, cancelled and expired trials are not", () => {
   const now = new Date("2026-12-01T00:00:00Z"), past = new Date("2026-11-01T00:00:00Z"), future = new Date("2026-12-20T00:00:00Z");
-  const t = (o: object) => ({ slug: "shop", status: "active" as const, trialEndsAt: null, currentPeriodEnd: null, ...o });
+  const t = (o: object) => ({ slug: "shop", status: "active" as const, trialEndsAt: null, currentPeriodEnd: null, verificationStatus: "verified", ...o });
   assert.equal(isIndexableTenant(t({}), now), true);
   assert.equal(isIndexableTenant(t({ slug: "demo" }), now), false);
   assert.equal(isIndexableTenant(t({ status: "suspended" }), now), false);
@@ -118,6 +118,8 @@ test("who is indexable: demo, suspended, cancelled and expired trials are not", 
   assert.equal(isIndexableTenant(t({ status: "trial", trialEndsAt: future }), now), true);
   assert.equal(isIndexableTenant(t({ status: "trial", trialEndsAt: past }), now), false);
   assert.equal(isIndexableTenant(t({ status: "trial", trialEndsAt: past, currentPeriodEnd: future }), now), true);
+  for (const v of ["unverified", "pending_review", "rejected", "expired"]) assert.equal(isIndexableTenant(t({ verificationStatus: v }), now), false, `${v} is not indexable`);
+  assert.equal(isIndexableTenant(t({ status: "incomplete" }), now), false);
 });
 
 test("canonical origin: custom domain wins, else <site>/s/<slug>; trim keeps words", () => {

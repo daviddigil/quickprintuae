@@ -15,6 +15,7 @@ import { commissionsToInvoice, ensureCommissionsForPeriod } from "@/server/commi
 import { resolveRule } from "@/lib/commission";
 import { usageForPeriod } from "@/server/usage";
 import { applyPendingPlanChanges } from "./plan-change";
+import { chargeWithCardOnFile, platformStripeFromGateway } from "./gateway/charge";
 
 export function platformStripe() {
   return env.platformStripeKey ? new Stripe(env.platformStripeKey) : null;
@@ -114,10 +115,13 @@ export async function generateInvoicesForPeriod(date: Date, opts: { tenantId?: s
 export async function collectInvoice(invoiceId: string): Promise<{ status: "paid" | "link" | "skipped" | "failed"; url?: string; error?: string }> {
   const inv = await db.query.saasInvoices.findFirst({ where: eq(schema.saasInvoices.id, invoiceId) });
   if (!inv || inv.status !== "open") return { status: "skipped" };
-  const stripe = platformStripe();
-  if (!stripe) return { status: "skipped", error: "PLATFORM_STRIPE_SECRET_KEY not set" };
   const tenant = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, inv.tenantId) });
   if (!tenant) return { status: "skipped" };
+  // card on file (SubscriptionGateway): charged automatically, e.g. the first invoice when the trial ends
+  const card = await chargeWithCardOnFile(inv, tenant);
+  if (card.status === "paid") { await markInvoicePaid(inv.id, card.ref); return { status: "paid" }; }
+  const stripe = (await platformStripeFromGateway()) ?? platformStripe();
+  if (!stripe) return { status: "skipped", error: card.status === "failed" ? card.reason : "No payment gateway configured" };
   const amount = Math.round(inv.total * 100);
   try {
     if (tenant.stripeCustomerId) {
@@ -174,15 +178,17 @@ export async function enforceDunning(now = new Date()) {
   }
   const expired = await db.query.tenants.findMany({ where: and(eq(schema.tenants.status, "trial"), lt(schema.tenants.trialEndsAt, now)) });
   for (const t of expired) {
-    let hasCard = false;
+    let hasCard = t.cardStatus === "on_file";
     const stripe = platformStripe();
     if (stripe && t.stripeCustomerId) {
       try {
         const c = await stripe.customers.retrieve(t.stripeCustomerId);
-        hasCard = !c.deleted && !!c.invoice_settings?.default_payment_method;
+        hasCard = hasCard || (!c.deleted && !!c.invoice_settings?.default_payment_method);
       } catch { /* treat as no card */ }
     }
     await db.update(schema.tenants).set({ status: hasCard ? "active" : "past_due" }).where(eq(schema.tenants.id, t.id));
+    // trial over and a card on file: bill the first invoice now and charge it (a failed charge stays open and goes through the dunning below)
+    if (hasCard) for (const invoiceId of await generateInvoicesForPeriod(t.trialEndsAt ?? now, { tenantId: t.id })) await collectInvoice(invoiceId);
     trialsEnded++;
   }
   return { pastDue, suspended, trialsEnded };
@@ -218,7 +224,7 @@ export async function platformMetrics() {
   // commission earned this month from the per-order ledger (missing rows for legacy orders are filled in first)
   for (const t of tenants) await ensureCommissionsForPeriod(t.id, start, end);
   const feeRows = await db.execute(sql`select coalesce(sum(c.fee), 0)::float8 as fee from order_commissions c join orders o on o.id = c.order_id
-    where c.status in ('accrued', 'invoiced') and o.paid_at >= ${start.toISOString()}::timestamptz and o.paid_at < ${end.toISOString()}::timestamptz`);
+    where c.status in ('accrued', 'invoiced', 'settled') and o.paid_at >= ${start.toISOString()}::timestamptz and o.paid_at < ${end.toISOString()}::timestamptz`);
   feesThisMonth = Number((feeRows as unknown as { fee: number }[])[0]?.fee ?? 0);
   const since = new Date(Date.now() - 12 * 7 * 86400_000);
   const signups = await db.select({ week: sql<string>`to_char(date_trunc('week', ${schema.tenants.createdAt}), 'YYYY-MM-DD')`, n: count() })

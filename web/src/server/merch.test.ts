@@ -26,7 +26,7 @@ const MUG: ProductConfig = {
 };
 
 async function shop() {
-  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `M ${suffix}`, slug: `m${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: "growth" });
+  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `M ${suffix}`, slug: `m${suffix}${created.length}`, ownerName: "O", ownerEmail: `o${created.length}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: "growth", verified: true });
   created.push(t.id);
   const settings = { ...t.settings, payments: { stripe: { enabled: true, secretKeyEnc: "x" } } };
   const [tenant] = await db.update(schema.tenants).set({ settings: settings as never }).where(eq(schema.tenants.id, t.id)).returning();

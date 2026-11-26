@@ -4,6 +4,7 @@ import { eq, isNull, and } from "drizzle-orm";
 import { createDb } from "../src/db/client";
 import * as schema from "../src/db/schema";
 import { ensurePlans, provisionTenant } from "../src/server/provision";
+import { backfillTrustKeys } from "../src/server/trust/keys";
 
 async function main() {
   const { db, client } = createDb();
@@ -22,7 +23,7 @@ async function main() {
     if (!demo) {
       const { tenant } = await provisionTenant(db, {
         shopName: "Demo Print Hub", slug: "demo", ownerName: "Demo Owner",
-        ownerEmail: "owner@demo.ae", ownerPassword: "owner12345", phone: "+971500000000", emirate: "Dubai",
+        ownerEmail: "owner@demo.ae", ownerPassword: "owner12345", phone: "+971500000000", emirate: "Dubai", verified: true,
       });
       await db.update(schema.tenants).set({ address: "Al Karama, Dubai", trn: "100000000000003" }).where(eq(schema.tenants.id, tenant.id));
       await db.insert(schema.users).values({ tenantId: tenant.id, role: "customer", email: "customer@demo.ae", name: "Demo Customer", phone: "+971501111111", passwordHash: await bcrypt.hash("customer123", 10) });
@@ -35,6 +36,11 @@ async function main() {
     await db.update(schema.tenants).set({ settings: { ...demoShop.settings, walkIn: { ...(demoShop.settings?.walkIn ?? {}), enabled: true } } }).where(eq(schema.tenants.id, demoShop.id));
     console.log("demo store: walk-in QR queue enabled -> /s/demo/walk-in  (shop view: /admin/walk-in)");
   }
+  // the demo shop is exempt from seller verification (existing real shops are not)
+  await db.update(schema.tenants).set({ verificationStatus: "verified" }).where(and(eq(schema.tenants.slug, "demo"), eq(schema.tenants.verificationStatus, "unverified")));
+  // exact canonical email/phone keys for old owner accounts (one person = one shop owner); idempotent
+  const keys = await backfillTrustKeys(db);
+  if (keys.updated || keys.conflicts) console.log(`trust keys: ${keys.updated} owner accounts updated, ${keys.conflicts} conflicts left for review`);
   await client.end();
 }
 main().catch((e) => { console.error(e); process.exit(1); });

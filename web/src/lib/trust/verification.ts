@@ -107,3 +107,10 @@ export const GUARD_MESSAGES: Record<GuardCode, string> = {
 export class GuardError extends Error {
   constructor(public code: GuardCode, message = GUARD_MESSAGES[code]) { super(message); }
 }
+
+/** Who may download a licence document: the shop's own owner (not staff, not customers) and superadmins. Nobody else. */
+export function canViewVerificationDocument(viewer: { role: string; tenantId: string | null } | null, docTenantId: string): boolean {
+  if (!viewer) return false;
+  if (viewer.role === "superadmin") return true;
+  return viewer.role === "owner" && viewer.tenantId === docTenantId;
+}
