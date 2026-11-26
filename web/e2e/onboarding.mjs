@@ -93,7 +93,7 @@ try {
   await a.getByRole("button", { name: /submit for review/i }).click();
   await a.getByText(/PDF, JPG or PNG/).first().waitFor({ timeout: 15000 });
   step("expired licence and a non-document file are rejected (bytes are sniffed, not the file name)");
-  await fillVerification(a, { legalName: nameA, licence: licA, trn: "100000000000" + String(stamp.length).padStart(3, "7").slice(-3) });
+  await fillVerification(a, { legalName: nameA, licence: licA, trn: "1" + String(Date.now()).padStart(14, "0").slice(-14) });
   await a.getByText(/We received your details/).waitFor({ timeout: 20000 });
   const v = (await sql`select sv.id, sv.status, sv.document_key, sv.licence_number_norm, sv.legal_name_norm, sv.trn from seller_verifications sv join tenants t on t.id = sv.tenant_id where t.slug=${slugA}`)[0];
   assert(v.status === "pending_review" && v.document_key.endsWith(".enc"), "pending with an encrypted document: " + JSON.stringify(v));
