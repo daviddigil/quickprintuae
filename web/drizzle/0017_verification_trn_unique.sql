@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "seller_verif_trn_idx" ON "seller_verifications" USING btree ("trn") WHERE "seller_verifications"."status" <> 'rejected' and "seller_verifications"."trn" is not null;

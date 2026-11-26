@@ -310,6 +310,7 @@ export const sellerVerifications = pgTable("seller_verifications", {
   // the same licence / business name cannot back two live sellers
   uniqueIndex("seller_verif_licence_idx").on(t.licenceNumberNorm).where(sql`${t.status} <> 'rejected'`),
   uniqueIndex("seller_verif_name_idx").on(t.legalNameNorm).where(sql`${t.status} <> 'rejected'`),
+  uniqueIndex("seller_verif_trn_idx").on(t.trn).where(sql`${t.status} <> 'rejected' and ${t.trn} is not null`),
   index("seller_verif_status_idx").on(t.status, t.submittedAt),
 ]);
 
