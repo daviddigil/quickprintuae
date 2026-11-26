@@ -56,9 +56,29 @@ export async function login(page, email, password, base = BASE) {
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
+/**
+ * Superadmin sign-in. Superadmins must use two-factor: set SA_TOTP_SECRET (base32) and the code step is filled automatically.
+ * If 2FA is not enrolled yet, set SA_ENROL_2FA=1 and the secret is printed once ("SA_TOTP_SECRET=...") after enrolling.
+ */
 export async function loginSuperadmin(page, base = BASE) {
-  await login(page, "admin@quickprint.ae", SA_PASSWORD, base);
+  const { totpAt } = await import("../src/server/security/totp.ts");
+  await login(page, process.env.SA_EMAIL ?? "admin@quickprint.ae", SA_PASSWORD, base);
+  const code = page.getByTestId("totp-code");
+  const enrol = process.env.SA_ENROL_2FA === "1";
+  await Promise.race([code.waitFor({ timeout: 30000 }).catch(() => {}), page.waitForURL(/superadmin/, { timeout: 30000 }).catch(() => {})]);
+  if (await code.isVisible().catch(() => false)) {
+    if (!process.env.SA_TOTP_SECRET) throw new Error("this superadmin has 2FA on: set SA_TOTP_SECRET");
+    await code.fill(totpAt(process.env.SA_TOTP_SECRET, Date.now())); await page.getByRole("button", { name: "Verify and sign in" }).click();
+  }
   await page.waitForURL(/superadmin/, { timeout: 60000 });
+  if (enrol && !process.env.SA_TOTP_SECRET) {
+    await page.goto(`${base}/superadmin/security`, { waitUntil: "networkidle" });
+    await page.getByTestId("start-2fa").click(); await page.getByTestId("totp-secret").waitFor();
+    const secret = (await page.getByTestId("totp-secret").innerText()).trim();
+    await page.getByTestId("enrol-code").fill(totpAt(secret, Date.now())); await page.getByRole("button", { name: "Turn on two-factor" }).click();
+    await page.getByTestId("recovery-codes").waitFor();
+    console.log(`SA_TOTP_SECRET=${secret}`);
+  }
 }
 
 /** Same as signup() but over the API (for scripts that use request contexts): returns the cookie header of the new owner session. */
