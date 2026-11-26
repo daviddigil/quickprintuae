@@ -82,7 +82,7 @@ export function CheckoutForm(d: CheckoutData) {
 
   return (
     <form onSubmit={submit} className="grid gap-8 lg:grid-cols-[1fr_340px]">
-      <div className="space-y-8">
+      <div className="min-w-0 space-y-8">
         <section>
           <h2 className="mb-3 text-lg font-semibold">Contact details</h2>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -171,7 +171,15 @@ export function CheckoutForm(d: CheckoutData) {
       <aside className="h-fit rounded-xl border border-outline-variant bg-white p-5 lg:sticky lg:top-32">
         <h2 className="font-semibold">Order summary</h2>
         <ul className="mt-3 space-y-2 text-sm">
-          {lines.map((l) => <li key={l.key} className="flex justify-between gap-2"><span className="text-on-surface-variant">{l.productName} × {l.quantity}{l.pages > 1 ? ` (${l.pages}p)` : ""}</span><span>{formatAED(l.estimate)}</span></li>)}
+          {lines.map((l) => (
+            <li key={l.key} className="flex justify-between gap-2">
+              <span className="min-w-0 text-on-surface-variant">{l.productName} × {l.quantity}{l.pages > 1 ? ` (${l.pages}p)` : ""}
+                {l.details?.map((d) => <span key={d} className="block break-words text-xs">{d}</span>)}
+                {!l.design && l.fileNames.length > 0 && <span className="block truncate text-xs">{l.kind === "merchandise" || l.kind === "gift_pack" ? "Artwork: " : ""}{l.fileNames.join(", ")}</span>}
+              </span>
+              <span>{formatAED(l.estimate)}</span>
+            </li>
+          ))}
         </ul>
         <dl className="mt-4 space-y-1 border-t border-outline-variant pt-3 text-sm">
           <Row k="Subtotal" v={formatAED(totals.subtotal)} />

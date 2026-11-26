@@ -52,7 +52,7 @@ test("personalisation: required, max length and flat fee", () => {
   assert.throws(() => computeLinePrice(cfg, {}, 1), /Name on mug/);
   assert.throws(() => computeLinePrice(cfg, { [PERSONALISATION_PREFIX + "name"]: "x".repeat(11) }, 1), /at most 10/);
   const ok = computeLinePrice(cfg, { [PERSONALISATION_PREFIX + "name"]: " Sara " }, 2);
-  assert.equal(ok.lineTotal, 40); assert.equal(ok.labels[PERSONALISATION_PREFIX + "name"], "Sara");
+  assert.equal(ok.lineTotal, 40); assert.equal(ok.labels[PERSONALISATION_PREFIX + "name"], "Name on mug: Sara"); // trimmed, prefixed with the field label
   const withMsg = computeLinePrice(cfg, { [PERSONALISATION_PREFIX + "name"]: "Sara", [PERSONALISATION_PREFIX + "msg"]: "Happy birthday" }, 2);
   assert.equal(withMsg.lineTotal, 45);
 });

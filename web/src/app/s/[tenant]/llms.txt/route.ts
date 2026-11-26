@@ -1,4 +1,5 @@
 import { resolveTenant } from "@/lib/tenant";
+import { categoryOf } from "@/lib/storefront-catalog";
 import { aed, deliveryCfg, isIndexableTenant, paymentLabels, shopCatalog, shopPlaces, storefrontUrl, trim } from "@/lib/seo/storefront";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ tenant: string
     ...(t.trn ? [`- VAT TRN: ${t.trn}`] : []),
     `- Payment: ${pay.length ? pay.join("; ") : "online at checkout"}. Cash on delivery is not available.`, "",
     "## Products and prices",
-    ...catalog.map(({ product, from }) => `- [${product.name}](${storefrontUrl(t, `/p/${product.slug}`)}): ${trim(product.description, 160)}${from != null ? ` From ${aed(from)}.` : ""} Typical turnaround ${product.turnaroundHours >= 24 ? `${Math.round(product.turnaroundHours / 24)} day(s)` : `${product.turnaroundHours} hour(s)`}.`), "",
+    ...catalog.map(({ product, from }) => `- [${product.name}](${storefrontUrl(t, `/p/${product.slug}`)}) (${categoryOf(product)}): ${trim(product.description, 160)}${from != null ? ` From ${aed(from)}.` : ""} Typical turnaround ${product.turnaroundHours >= 24 ? `${Math.round(product.turnaroundHours / 24)} day(s)` : `${product.turnaroundHours} hour(s)`}.`), "",
     "## How to order",
     `- [Shop home](${storefrontUrl(t)}): choose a product, upload files, pick options, pay online`,
     `- [Catalogue as JSON](${storefrontUrl(t, "/products.json")}): products, options and price tiers`, "",

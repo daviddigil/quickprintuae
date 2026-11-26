@@ -6,11 +6,16 @@ import { Alert, Button, Input, cn } from "@/components/ui";
 import { CardDesigner } from "@/components/card-designer/CardDesigner";
 import { addToCart } from "@/lib/cart";
 import { computeLinePrice, formatAED } from "@/lib/pricing";
-import type { CardDesign, OptionChoice, OptionGroup, ProductConfig, ProductKind, Selections } from "@/lib/types";
+import { PERSONALISATION_PREFIX, type CardDesign, type OptionChoice, type OptionGroup, type PersonalisationField, type ProductConfig, type ProductKind, type Selections } from "@/lib/types";
+import { activeTier, cleanSelections, estimateSelections, missingPersonalisation, personalisationLines, splitLabel, tierRows } from "@/lib/storefront-catalog";
 import { FileUploader, type UploadedFile } from "./file-uploader";
+import { ProductGallery } from "./ProductGallery";
+import { QuoteRequestButton } from "./QuoteForm";
 
 export interface ConfiguratorProduct {
   id: string; slug: string; name: string; kind: ProductKind; description: string; turnaroundHours: number; config: ProductConfig;
+  /** photos, cover first */
+  images?: string[];
 }
 export interface ConfiguratorInitial { selections?: Selections; quantity?: number; pages?: number }
 
@@ -30,6 +35,10 @@ function defaultSelections(config: ProductConfig, initial?: Selections): Selecti
   for (const g of config.optionGroups) {
     const init = initial?.[g.key];
     s[g.key] = init && g.choices.some((c) => c.value === init) ? init : g.default ?? g.choices[0]?.value;
+  }
+  for (const f of config.personalisation?.fields ?? []) {
+    const v = initial?.[PERSONALISATION_PREFIX + f.key];
+    if (typeof v === "string" && v.trim()) s[PERSONALISATION_PREFIX + f.key] = v.slice(0, f.maxLength);
   }
   return s;
 }
@@ -73,14 +82,31 @@ export function Configurator({
   const [design, setDesign] = useState<CardDesign | undefined>();
   const [cardTab, setCardTab] = useState<"ai" | "design" | "upload">(aiEnabled ? "ai" : "design");
   const [err, setErr] = useState<string | null>(null);
+  const [attempted, setAttempted] = useState(false);
+
+  const pers = config.personalisation;
+  const persFields = pers?.fields ?? [];
+  // merchandise artwork upload (the print products keep their own upload / designer sections)
+  const artworkMode = !config.designer && !config.requiresUpload ? (pers?.artwork ?? "none") : "none";
+  const missing = missingPersonalisation(config, sel);
+  const tiers = tierRows(config);
 
   const isPhotoMulti = kind === "photo";
   const effectiveQty = isPhotoMulti ? qty * Math.max(1, files.length) : qty;
 
   const price = useMemo(() => {
-    try { return { ok: true as const, ...computeLinePrice(config, sel, effectiveQty, pages) }; }
+    try { return { ok: true as const, ...computeLinePrice(config, estimateSelections(config, sel), effectiveQty, pages) }; }
     catch (e) { return { ok: false as const, error: (e as Error).message }; }
   }, [config, sel, effectiveQty, pages]);
+
+  // live preview on the cover photo: first uploaded artwork + first text field
+  const artFile = artworkMode !== "none" ? files[0] : undefined;
+  const firstText = persFields.find((f) => f.type === "text");
+  const gallery = product.images ?? [];
+  const previewProps = config.mockup?.enabled && (gallery.length > 0 || artworkMode !== "none" || firstText)
+    ? { mockup: config.mockup, artworkUrl: artFile?.previewUrl ?? null, artworkName: artFile?.filename ?? null, artworkIsPlaceholder: !!artFile && !artFile.previewUrl, text: firstText ? sel[PERSONALISATION_PREFIX + firstText.key] ?? "" : "" }
+    : null;
+  const cleaned = cleanSelections(config, sel);
 
   const sizeMm = chosenSizeMm(config, sel);
   const checkDpi = ["photo", "photo_frame", "passport_photo"].includes(kind) && sizeMm;
@@ -108,10 +134,18 @@ export function Configurator({
     } else if (config.requiresUpload && !files.length) {
       return setErr("Please upload your file first.");
     }
+    setAttempted(true);
+    if (missing.length) {
+      setErr(`Please fill in ${missing.map((f) => f.label).join(", ")}.`);
+      document.getElementById(`pf-${missing[0].key}`)?.focus();
+      return;
+    }
+    if (artworkMode === "required" && !files.length) return setErr("Please upload your artwork to continue.");
     if (!price.ok) return setErr(price.error);
     addToCart(store, {
       productId: product.id, productSlug: product.slug, productName: product.name, kind,
-      quantity: effectiveQty, pages: config.perPage ? pages : 1, selections: sel,
+      details: personalisationLines(config, sel),
+      quantity: effectiveQty, pages: config.perPage ? pages : 1, selections: cleaned,
       fileIds: usingDesign ? [] : files.map((f) => f.id), fileNames: usingDesign ? [] : files.map((f) => f.filename),
       design: usingDesign ? design : undefined, estimate: price.lineTotal,
     });
@@ -119,13 +153,37 @@ export function Configurator({
   }
 
   const uploader = (
-    <FileUploader store={store} productId={product.id} accept={config.acceptedFiles} files={files} onChange={onFiles}
+    <FileUploader store={store} productId={product.id} accept={config.acceptedFiles ?? (artworkMode !== "none" ? ".png,.jpg,.jpeg,.svg,.pdf" : undefined)} files={files} onChange={onFiles}
       multiple={kind === "photo" || kind === "document" || kind === "confidential_document"} confidential={kind === "confidential_document"} />
   );
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-      <div className="space-y-8">
+      <div className="min-w-0 space-y-8">
+        {(gallery.length > 0 || previewProps) && <ProductGallery images={gallery} name={product.name} preview={previewProps} />}
+
+        {/* Personalisation text */}
+        {persFields.length > 0 && (
+          <section aria-labelledby="pers-h">
+            <h2 id="pers-h" className="mb-3 font-semibold">Personalise it</h2>
+            <div className="space-y-4">
+              {persFields.map((f) => (
+                <PersonalisationInput key={f.key} field={f} value={sel[PERSONALISATION_PREFIX + f.key] ?? ""} invalid={attempted && missing.some((m) => m.key === f.key)}
+                  onChange={(v) => setSel({ ...sel, [PERSONALISATION_PREFIX + f.key]: v })} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Merchandise artwork */}
+        {artworkMode !== "none" && (
+          <section aria-labelledby="art-h">
+            <h2 id="art-h" className="mb-1 font-semibold">Your artwork {artworkMode === "required" ? <span className="text-sm font-normal text-on-surface-variant">(required)</span> : <span className="text-sm font-normal text-on-surface-variant">(optional)</span>}</h2>
+            <p className="mb-3 text-sm text-on-surface-variant">{artworkMode === "required" ? "Upload the logo or design to print." : "Upload a logo or design, or skip this and add text only."} The preview above shows roughly where it will print.</p>
+            {uploader}
+          </section>
+        )}
+
         {/* Artwork / files */}
         {config.designer ? (
           <section>
@@ -192,6 +250,32 @@ export function Configurator({
             </div>
           )}
         </section>
+
+        {tiers.length > 0 && (
+          <section aria-labelledby="tier-h" data-testid="tier-table">
+            <h2 id="tier-h" className="mb-1 font-semibold">Buy more, save more</h2>
+            <p className="mb-3 text-sm text-on-surface-variant">Price per unit before options{pricesIncludeVat ? "" : ", excl. VAT"}.</p>
+            <div className="overflow-x-auto rounded-xl border border-outline-variant">
+              <table className="w-full text-sm">
+                <thead className="bg-surface-low text-start text-on-surface-variant">
+                  <tr><th scope="col" className="px-3 py-2 text-start font-medium">Quantity</th><th scope="col" className="px-3 py-2 text-start font-medium">Each</th><th scope="col" className="px-3 py-2 text-start font-medium">You save</th></tr>
+                </thead>
+                <tbody>
+                  {tiers.map((r) => {
+                    const on = activeTier(tiers, effectiveQty) === r;
+                    return (
+                      <tr key={r.min} aria-current={on ? "true" : undefined} className={cn("border-t border-outline-variant", on && "bg-store-soft font-semibold")}>
+                        <td className="px-3 py-2.5 tabular-nums">{r.max ? `${r.min.toLocaleString()}–${r.max.toLocaleString()}` : `${r.min.toLocaleString()}+`}</td>
+                        <td className="px-3 py-2.5 tabular-nums">{formatAED(r.unitPrice)}</td>
+                        <td className="px-3 py-2.5 tabular-nums">{r.savePct > 0 ? `${r.savePct}%` : "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Summary */}
@@ -203,9 +287,10 @@ export function Configurator({
               <p className="mt-1 text-3xl font-extrabold" data-testid="price">{formatAED(price.lineTotal)}</p>
               <p className="mt-1 text-xs text-on-surface-variant">{pricesIncludeVat ? `incl. ${vatRate}% VAT` : `+ ${vatRate}% VAT at checkout`}</p>
               <dl className="mt-4 space-y-1 border-t border-outline-variant pt-3 text-sm">
-                {Object.entries(price.labels).map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-3"><dt className="text-on-surface-variant">{config.optionGroups.find((g) => g.key === k)?.label}</dt><dd className="text-right font-medium">{v}</dd></div>
-                ))}
+                {Object.entries(price.labels).filter(([k]) => !k.startsWith(PERSONALISATION_PREFIX) || (sel[k] ?? "").trim()).map(([k, v]) => {
+                  const [l, val] = k.startsWith(PERSONALISATION_PREFIX) ? splitLabel(k, v) : [config.optionGroups.find((g) => g.key === k)?.label, v];
+                  return <div key={k} className="flex justify-between gap-3"><dt className="text-on-surface-variant">{l}</dt><dd className="min-w-0 break-words text-end font-medium">{val}</dd></div>;
+                })}
                 <div className="flex justify-between gap-3"><dt className="text-on-surface-variant">{config.perPage ? "Pages × copies" : "Quantity"}</dt><dd className="font-medium">{config.perPage ? `${pages} × ${qty}` : effectiveQty.toLocaleString()}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-on-surface-variant">Unit price</dt><dd className="font-medium">{formatAED(price.unitPrice)}</dd></div>
                 {price.setupFees > 0 && <div className="flex justify-between gap-3"><dt className="text-on-surface-variant">Setup / finishing</dt><dd className="font-medium">{formatAED(price.setupFees)}</dd></div>}
@@ -216,8 +301,34 @@ export function Configurator({
           {kind === "confidential_document" && <p className="mt-2 flex items-center gap-2 text-sm text-success"><ShieldCheck className="h-4 w-4" />Restricted access & sealed packaging</p>}
           {err && <div className="mt-4"><Alert>{err}</Alert></div>}
           <Button variant="store" className="mt-5 w-full py-3" onClick={add} disabled={!price.ok} data-testid="add-to-cart">Add to cart</Button>
+          {config.quote?.enabled && (
+            <div className="mt-3 flex justify-center">
+              <QuoteRequestButton store={store} product={{ id: product.id, name: product.name }} selections={cleaned} quantity={effectiveQty} label={config.quote.label} />
+            </div>
+          )}
         </div>
       </aside>
+    </div>
+  );
+}
+
+function PersonalisationInput({ field: f, value, onChange, invalid }: { field: PersonalisationField; value: string; onChange: (v: string) => void; invalid: boolean }) {
+  const id = `pf-${f.key}`;
+  const cls = cn("min-h-11 w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:border-outline", invalid ? "border-critical" : "border-outline-variant");
+  const common = { id, name: id, value, maxLength: f.maxLength, placeholder: f.placeholder, "aria-required": f.required || undefined, "aria-invalid": invalid || undefined, "aria-describedby": `${id}-hint`, className: cls } as const;
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3 text-sm font-medium text-on-surface">
+        <span>{f.label} {f.required ? <span className="font-normal text-critical">(required)</span> : <span className="font-normal text-on-surface-variant">(optional)</span>}</span>
+        {f.flat ? <span className="text-xs font-normal text-on-surface-variant">+{formatAED(f.flat)} when filled in</span> : null}
+      </label>
+      {f.type === "textarea"
+        ? <textarea {...common} rows={3} onChange={(e) => onChange(e.target.value)} />
+        : <input {...common} type="text" autoComplete="off" onChange={(e) => onChange(e.target.value)} />}
+      <p id={`${id}-hint`} className={cn("mt-1 flex justify-between gap-3 text-xs", invalid ? "text-critical" : "text-on-surface-variant")}>
+        <span>{invalid ? `Please fill in ${f.label}.` : ""}</span>
+        <span className="tabular-nums" data-testid={`${id}-count`}>{value.length}/{f.maxLength}</span>
+      </p>
     </div>
   );
 }

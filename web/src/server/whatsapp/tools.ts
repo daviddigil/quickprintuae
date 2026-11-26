@@ -1,24 +1,31 @@
 import "server-only";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { Product, Tenant } from "@/db/schema";
+import type { Tenant } from "@/db/schema";
 import { computeLinePrice, PricingError, round2 } from "@/lib/pricing";
+import { categoryOf, estimateSelections, needsPersonalisation } from "@/lib/storefront-catalog";
+import { storefrontColumns, type StorefrontProduct } from "../storefront-products";
 import { env } from "@/lib/env";
 import { cfgLink } from "./cart-math";
 
 /** All tools are scoped to one tenant and compute money with the same engine as checkout — the model never invents prices. */
-export async function activeProducts(tenantId: string): Promise<Product[]> {
-  return db.select().from(schema.products).where(and(eq(schema.products.tenantId, tenantId), eq(schema.products.active, true))).orderBy(asc(schema.products.sortOrder));
+export async function activeProducts(tenantId: string): Promise<StorefrontProduct[]> {
+  return db.select(storefrontColumns).from(schema.products).where(and(eq(schema.products.tenantId, tenantId), eq(schema.products.active, true))).orderBy(asc(schema.products.sortOrder));
 }
 
 export async function listProducts(tenant: Tenant) {
   const ps = await activeProducts(tenant.id);
   return ps.map((p) => ({
-    slug: p.slug, name: p.name, kind: p.kind, description: p.description, turnaround_hours: p.turnaroundHours,
+    slug: p.slug, name: p.name, kind: p.kind, category: categoryOf(p), needs_personalisation_on_website: needsPersonalisation(p.config), description: p.description, turnaround_hours: p.turnaroundHours,
     per_page: !!p.config.perPage, quantity_presets: p.config.quantityPresets ?? null, min_quantity: p.config.minQuantity ?? null,
     from_price_aed: Math.min(...p.config.tiers.map((t) => t.unitPrice)),
     options: p.config.optionGroups.map((g) => ({ key: g.key, label: g.label, default: g.default ?? null, choices: g.choices.map((c) => ({ value: c.value, label: c.label })) })),
   }));
+}
+
+/** Polite chat reply for items that need personalisation or artwork (also used as the add_to_cart refusal). */
+export function personalisationNote(name: string, url: string) {
+  return `${name} needs personalisation (text and/or artwork), so it can't be added to the chat cart. Please order it on the website: ${url}`;
 }
 
 export interface QuoteArgs { product_slug: string; quantity: number; pages?: number; selections?: Record<string, string> }
@@ -27,14 +34,16 @@ export async function quotePrice(tenant: Tenant, a: QuoteArgs) {
   const ps = await activeProducts(tenant.id);
   const p = ps.find((x) => x.slug === a.product_slug);
   if (!p) return { ok: false as const, error: `Unknown product "${a.product_slug}". Use list_products for valid slugs.` };
+  // products that need text or artwork from the customer cannot be completed in chat: price them, but send the customer to the website
+  const needsWebsite = needsPersonalisation(p.config);
   try {
-    const r = computeLinePrice(p.config, a.selections ?? {}, a.quantity, a.pages ?? 1);
+    const r = computeLinePrice(p.config, needsWebsite ? estimateSelections(p.config, a.selections ?? {}) : a.selections ?? {}, a.quantity, a.pages ?? 1);
     const vatRate = tenant.settings.vatRate ?? 5;
     const inc = tenant.settings.pricesIncludeVat;
     const subtotal = r.lineTotal;
     const vat = inc ? round2(subtotal - subtotal / (1 + vatRate / 100)) : round2(subtotal * (vatRate / 100));
     const total = inc ? subtotal : round2(subtotal + vat);
-    return { ok: true as const, product: p.name, slug: p.slug, quantity: a.quantity, pages: a.pages ?? 1, chosen_options: r.labels, unit_price_aed: r.unitPrice, setup_fees_aed: r.setupFees, subtotal_aed: subtotal, vat_rate_percent: vatRate, vat_aed: vat, total_aed: total, prices_include_vat: inc, turnaround_hours: p.turnaroundHours, delivery_not_included: true };
+    return { ok: true as const, product: p.name, slug: p.slug, quantity: a.quantity, pages: a.pages ?? 1, chosen_options: r.labels, unit_price_aed: r.unitPrice, setup_fees_aed: r.setupFees, subtotal_aed: subtotal, vat_rate_percent: vatRate, vat_aed: vat, total_aed: total, prices_include_vat: inc, turnaround_hours: p.turnaroundHours, delivery_not_included: true, ...(needsWebsite ? { needs_website: true as const, product_url: `${env.appUrl}/s/${tenant.slug}/p/${p.slug}`, website_note: personalisationNote(p.name, `${env.appUrl}/s/${tenant.slug}/p/${p.slug}`) } : {}) };
   } catch (e) {
     if (e instanceof PricingError) return { ok: false as const, error: e.message };
     throw e;
@@ -68,7 +77,7 @@ export async function shopInfo(tenant: Tenant) {
 }
 
 /** Best-effort product match for the rule-based fallback. */
-export function matchProduct<T extends Pick<Product, "slug" | "name" | "kind">>(products: T[], text: string): T | undefined {
+export function matchProduct<T extends Pick<StorefrontProduct, "slug" | "name" | "kind">>(products: T[], text: string): T | undefined {
   const t = text.toLowerCase();
   const kw: Record<string, string[]> = {
     business_card: ["business card", "visiting card", "cards"], flyer: ["flyer", "leaflet"], brochure: ["brochure"], notebook: ["notebook"], poster: ["poster", "banner", "roll-up", "rollup"],

@@ -53,7 +53,7 @@ export function computeLinePrice(
     const value = typeof raw === "string" ? raw.trim() : "";
     if (!value) { if (f.required) throw new PricingError(`Please fill in ${f.label}`); continue; }
     if (value.length > f.maxLength) throw new PricingError(`${f.label} can be at most ${f.maxLength} characters`);
-    labels[PERSONALISATION_PREFIX + f.key] = value;
+    labels[PERSONALISATION_PREFIX + f.key] = `${f.label}: ${value}`; // "Label: value" so order pages/invoices read well without the product config
     setupFees += f.flat ?? 0;
   }
 

@@ -31,8 +31,11 @@ export function CartView({ store, vatRate, pricesIncludeVat }: { store: string; 
               <p className="text-sm text-on-surface-variant">
                 {l.pages > 1 ? `${l.pages} pages × ${l.quantity} copies` : `Qty ${l.quantity.toLocaleString()}`}
               </p>
+              {l.details && l.details.length > 0 && (
+                <ul className="mt-1 text-sm" data-testid="cart-details">{l.details.map((d) => <li key={d} className="break-words">{d}</li>)}</ul>
+              )}
               <p className="mt-1 truncate text-xs text-on-surface-variant">
-                {l.design ? "Custom design" : l.fileNames.length ? l.fileNames.join(", ") : ""}
+                {l.design ? "Custom design" : l.fileNames.length ? `${l.kind === "merchandise" || l.kind === "gift_pack" ? "Artwork: " : ""}${l.fileNames.join(", ")}` : ""}
               </p>
             </div>
             <div className="flex flex-col items-end justify-between">

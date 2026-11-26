@@ -214,6 +214,8 @@ export interface CartLine {
   selections: Selections;
   fileIds: string[];
   fileNames: string[];
+  /** readable personalisation lines ("Name on mug: Sara") for the cart and checkout summary */
+  details?: string[];
   design?: CardDesign;
   /** client-side estimate only, server recomputes */
   estimate: number;

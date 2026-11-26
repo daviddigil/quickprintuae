@@ -111,12 +111,14 @@ export function printShopLd(i: PrintShopLdInput): LdNode {
   });
 }
 
-export interface ProductLdInput { url: string; name: string; description: string; category?: string; image?: string; shopId: string; shopName: string; lowPrice: number | null; vatIncluded: boolean }
+export interface ProductLdInput { url: string; name: string; description: string; category?: string; image?: string | string[]; shopId: string; shopName: string; lowPrice: number | null; vatIncluded: boolean }
 
 /** Product with an AggregateOffer ("from" price in AED). Never emits ratings or reviews. */
 export function productLd(i: ProductLdInput): LdNode {
+  // all gallery photos (cover first, no duplicates); a single photo stays a plain string
+  const imgs = [...new Set((Array.isArray(i.image) ? i.image : [i.image]).filter((x): x is string => !!x))];
   return compact({
-    "@type": "Product", name: i.name, description: i.description, url: i.url, category: i.category, image: i.image,
+    "@type": "Product", name: i.name, description: i.description, url: i.url, category: i.category, image: imgs.length > 1 ? imgs : imgs[0],
     brand: { "@type": "Brand", name: i.shopName },
     offers: i.lowPrice == null ? undefined : {
       "@type": "AggregateOffer", lowPrice: i.lowPrice, priceCurrency: SITE.currency, offerCount: 1, availability: "https://schema.org/InStock", url: i.url,

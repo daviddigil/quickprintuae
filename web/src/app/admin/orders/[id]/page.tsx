@@ -6,11 +6,13 @@ import { db, schema } from "@/db";
 import { requireStaff } from "@/lib/auth";
 import { formatAED } from "@/lib/pricing";
 import { ORDER_STATUS_LABEL } from "@/lib/types";
+import { PERSONALISATION_PREFIX } from "@/lib/types";
+import { isImageArtwork, splitLabel } from "@/lib/storefront-catalog";
 import { NEXT_STATUSES } from "@/server/orders";
 import { DELIVERY_PROVIDERS } from "@/server/delivery";
 import { Alert, Badge, Button, Card, CardHeader, Input, LinkButton, ORDER_STATUS_TONE, Select, Textarea } from "@/components/ui";
 import { Flash } from "@/components/admin/Flash";
-import { ProofDownload } from "@/components/admin/ProofDownload";
+import { MerchProof, ProofDownload } from "@/components/admin/ProofDownload";
 import { WalkInOrderJobs } from "@/components/admin/WalkInOrderJobs";
 import { dubai, slotLabel, waLink } from "@/components/admin/format";
 import { bookCourier, changeOrderStatus, saveInternalNotes, setManualTracking } from "../../actions";
@@ -27,6 +29,10 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
   const items = await db.query.orderItems.findMany({ where: eq(schema.orderItems.orderId, order.id) });
   const fileIds = items.flatMap((i) => i.fileIds);
   const files = fileIds.length ? await db.query.files.findMany({ where: and(eq(schema.files.tenantId, tenant.id), inArray(schema.files.id, fileIds)) }) : [];
+  // product photo + print area for merchandise proofs (never selects the owner-only `internal` column into the page tree)
+  const productIds = [...new Set(items.filter((i) => (i.kind === "merchandise" || i.kind === "gift_pack") && i.productId).map((i) => i.productId!))];
+  const products = productIds.length ? await db.select({ id: schema.products.id, imageUrl: schema.products.imageUrl, images: schema.products.images, config: schema.products.config }).from(schema.products).where(and(eq(schema.products.tenantId, tenant.id), inArray(schema.products.id, productIds))) : [];
+  const productById = new Map(products.map((p) => [p.id, p]));
   const events = await db.query.orderEvents.findMany({ where: eq(schema.orderEvents.orderId, order.id), orderBy: [asc(schema.orderEvents.createdAt)] });
   const pickup = order.pickupLocationId ? await db.query.pickupLocations.findFirst({ where: eq(schema.pickupLocations.id, order.pickupLocationId) }) : null;
   const payments = await db.query.payments.findMany({ where: eq(schema.payments.orderId, order.id) });
@@ -62,6 +68,13 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
             <div className="divide-y">
               {items.map((it) => {
                 const itemFiles = files.filter((f) => it.fileIds.includes(f.id));
+                const sel = Object.entries(it.selectionLabels);
+                const optionEntries = sel.filter(([k]) => !k.startsWith(PERSONALISATION_PREFIX));
+                const persEntries = sel.filter(([k]) => k.startsWith(PERSONALISATION_PREFIX));
+                const merch = it.kind === "merchandise" || it.kind === "gift_pack";
+                const prod = it.productId ? productById.get(it.productId) : undefined;
+                const art = itemFiles.find((f) => !f.deletedAt && isImageArtwork(f.filename)) ?? itemFiles.find((f) => !f.deletedAt);
+                const firstTextKey = prod?.config.personalisation?.fields.find((f) => f.type === "text")?.key;
                 return (
                   <div key={it.id} className="space-y-3 px-5 py-4">
                     <div className="flex flex-wrap justify-between gap-2">
@@ -71,12 +84,20 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
                       </div>
                       <p className="font-semibold">{formatAED(it.lineTotal)}</p>
                     </div>
-                    {Object.keys(it.selectionLabels).length > 0 && (
+                    {optionEntries.length > 0 && (
                       <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-                        {Object.entries(it.selectionLabels).map(([k, v]) => (
+                        {optionEntries.map(([k, v]) => (
                           <div key={k} className="flex gap-2"><dt className="capitalize text-on-surface-variant">{k.replace(/_/g, " ")}:</dt><dd className="font-medium">{v}</dd></div>
                         ))}
                       </dl>
+                    )}
+                    {persEntries.length > 0 && (
+                      <div className="rounded-lg border border-outline-variant bg-surface-low p-3 text-sm" data-testid="personalisation">
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Personalisation</p>
+                        <dl className="space-y-1">
+                          {persEntries.map(([k, v]) => { const [l, val] = splitLabel(k, v); return <div key={k} className="flex flex-wrap gap-2"><dt className="text-on-surface-variant">{l}:</dt><dd className="min-w-0 whitespace-pre-wrap break-words font-semibold">{val}</dd></div>; })}
+                        </dl>
+                      </div>
                     )}
                     {itemFiles.length > 0 && (
                       <ul className="space-y-1">
@@ -96,6 +117,13 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
                       </ul>
                     )}
                     {it.design && <ProofDownload design={it.design} name={`${order.number}-${it.id.slice(0, 6)}`} />}
+                    {merch && (persEntries.length > 0 || art) && (
+                      <MerchProof name={`${order.number}-${it.id.slice(0, 6)}`} orderNumber={order.number} productName={it.productName} quantity={it.quantity}
+                        coverUrl={prod?.imageUrl ?? prod?.images?.[0] ?? null} mockup={prod?.config.mockup ?? null}
+                        artwork={art ? { url: `/api/v1/admin/files/${art.id}`, filename: art.filename } : null}
+                        text={persEntries.map(([, v]) => v)} details={optionEntries.map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)}
+                        overlayText={firstTextKey ? splitLabel(PERSONALISATION_PREFIX + firstTextKey, it.selectionLabels[PERSONALISATION_PREFIX + firstTextKey] ?? "")[1] : undefined} />
+                    )}
                   </div>
                 );
               })}

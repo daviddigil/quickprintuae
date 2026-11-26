@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles, MessageCircle, ScanLine } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles, MessageCircle, ScanLine, Inbox } from "lucide-react";
 import { cn } from "@/components/ui";
 
 const NAV = [
@@ -10,6 +10,7 @@ const NAV = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/walk-in", label: "Walk-in queue", icon: ScanLine, walkIn: true },
   { href: "/admin/products", label: "Products & pricing", icon: Package },
+  { href: "/admin/quotes", label: "Quotes", icon: Inbox, quotes: true },
   { href: "/admin/fulfillment", label: "Pickup & delivery", icon: Truck },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/banners", label: "Hero slider", icon: Sparkles },
@@ -20,7 +21,7 @@ const NAV = [
   { href: "/admin/billing", label: "Plan & billing", icon: Receipt },
 ];
 
-export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walkIn = false }: { shopName: string; storeUrl: string; isOwner: boolean; userName: string; planLine: string; walkIn?: boolean }) {
+export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walkIn = false, newQuotes = 0 }: { shopName: string; storeUrl: string; isOwner: boolean; userName: string; planLine: string; walkIn?: boolean; newQuotes?: number }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const items = NAV.filter((n) => (!n.ownerOnly || isOwner) && (!("walkIn" in n) || walkIn));
@@ -44,6 +45,7 @@ export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walk
               <Link key={n.href} href={n.href} onClick={() => setOpen(false)}
                 className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium", active ? "bg-primary-container font-semibold text-on-primary-container" : "text-on-surface-variant hover:bg-surface-container")}>
                 <Icon size={17} /> {n.label}
+                {"quotes" in n && newQuotes > 0 && <span data-testid="quotes-badge" aria-label={`${newQuotes} new`} className="ms-auto min-w-6 rounded-full bg-primary px-2 text-center text-xs font-bold text-on-primary">{newQuotes}</span>}
               </Link>
             );
           })}

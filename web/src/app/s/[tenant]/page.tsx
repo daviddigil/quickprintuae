@@ -8,7 +8,10 @@ import { startingPrice } from "@/components/store/price";
 import { enabledProviders } from "@/server/payments";
 import { ProductIcon } from "@/components/store/product-icon";
 import { HeroSlider } from "@/components/store/HeroSlider";
-import type { Product } from "@/db/schema";
+import type { StorefrontProduct } from "@/server/storefront-products";
+import { storefrontColumns } from "@/server/storefront-products";
+import { groupByCategory, resolveCategory } from "@/lib/storefront-catalog";
+import { cn } from "@/components/ui";
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { isIndexableTenant, shopLd, storefrontUrl, trim } from "@/lib/seo/storefront";
@@ -19,9 +22,11 @@ export async function generateMetadata({ params }: { params: Promise<{ tenant: s
   return { title: { absolute: `${t.name} — online printing in ${t.emirate}` }, description, alternates: { canonical: storefrontUrl(t) }, robots: isIndexableTenant(t) ? undefined : { index: false, follow: false } };
 }
 
-export default async function StoreHome({ params }: { params: Promise<{ tenant: string }> }) {
+export default async function StoreHome({ params, searchParams }: { params: Promise<{ tenant: string }>; searchParams: Promise<{ category?: string | string[] }> }) {
   const tenant = await requireStorefrontTenant((await params).tenant);
-  const products = await db.select().from(schema.products)
+  const sp = await searchParams;
+  // explicit columns: `internal` (cost price) must never reach the storefront
+  const products = await db.select(storefrontColumns).from(schema.products)
     .where(and(eq(schema.products.tenantId, tenant.id), eq(schema.products.active, true))).orderBy(asc(schema.products.sortOrder));
   const now = new Date();
   // only slides inside their offer window (start/end dates are optional)
@@ -31,6 +36,10 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
     .orderBy(asc(schema.banners.sortOrder), asc(schema.banners.createdAt));
   const featured = products.filter((p) => p.featured);
   const others = products.filter((p) => !p.featured);
+  const groups = groupByCategory(products);
+  const multi = groups.length > 1;
+  const selected = resolveCategory(groups, sp.category);
+  const shown = selected ? groups.filter((g) => g.name === selected) : groups;
   const base = `/s/${tenant.slug}`;
   const providers = enabledProviders(tenant);
   const s = tenant.settings;
@@ -62,17 +71,43 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
       </section>
       )}
 
-      <section className="mx-auto max-w-6xl px-4 py-12">
-        <h2 className="text-2xl font-bold">Popular products</h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((p) => <ProductCard key={p.id} p={p} base={base} />)}
-        </div>
-        {others.length > 0 && (
+      <section id="products" className="mx-auto max-w-6xl scroll-mt-28 px-4 py-12">
+        {multi ? (
           <>
-            <h2 className="mt-12 text-xl font-bold">More printing</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {others.map((p) => <ProductCard key={p.id} p={p} base={base} compact />)}
+            <nav aria-label="Product categories" className="-mx-1 flex flex-wrap gap-2" data-testid="category-chips">
+              {[{ name: "All", href: base }, ...groups.map((g) => ({ name: g.name, href: `${base}?category=${encodeURIComponent(g.name)}` }))].map((c) => {
+                const on = c.name === "All" ? !selected : c.name === selected;
+                return (
+                  <Link key={c.name} href={`${c.href}#products`} scroll={false} aria-current={on ? "true" : undefined} data-category={c.name}
+                    className={cn("inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium", on ? "btn-store border-transparent" : "border-outline-variant bg-white text-on-surface hover:bg-surface-low")}>
+                    {c.name}
+                  </Link>
+                );
+              })}
+            </nav>
+            {shown.map((g) => (
+              <div key={g.name} className="mt-8" data-testid={`category-${g.name}`}>
+                <h2 className="text-2xl font-bold">{g.name}</h2>
+                <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {g.products.map((p) => <li key={p.id} className="flex"><ProductCard p={p} base={base} /></li>)}
+                </ul>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold">{groups[0]?.name === "Print" || !groups[0] ? "Popular products" : groups[0].name}</h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {(featured.length ? featured : others).map((p) => <ProductCard key={p.id} p={p} base={base} />)}
             </div>
+            {featured.length > 0 && others.length > 0 && (
+              <>
+                <h2 className="mt-12 text-xl font-bold">More printing</h2>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {others.map((p) => <ProductCard key={p.id} p={p} base={base} compact />)}
+                </div>
+              </>
+            )}
           </>
         )}
       </section>
@@ -108,14 +143,15 @@ export default async function StoreHome({ params }: { params: Promise<{ tenant: 
   );
 }
 
-function ProductCard({ p, base, compact }: { p: Product; base: string; compact?: boolean }) {
+function ProductCard({ p, base, compact }: { p: StorefrontProduct; base: string; compact?: boolean }) {
   const from = startingPrice(p);
+  const photo = p.imageUrl || p.images?.[0] || null;
   return (
-    <Link href={`${base}/p/${p.slug}`} className="group flex flex-col overflow-hidden rounded-xl border border-outline-variant bg-white transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className={`bg-store-soft flex items-center justify-center ${compact ? "h-28" : "h-40"}`}>
-        {p.imageUrl
+    <Link href={`${base}/p/${p.slug}`} className="group flex w-full flex-col overflow-hidden rounded-xl border border-outline-variant bg-white transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className={`bg-store-soft flex items-center justify-center ${compact ? "aspect-[16/9]" : "aspect-[4/3]"}`}>
+        {photo
           // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" />
+          ? <img src={photo} alt="" loading="lazy" className="h-full w-full object-cover" />
           : <ProductIcon kind={p.kind} className="text-store h-12 w-12 transition group-hover:scale-110" />}
       </div>
       <div className="flex flex-1 flex-col p-4">

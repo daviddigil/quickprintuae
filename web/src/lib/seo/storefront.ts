@@ -5,6 +5,7 @@ import type { Tenant, Product } from "@/db/schema";
 import { DEFAULT_TENANT_SETTINGS } from "@/lib/catalog-defaults";
 import { startingPrice } from "@/components/store/price";
 import { enabledProviders } from "@/server/payments";
+import { storefrontColumns } from "@/server/storefront-products";
 import type { ProductKind } from "@/lib/types";
 import { siteUrl } from "./site";
 import { printShopLd, type LdNode } from "./jsonld";
@@ -43,7 +44,7 @@ export const aed = (n: number) => `AED ${Number.isInteger(n) ? n : n.toFixed(2)}
 export const deliveryCfg = (t: Pick<Tenant, "settings">) => ({ ...DEFAULT_TENANT_SETTINGS.delivery, ...(t.settings?.delivery ?? {}) });
 
 export async function shopCatalog(t: Pick<Tenant, "id">) {
-  const products = await db.select().from(schema.products).where(and(eq(schema.products.tenantId, t.id), eq(schema.products.active, true))).orderBy(asc(schema.products.sortOrder));
+  const products = await db.select(storefrontColumns).from(schema.products).where(and(eq(schema.products.tenantId, t.id), eq(schema.products.active, true))).orderBy(asc(schema.products.sortOrder));
   return products.map((p) => ({ product: p, from: startingPrice(p) }));
 }
 

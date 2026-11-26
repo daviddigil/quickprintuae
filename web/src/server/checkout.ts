@@ -13,6 +13,7 @@ import { createCheckout, enabledProviders, type ProviderCode } from "./payments"
 import { normalizePhone } from "@/lib/phone";
 import { getWalkInProduct, isWalkInExtension, walkInGate } from "./walk-in/customers";
 import { walkInSettings } from "./walk-in/settings";
+import { storefrontColumns } from "./storefront-products";
 import { createPrintJobs, nextTicketNo } from "./walk-in/queue";
 
 export class CheckoutError extends Error {
@@ -97,7 +98,7 @@ export async function createOrder(tenant: Tenant, input: CheckoutInputT, custome
 
   const ds = deliverySettings(tenant);
   const productIds = [...new Set(input.lines.map((l) => l.productId))];
-  const products = await db.select().from(schema.products)
+  const products = await db.select(storefrontColumns).from(schema.products)
     .where(and(eq(schema.products.tenantId, tenant.id), inArray(schema.products.id, productIds), eq(schema.products.active, true)));
   const byId = new Map(products.map((p) => [p.id, p]));
 
@@ -113,6 +114,7 @@ export async function createOrder(tenant: Tenant, input: CheckoutInputT, custome
     const design = isDesign(l.design) ? l.design : undefined;
     if (p.config.requiresUpload && !l.fileIds.length) throw new CheckoutError(`Please upload a file for ${p.name}.`);
     if (p.config.designer && !design && !l.fileIds.length) throw new CheckoutError(`Please design or upload artwork for ${p.name}.`);
+    if (p.config.personalisation?.artwork === "required" && !l.fileIds.length) throw new CheckoutError(`Please upload your artwork for ${p.name}.`);
     let price;
     try { price = computeLinePrice(p.config, l.selections, l.quantity, l.pages); }
     catch (e) { throw new CheckoutError(e instanceof PricingError ? `${p.name}: ${e.message}` : "Pricing failed"); }

@@ -28,6 +28,7 @@ export async function addToCart(tenant: Tenant, store: CartStore, rawArgs: unkno
   if (items.length >= MAX_CART_ITEMS) return { ok: false as const, error: `The cart is full (max ${MAX_CART_ITEMS} items). Remove one first.` };
   const q = await quotePrice(tenant, { product_slug: a.data.product_slug, quantity: a.data.quantity, pages: a.data.pages, selections: a.data.selections });
   if (!q.ok) return q;
+  if ("needs_website" in q && q.needs_website) return { ok: false as const, error: q.website_note, product_url: q.product_url };
   const item: WaCartItem = { slug: q.slug, name: q.product, quantity: q.quantity, pages: q.pages, selections: a.data.selections ?? {}, labels: q.chosen_options, unitPriceAed: q.unit_price_aed, subtotalAed: q.subtotal_aed };
   const next = [...items, item];
   await store.set(next);
