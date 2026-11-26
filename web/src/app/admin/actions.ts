@@ -97,6 +97,22 @@ export async function addProductFromTemplate(fd: FormData) {
   redirect(`/admin/products/${p.id}`);
 }
 
+export async function duplicateProduct(fd: FormData) {
+  const { tenant } = await requireStaff();
+  const src = await db.query.products.findFirst({ where: and(eq(schema.products.id, str(fd, "productId")), eq(schema.products.tenantId, tenant.id)) });
+  if (!src) back("/admin/products", "Product not found", true);
+  const existing = await db.query.products.findMany({ where: eq(schema.products.tenantId, tenant.id), columns: { slug: true } });
+  const base = src!.slug.replace(/-copy(-\d+)?$/, "");
+  let slug = `${base}-copy`; let i = 2;
+  while (existing.some((e) => e.slug === slug)) slug = `${base}-copy-${i++}`;
+  const { id: _id, createdAt: _c, ...rest } = src!;
+  void _id; void _c;
+  // the copy starts as a draft so it never appears on the storefront half-edited
+  const [p] = await db.insert(schema.products).values({ ...rest, slug, name: `${src!.name} (copy)`, active: false, featured: false, sortOrder: existing.length }).returning();
+  await audit("product.create", { productId: p.id, duplicateOf: src!.id }, tenant.id);
+  redirect(`/admin/products/${p.id}`);
+}
+
 export async function deleteProduct(fd: FormData) {
   const { tenant } = await requireStaff();
   const id = str(fd, "productId");
