@@ -4,6 +4,7 @@ import { chromium } from "playwright";
 import postgres from "postgres";
 import { readdirSync, statSync } from "fs";
 import path from "path";
+import { signup as signupShop } from "./helpers.mjs";
 
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const SA_PASS = process.env.SA_PASSWORD ?? "change-me-now";
@@ -82,26 +83,19 @@ const token = (id) => crypto.createHmac("sha256", process.env.AUTH_SECRET ?? "e2
 const publicPages = ["/", "/pricing", "/signup", "/login", "/s/demo", "/s/demo/cart", "/s/demo/checkout", "/s/demo/account", "/s/demo/walk-in", ...prods.map((p) => `/s/demo/p/${p.slug}`), "/s/nonexistent-shop", "/s/demo/p/nope"];
 if (order) publicPages.push(`/s/demo/orders/${order.id}?t=${token(order.id)}`);
 if (wiOrder) publicPages.push(`/s/demo/walk-in/status/${wiOrder.id}?t=${token(wiOrder.id)}`);
-const adminPages = ["/admin", "/admin/orders", "/admin/products", "/admin/fulfillment", "/admin/payments", "/admin/banners", "/admin/whatsapp", "/admin/walk-in", "/admin/walk-in/poster", "/admin/settings", "/admin/customers", "/admin/staff", "/admin/billing", "/admin/orders?status=paid", "/admin/orders?source=walk_in", "/admin/customers?q=a", product && `/admin/products/${product.id}`, order && `/admin/orders/${order.id}`, order && `/admin/orders/${order.id}/invoice`, order && `/admin/orders/${order.id}/invoice?ticket=1`].filter(Boolean);
-const saPages = ["/superadmin", "/superadmin/tenants", "/superadmin/plans", "/superadmin/invoices", "/superadmin/commissions", "/superadmin/usage", "/superadmin/audit", "/superadmin/settings", ...tenants.map((t) => `/superadmin/tenants/${t.id}`)];
+const adminPages = ["/admin", "/admin/verification", "/admin/orders", "/admin/products", "/admin/fulfillment", "/admin/payments", "/admin/banners", "/admin/whatsapp", "/admin/walk-in", "/admin/walk-in/poster", "/admin/settings", "/admin/customers", "/admin/staff", "/admin/billing", "/admin/orders?status=paid", "/admin/orders?source=walk_in", "/admin/customers?q=a", product && `/admin/products/${product.id}`, order && `/admin/orders/${order.id}`, order && `/admin/orders/${order.id}/invoice`, order && `/admin/orders/${order.id}/invoice?ticket=1`].filter(Boolean);
+const saPages = ["/superadmin", "/superadmin/verifications", "/superadmin/tenants", "/superadmin/plans", "/superadmin/invoices", "/superadmin/commissions", "/superadmin/usage", "/superadmin/audit", "/superadmin/settings", ...tenants.map((t) => `/superadmin/tenants/${t.id}`)];
 
 /* ---------- 0. SELF-SERVE (first: signup is rate-limited per IP and the API fuzz below also posts to it): brand-new shop signs up through the UI, then everything is crawled for that fresh tenant ---------- */
 const stamp = Date.now().toString(36);
 const slug = `smoke${stamp}`;
 const fresh = await br.newContext({ viewport: { width: 1280, height: 900 } });
 const sp = await fresh.newPage(); const spErrs = []; sp.on("pageerror", (e) => spErrs.push(e.message));
-await sp.goto(BASE + "/signup", { waitUntil: "networkidle" });
-await sp.getByPlaceholder("Al Noor Printing").fill(`Smoke Shop ${stamp}`);
-await sp.getByPlaceholder("alnoor").fill(slug);
-await sp.getByText("✓ Available").waitFor({ timeout: 15000 });
-await sp.fill('input[name="ownerName"]', "Smoke Owner");
-await sp.fill('input[name="email"]', `smoke-${stamp}@example.com`);
-await sp.fill('input[name="phone"]', "+971501112233");
-await sp.fill('input[name="password"]', "smoke-pass-123");
-await sp.getByRole("button", { name: /create|start|sign up/i }).first().click();
+let signedUp = null;
+try { signedUp = await signupShop(sp, { base: BASE, slug, name: `Smoke Shop ${stamp}`, email: `smoke-${stamp}@example.com`, password: "smoke-pass-123", ownerName: "Smoke Owner" }); } catch (e) { spErrs.push(String(e)); }
 try {
-  await sp.waitForURL(/\/admin/, { timeout: 60000 });
-  log(true, `[self-serve] signup → /admin for new shop ${slug}`);
+  if (!signedUp) throw new Error("signup failed");
+  log(true, `[self-serve] signup (details + test card) → /admin for new shop ${slug}`);
 } catch { bad("[self-serve] signup", `did not reach /admin; url=${sp.url()} errs=${spErrs.join(";")}`); log(false, "[self-serve] signup", sp.url()); }
 if (/\/admin/.test(sp.url())) {
   const newT = (await sql`select id from tenants where slug=${slug}`)[0];

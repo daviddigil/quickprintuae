@@ -13,7 +13,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ tenant: string
   const [catalog, { pickups, zones }] = await Promise.all([shopCatalog(t), shopPlaces(t)]);
   const d = deliveryCfg(t);
   const open = DAYS.filter((_, i) => !d.closedWeekdays.includes(i));
-  const pay = paymentLabels(t);
+  const pay = await paymentLabels(t);
   const L = [
     `# ${t.name}`, "",
     `> ${t.name} is a print shop in ${t.emirate}, United Arab Emirates, taking online orders for printing with pickup or scheduled delivery. Prices are in AED${t.settings?.pricesIncludeVat ? " including" : " excluding"} 5% VAT.`, "",

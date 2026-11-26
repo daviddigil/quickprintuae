@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ tenant:
   const order = await db.query.orders.findFirst({ where: and(eq(schema.orders.id, p.id), eq(schema.orders.tenantId, tenant.id), eq(schema.orders.source, "walk_in")) });
   if (!order || !verifyOrderToken(order.id, body.data.t)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (order.status !== "pending_payment") return NextResponse.json({ error: "This order is already paid or closed." }, { status: 409 });
-  if (!enabledProviders(tenant).includes(body.data.provider)) return NextResponse.json({ error: "Payment method unavailable" }, { status: 400 });
+  if (!(await enabledProviders(tenant)).includes(body.data.provider)) return NextResponse.json({ error: "Payment method unavailable" }, { status: 400 });
   try {
     const { url } = await startPayment(tenant, order, body.data.provider, publicOrigin(req), walkInStatusPath(tenant.slug, order.id));
     return NextResponse.json({ url });

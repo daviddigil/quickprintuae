@@ -25,7 +25,7 @@ export default async function WalkInStatusPage({ params, searchParams }: { param
   const summary = await orderQueueSummary(tenant.id, order.id);
   return (
     <WalkInStatus
-      store={tenant.slug} orderId={order.id} token={t!} providers={enabledProviders(tenant)} shopName={tenant.name}
+      store={tenant.slug} orderId={order.id} token={t!} providers={await enabledProviders(tenant)} shopName={tenant.name}
       initial={{ state: order.status === "cancelled" || order.status === "refunded" ? "cancelled" : summary.state, ticketNo: summary.ticketNo ?? order.ticketNo, total: order.total, jobs: summary.jobs }}
     />
   );

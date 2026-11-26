@@ -2,6 +2,7 @@
 // Usage: BASE=http://localhost:3200 SA_PASSWORD=... node e2e/billing-model.mjs
 import { chromium } from "playwright";
 import postgres from "postgres";
+import { signup } from "./helpers.mjs";
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const SA = process.env.SA_PASSWORD ?? "change-me-now";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
@@ -13,12 +14,7 @@ const page = async () => { const p = await (await br.newContext({ viewport: { wi
 const slug = "bm" + Date.now().toString(36);
 try {
   const o = await page();
-  await o.goto(`${BASE}/signup`);
-  await o.getByPlaceholder("Al Noor Printing").fill("BM Shop"); await o.getByPlaceholder("alnoor").fill(slug);
-  await o.getByText("✓ Available").waitFor({ timeout: 15000 });
-  await o.fill('input[name="ownerName"]', "Owner"); await o.fill('input[name="phone"]', "+971501112233");
-  await o.fill('input[name="email"]', `${slug}@example.com`); await o.fill('input[name="password"]', "pw123456pw");
-  await o.getByRole("button", { name: /create|start|sign up/i }).first().click(); await o.waitForURL(/admin/, { timeout: 60000 });
+  await signup(o, { base: BASE, slug, name: "BM Shop" });
   await o.goto(`${BASE}/admin/billing`, { waitUntil: "networkidle" });
   assert(await o.getByTestId("billing-model").isVisible(), "billing model card");
   assert(await o.getByTestId("plan-payg").isVisible(), "pay-per-order plan offered");

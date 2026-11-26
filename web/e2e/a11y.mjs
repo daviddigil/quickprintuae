@@ -4,6 +4,7 @@ import { chromium } from "playwright";
 import postgres from "postgres";
 import { readFileSync } from "fs";
 import { createRequire } from "module";
+import { signup } from "./helpers.mjs";
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const SA = process.env.SA_PASSWORD ?? "change-me-now";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
@@ -22,17 +23,12 @@ try {
     const pub = await (await br.newContext({ viewport: vp })).newPage();
     for (const u of ["/", "/pricing", "/signup", "/login", "/s/demo", "/s/demo/p/business-cards", "/s/demo/cart", "/s/demo/walk-in"]) await scan(pub, u, name);
     const o = await (await br.newContext({ viewport: vp })).newPage();
-    await o.goto(BASE + "/signup", { waitUntil: "networkidle" });
-    await o.getByPlaceholder("Al Noor Printing").fill("A11y Shop " + name); await o.getByPlaceholder("alnoor").fill(slug + name[0]);
-    await o.getByText("✓ Available").waitFor({ timeout: 15000 });
-    await o.fill('input[name="ownerName"]', "Owner"); await o.fill('input[name="phone"]', "+971501112233");
-    await o.fill('input[name="email"]', `${slug}${name[0]}@example.com`); await o.fill('input[name="password"]', "pw123456pw");
-    await o.getByRole("button", { name: /create|start|sign up/i }).first().click(); await o.waitForURL(/admin/, { timeout: 60000 });
-    for (const u of ["/admin", "/admin/orders", "/admin/products", "/admin/billing", "/admin/settings", "/admin/whatsapp", "/admin/walk-in"]) await scan(o, u, name + ":admin");
+    await signup(o, { base: BASE, slug: slug + name[0], name: "A11y Shop " + name });
+    for (const u of ["/admin", "/admin/orders", "/admin/products", "/admin/billing", "/admin/verification", "/admin/settings", "/admin/whatsapp", "/admin/walk-in"]) await scan(o, u, name + ":admin");
     const s = await (await br.newContext({ viewport: vp })).newPage();
     await s.goto(BASE + "/login"); await s.fill('input[name="email"]', "admin@quickprint.ae"); await s.fill('input[name="password"]', SA);
     await s.getByRole("button", { name: "Sign in" }).click(); await s.waitForURL(/superadmin/, { timeout: 60000 });
-    for (const u of ["/superadmin", "/superadmin/plans", "/superadmin/usage", "/superadmin/commissions", "/superadmin/tenants"]) await scan(s, u, name + ":super");
+    for (const u of ["/superadmin", "/superadmin/plans", "/superadmin/usage", "/superadmin/commissions", "/superadmin/tenants", "/superadmin/verifications"]) await scan(s, u, name + ":super");
   }
 } finally { await sql`delete from tenants where slug like ${slug + "%"}`; await sql.end(); await br.close(); }
 const byRule = new Map();

@@ -66,7 +66,7 @@ export default async function OrderPage({ params, searchParams }: P) {
         <Card className="mt-6 p-5">
           <p className="font-semibold">Awaiting payment of {formatAED(order.total)}</p>
           <p className="text-sm text-on-surface-variant">Your order goes into production as soon as payment is confirmed.</p>
-          <PayAgain store={tenant.slug} orderId={order.id} token={t} providers={enabledProviders(tenant)} />
+          <PayAgain store={tenant.slug} orderId={order.id} token={t} providers={await enabledProviders(tenant)} />
         </Card>
       )}
 

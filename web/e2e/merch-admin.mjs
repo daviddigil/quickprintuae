@@ -3,6 +3,8 @@
 import { chromium } from "playwright";
 import postgres from "postgres";
 import { deflateSync } from "zlib";
+import { signup } from "./helpers.mjs";
+
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
 const step = (s) => console.log("✔", s);
@@ -25,12 +27,7 @@ const NOTE = "SECRET-SUPPLIER-NOTE-" + slug;
 try {
   const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } });
   const o = await ctx.newPage(); o.on("pageerror", (e) => errors.push(e.message));
-  await o.goto(`${BASE}/signup`);
-  await o.getByPlaceholder("Al Noor Printing").fill("Merch Admin Shop"); await o.getByPlaceholder("alnoor").fill(slug);
-  await o.getByText("✓ Available").waitFor({ timeout: 15000 });
-  await o.fill('input[name="ownerName"]', "Owner"); await o.fill('input[name="phone"]', "+971501112233");
-  await o.fill('input[name="email"]', `${slug}@example.com`); await o.fill('input[name="password"]', "pw123456pw");
-  await o.getByRole("button", { name: /create|start|sign up/i }).first().click(); await o.waitForURL(/admin/, { timeout: 60000 });
+  await signup(o, { base: BASE, slug, name: "Merch Admin Shop" });
   step("signed up " + slug);
 
   // ---- list page: add menu ----

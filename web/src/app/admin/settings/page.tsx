@@ -6,10 +6,11 @@ import { Alert, Button, Card, CardHeader, Field, Input, Select, Textarea } from 
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Flash } from "@/components/admin/Flash";
 import { saveStoreSettings } from "../actions";
+import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
 
 export const metadata = { title: "Store settings" };
 
-export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; setup?: string }> }) {
   const { tenant, user } = await requireStaff();
   const sp = await searchParams;
   const s = tenant.settings;
@@ -83,6 +84,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <Button>Save settings</Button>
         </fieldset>
       </form>
+      {owner && <TwoFactorPanel started={sp.setup === "1"} />}
     </div>
   );
 }

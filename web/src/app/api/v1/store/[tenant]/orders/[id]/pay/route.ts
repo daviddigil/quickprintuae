@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ tenant:
   if (!verifyOrderToken(order.id, body.data.t) && !(customer && order.customerId === customer.id))
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (order.status !== "pending_payment") return NextResponse.json({ error: "This order is already paid or closed." }, { status: 409 });
-  if (!enabledProviders(tenant).includes(body.data.provider)) return NextResponse.json({ error: "Payment method unavailable" }, { status: 400 });
+  if (!(await enabledProviders(tenant)).includes(body.data.provider)) return NextResponse.json({ error: "Payment method unavailable" }, { status: 400 });
   try {
     const { url } = await startPayment(tenant, order, body.data.provider, publicOrigin(req));
     return NextResponse.json({ url });

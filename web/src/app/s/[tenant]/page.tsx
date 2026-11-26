@@ -41,7 +41,7 @@ export default async function StoreHome({ params, searchParams }: { params: Prom
   const selected = resolveCategory(groups, sp.category);
   const shown = selected ? groups.filter((g) => g.name === selected) : groups;
   const base = `/s/${tenant.slug}`;
-  const providers = enabledProviders(tenant);
+  const providers = await enabledProviders(tenant);
   const s = tenant.settings;
 
   const ld = await shopLd(tenant);

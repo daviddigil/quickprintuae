@@ -26,7 +26,7 @@ let failed = 0;
 const ok = (c: unknown, msg: string) => { if (c) console.log("✔", msg); else { failed++; console.log("✘", msg); } };
 
 async function tenant(plan: string, n: string) {
-  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `Agent ${n}`, slug: `ag${n}${suffix}`, ownerName: "O", ownerEmail: `o${n}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: plan });
+  const { tenant: t } = await provisionTenant(createDb().db, { shopName: `Agent ${n}`, slug: `ag${n}${suffix}`, ownerName: "O", ownerEmail: `o${n}${suffix}@t.ae`, ownerPassword: "pw123456", planCode: plan, verified: true });
   tenants.push(t.id); return t;
 }
 async function pdf(pages: number) { const d = await PDFDocument.create(); for (let i = 0; i < pages; i++) d.addPage([595, 842]); return Buffer.from(await d.save()); }

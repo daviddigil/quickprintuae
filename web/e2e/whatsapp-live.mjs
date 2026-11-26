@@ -414,8 +414,9 @@ const slug2 = `wa-iso-${Date.now().toString(36)}`;
 let ownerT2;
 await step("second shop signs up; it cannot see or touch the first shop's conversations (404)", async () => {
   ownerT2 = await pwRequest.newContext({ baseURL: A });
-  const su = await ownerT2.post("/api/v1/signup", { data: { shopName: "WA Iso Shop", slug: slug2, ownerName: "Iso Owner", email: `iso-${slug2}@example.com`, phone: "+971500000099", password: "iso-pass-12345", emirate: "Dubai", plan: "growth" } });
-  eq(su.status(), 200, "signup " + (await su.text()).slice(0, 100));   eq((await json(await ownerT2.get("/api/v1/admin/whatsapp/conversations"))).conversations.length, 0, "empty list");
+  const su = await ownerT2.post("/api/v1/signup", { data: { shopName: "WA Iso Shop", slug: slug2, ownerName: "Iso Owner", email: `iso-${slug2}@example.com`, phone: `+9715${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`, password: "iso-pass-12345", emirate: "Dubai", plan: "growth" } });
+  eq(su.status(), 200, "signup " + (await su.text()).slice(0, 100));
+  eq((await ownerT2.post("/api/v1/billing/card/fake", { data: {} })).status(), 200, "test card starts the trial");   eq((await json(await ownerT2.get("/api/v1/admin/whatsapp/conversations"))).conversations.length, 0, "empty list");
   eq((await ownerT2.get(`/api/v1/admin/whatsapp/conversations/${convA.id}`)).status(), 404, "read other shop's chat");
   eq((await ownerT2.patch(`/api/v1/admin/whatsapp/conversations/${convA.id}`, { data: { resumeAi: true } })).status(), 404, "resume other shop's chat");
   eq((await ownerT2.post("/api/v1/admin/whatsapp/messages", { data: { conversationId: convA.id, text: "hijack" } })).status(), 404, "send in other shop's chat");

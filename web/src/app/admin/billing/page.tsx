@@ -12,6 +12,8 @@ import { USAGE_KINDS } from "@/lib/usage";
 import { usageForPeriod } from "@/server/usage";
 import { ensurePlans } from "@/server/provision";
 import { effectiveRuleForTenant, ensureCommissionsForPeriod } from "@/server/commission";
+import { setupMode } from "@/server/billing/gateway";
+import { CardSection } from "./card-section";
 
 export const metadata = { title: "Plan & billing" };
 const INV_TONE = { draft: "gray", open: "yellow", paid: "green", void: "gray" } as const;
@@ -40,6 +42,8 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const pct = plan?.maxOrdersPerMonth ? Math.min(100, Math.round((usage.n / plan.maxOrdersPerMonth) * 100)) : 0;
   const trialDays = tenant.trialEndsAt ? Math.ceil((tenant.trialEndsAt.getTime() - Date.now()) / 86400_000) : null;
   const price = tenant.billingCycle === "yearly" ? plan?.priceYearly : plan?.priceMonthly;
+  const cardMode = await setupMode();
+  const ref = tenant.billingRef ?? {};
 
   return (
     <div className="space-y-6">
@@ -54,6 +58,20 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <Stat label="Orders this month" value={`${usage.n}${plan?.maxOrdersPerMonth ? ` / ${plan.maxOrdersPerMonth}` : ""}`} sub={plan?.maxOrdersPerMonth ? <span className="mt-1 block h-1.5 w-full overflow-hidden rounded bg-surface-high"><span className={`block h-full ${pct > 85 ? "bg-critical" : "bg-success"}`} style={{ width: `${pct}%` }} /></span> : "Unlimited"} />
         <Stat label="Paid sales this month" value={formatAED(usage.gmv)} sub={`Platform commission ${formatAED(feeTotal)}`} />
       </div>
+      <Card data-testid="card-section">
+        <CardHeader title="Payment card" subtitle="The card on file pays your QuickPrint invoices automatically." />
+        <div className="space-y-3 p-5 text-sm">
+          {tenant.cardStatus === "on_file" ? (
+            <p data-testid="card-on-file"><span className="font-semibold capitalize">{ref.cardBrand ?? "Card"}</span> ending <span className="font-semibold tabular-nums">{ref.cardLast4 ?? "••••"}</span>{ref.cardExp ? <span className="text-on-surface-variant"> · expires {ref.cardExp}</span> : null}</p>
+          ) : <Alert>No card on file. Add one so your invoices can be paid automatically.</Alert>}
+          {tenant.status === "trial" && tenant.trialEndsAt && (
+            <p className="rounded-shape-md bg-info-container px-4 py-3 text-on-info-container" data-testid="card-trial-note">
+              You are not charged during your free trial. Your card is charged automatically when the trial ends on <b>{dubai(tenant.trialEndsAt, "d MMM yyyy")}</b>{isCommissionPlan ? ", only for commission and usage invoices (your plan has no monthly fee)" : price ? <>: <b>{formatAED(price)}</b> plus 5% VAT for your first {tenant.billingCycle === "yearly" ? "year" : "month"}</> : ""}. Change plan or cancel before then to avoid the charge.
+            </p>
+          )}
+          <CardSection live={!!cardMode.live} fake={cardMode.fake} hasCard={tenant.cardStatus === "on_file"} />
+        </div>
+      </Card>
       <Card data-testid="billing-model">
         <CardHeader title="How you pay" subtitle={tenant.status === "trial" ? "Switching during your trial is instant." : "A change takes effect at the start of next month, so this month is billed on your current terms."} />
         {pendingPlan && (

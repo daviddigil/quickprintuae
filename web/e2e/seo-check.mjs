@@ -116,7 +116,7 @@ const slug = `seo${Date.now().toString(36)}`;
 const demo = (await sql`select id from tenants where slug='demo'`)[0];
 let tenantId;
 try {
-  [{ id: tenantId }] = await sql`insert into tenants (slug, name, status, emirate, address, phone, trn, settings) values (${slug}, ${EVIL}, 'active', 'Dubai', 'Al Karama', '+971500000000', '100000000000003', '{}'::jsonb) returning id`;
+  [{ id: tenantId }] = await sql`insert into tenants (slug, name, status, verification_status, emirate, address, phone, trn, settings) values (${slug}, ${EVIL}, 'active', 'verified', 'Dubai', 'Al Karama', '+971500000000', '100000000000003', '{}'::jsonb) returning id`;
   await sql`insert into products (tenant_id, kind, name, slug, description, active, featured, sort_order, turnaround_hours, config)
             select ${tenantId}, kind, name, slug, description, active, featured, sort_order, turnaround_hours, config from products where tenant_id=${demo.id}`;
   const home = `/s/${slug}`; const shopUrl = `${SITE}/s/${slug}`;
@@ -164,6 +164,14 @@ try {
     await sql`update tenants set status='active', trial_ends_at=null where id=${tenantId}`;
     const d = (await text("/s/demo")).t; truthy(/noindex/.test(robotsMeta(d) ?? ""), "demo shop is noindex"); eq((await get("/s/demo/sitemap.xml")).status, 404, "demo sitemap 404");
     truthy(!locs((await text("/sitemap.xml")).t).some((u) => u.includes("/s/demo")), "demo not in the platform sitemap");
+  });
+  await check("unverified seller (and 'incomplete' shop): noindex, no sitemap, not in the platform sitemap", async () => {
+    await sql`update tenants set verification_status='pending_review' where id=${tenantId}`;
+    const h = (await text(home)).t; truthy(/noindex/.test(robotsMeta(h) ?? ""), "unverified shop must be noindex"); eq((await get(`/s/${slug}/sitemap.xml`)).status, 404, "sitemap 404");
+    truthy(!locs((await text("/sitemap.xml")).t).some((u) => u.includes(`/s/${slug}`)), "unverified shop not in the platform sitemap");
+    await sql`update tenants set status='incomplete' where id=${tenantId}`;
+    eq((await get(`/s/${slug}`)).status, 404, "incomplete shop is not served");
+    await sql`update tenants set status='active', verification_status='verified' where id=${tenantId}`;
   });
   await check("walk-in page is noindex and not canonical-listed; private pages are noindex", async () => {
     const w = await text(`/s/${slug}/walk-in`); truthy(/noindex/.test(robotsMeta(w.t) ?? "") || /noindex/.test(w.r.headers.get("x-robots-tag") ?? ""), "walk-in noindex");

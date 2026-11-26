@@ -3,6 +3,7 @@
 import { chromium } from "playwright";
 import postgres from "postgres";
 import { writeFileSync } from "node:fs";
+import { signup as signupShop, verifyShop } from "./helpers.mjs";
 import { MERCH_TEMPLATES } from "../src/lib/catalog-defaults.ts";
 const BASE = process.env.BASE ?? "http://localhost:3243";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
@@ -15,12 +16,7 @@ const stamp = Date.now().toString(36);
 
 async function signup(slug) {
   const o = await newPage();
-  await o.goto(`${BASE}/signup`);
-  await o.getByPlaceholder("Al Noor Printing").fill("Quote " + slug); await o.getByPlaceholder("alnoor").fill(slug);
-  await o.getByText("✓ Available").waitFor({ timeout: 15000 });
-  await o.fill('input[name="ownerName"]', "Owner"); await o.fill('input[name="phone"]', "+971501112233");
-  await o.fill('input[name="email"]', `${slug}@example.com`); await o.fill('input[name="password"]', "pw123456pw");
-  await o.getByRole("button", { name: /create|start|sign up/i }).first().click(); await o.waitForURL(/admin/, { timeout: 60000 });
+  await signupShop(o, { base: BASE, slug, name: "Quote " + slug });
   return o;
 }
 try {

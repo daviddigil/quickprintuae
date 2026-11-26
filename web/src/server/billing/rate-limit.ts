@@ -83,7 +83,7 @@ export function redisStore(redisUrl: string): RateStore {
         const list = cmds(key, windowMs);
         const sock: Socket = tls ? tlsConnect({ host: u.hostname, port, servername: u.hostname }) : netConnect({ host: u.hostname, port });
         let acc = "", got = 0, count = NaN;
-        const done = (err?: Error) => { clearTimeout(timer); sock.destroy(); err ? reject(err) : resolve(count); };
+        const done = (err?: Error) => { clearTimeout(timer); sock.destroy(); if (err) reject(err); else resolve(count); };
         const timer = setTimeout(() => done(new Error("redis timeout")), 1500);
         sock.setEncoding("utf8");
         sock.on("error", done);

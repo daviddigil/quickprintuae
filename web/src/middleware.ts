@@ -4,7 +4,7 @@ const ROOT = (process.env.ROOT_DOMAIN || "localhost:3000").toLowerCase();
 /** Hosts that are never a tenant custom domain: localhost, IPs (v4/v6), single-label names (LAN computer names), docker hosts. */
 const isPlatformHost = (h: string) => { const n = h.split(":")[0].replace(/^\[|\]$/g, ""); return !n || n === "localhost" || n === "host.docker.internal" || /^\d{1,3}(\.\d{1,3}){3}$/.test(n) || h.startsWith("[") || !n.includes("."); };
 /** Paths served as-is on every host (never rewritten to a storefront). /sitemap.xml, /robots.txt and /llms.txt are NOT here: on a shop host they belong to the shop. */
-const PASSTHROUGH = ["/s/", "/api/", "/_next/", "/admin", "/superadmin", "/login", "/logout", "/signup", "/uploads/", "/favicon", "/icon", "/apple-icon", "/opengraph-image", "/manifest.webmanifest", "/.well-known/"];
+const PASSTHROUGH = ["/s/", "/api/", "/_next/", "/admin", "/superadmin", "/login", "/logout", "/forgot-password", "/reset-password", "/signup", "/uploads/", "/favicon", "/icon", "/apple-icon", "/opengraph-image", "/manifest.webmanifest", "/.well-known/"];
 /** Never indexed: sensitive / app-only areas */
 const PRIVATE = ["/admin", "/superadmin", "/login", "/logout", "/api/", "/uploads/"];
 

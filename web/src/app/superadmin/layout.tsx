@@ -18,6 +18,7 @@ const NAV = [
   { href: "/superadmin/gateways", label: "Payment gateways" },
   { href: "/superadmin/invoices", label: "SaaS invoices" },
   { href: "/superadmin/audit", label: "Audit log" },
+  { href: "/superadmin/security", label: "Security" },
   { href: "/superadmin/settings", label: "Platform health" },
 ];
 

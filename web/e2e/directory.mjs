@@ -2,6 +2,7 @@
 // Usage: BASE=http://localhost:3200 node e2e/directory.mjs   (uses 2 signups from the per-IP hourly limit)
 import { chromium } from "playwright";
 import postgres from "postgres";
+import { signup as signupShop, verifyShop } from "./helpers.mjs";
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
 const step = (s) => console.log("✔", s);
@@ -10,18 +11,13 @@ const br = await chromium.launch({ executablePath: process.env.CHROME_PATH || "/
 const errors = [];
 const mk = async (vp = { width: 1280, height: 860 }) => { const p = await (await br.newContext({ viewport: vp })).newPage(); p.on("pageerror", (e) => errors.push(e.message)); return p; };
 const stamp = Date.now().toString(36), slugA = "da" + stamp, slugB = "db" + stamp;
-async function signup(p, slug, name) {
-  await p.goto(`${BASE}/signup`, { waitUntil: "networkidle" });
-  await p.getByPlaceholder("Al Noor Printing").fill(name); await p.getByPlaceholder("alnoor").fill(slug);
-  await p.getByText("✓ Available").waitFor({ timeout: 15000 });
-  await p.fill('input[name="ownerName"]', "Owner"); await p.fill('input[name="phone"]', "+971501112233");
-  await p.fill('input[name="email"]', `${slug}@example.com`); await p.fill('input[name="password"]', "pw123456pw");
-  await p.getByRole("button", { name: /create|start|sign up/i }).first().click(); await p.waitForURL(/admin/, { timeout: 60000 });
-}
+const signup = (p, slug, name) => signupShop(p, { base: BASE, slug, name });
 try {
   const a = await mk(), b = await mk();
   await signup(a, slugA, `Barsha Print ${stamp}`); await signup(b, slugB, `Majaz Copy ${stamp}`);
   await sql`update tenants set status='active', emirate='Sharjah', area='Al Majaz' where slug=${slugB}`;
+  // listed only once the seller is verified (the unverified case is covered in e2e/onboarding.mjs)
+  await verifyShop(sql, slugA); await verifyShop(sql, slugB);
   // owner A sets area + keeps listing on (this also refreshes the directory cache)
   await a.goto(`${BASE}/admin/settings`, { waitUntil: "networkidle" });
   await a.selectOption('select[name="emirate"]', "Dubai"); await a.fill('input[name="area"]', "Al Barsha");

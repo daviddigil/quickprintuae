@@ -4,6 +4,7 @@
 import { chromium } from "playwright";
 import http from "http";
 import { execFileSync } from "child_process";
+import { signupApi, sqlClient, verifyShop } from "./helpers.mjs";
 
 const BASE = (process.env.BASE ?? "http://localhost:3242").replace(/\/$/, "");
 const IMG_PORT = 3299;
@@ -35,9 +36,10 @@ const overflow = async (page, label) => {
 };
 try {
   // ---------- shop + templates ----------
-  const su = await fetch(`${BASE}/api/v1/signup`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": `10.0.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` },
-    body: JSON.stringify({ shopName: `Merch ${stamp}`, slug, ownerName: "Merch Owner", email, phone: "+971501234567", password: pass, emirate: "Dubai", plan: "growth" }) });
-  expect(su.ok, "signup failed: " + (await su.text()));
+  // two-step signup over the API: details, then the test card; live checkout needs a verified seller
+  const su = await signupApi(BASE, { slug, shopName: `Merch ${stamp}`, ownerName: "Merch Owner", email, password: pass });
+  expect(su.ok, "signup failed: " + JSON.stringify(su.body ?? su.status));
+  const sql = sqlClient(); await verifyShop(sql, slug); await sql.end();
   execFileSync("npx", ["tsx", "e2e/merch-seed.ts", slug, `http://localhost:${IMG_PORT}`], { stdio: "inherit" });
   step(`shop ${slug} created with the printed-mug and t-shirt templates`);
 
