@@ -2,11 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
 
-export function PayAgain({ store, orderId, token, providers }: { store: string; orderId: string; token?: string; providers: ("stripe" | "mamo")[] }) {
+export function PayAgain({ store, orderId, token, providers }: { store: string; orderId: string; token?: string; providers: "stripe"[] }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   if (!providers.length) return null;
-  async function pay(provider: "stripe" | "mamo") {
+  async function pay(provider: "stripe") {
     setBusy(true); setErr(null);
     const res = await fetch(`/api/v1/store/${store}/orders/${orderId}/pay`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider, t: token }) });
     const data = await res.json().catch(() => ({}));
@@ -17,7 +17,7 @@ export function PayAgain({ store, orderId, token, providers }: { store: string; 
     <div className="mt-4">
       <div className="flex flex-wrap gap-2">
         {providers.map((p) => (
-          <Button key={p} variant="store" disabled={busy} onClick={() => pay(p)}>{busy ? "Opening…" : `Pay now${providers.length > 1 ? ` with ${p === "stripe" ? "card (Stripe)" : "Mamo Pay"}` : ""}`}</Button>
+          <Button key={p} variant="store" disabled={busy} onClick={() => pay(p)}>{busy ? "Opening…" : "Pay now by card"}</Button>
         ))}
       </div>
       {err && <p className="mt-2 text-sm text-critical">{err}</p>}

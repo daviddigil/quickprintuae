@@ -12,7 +12,7 @@ export interface CheckoutData {
   vatRate: number;
   pricesIncludeVat: boolean;
   delivery: DeliverySettings;
-  providers: ("stripe" | "mamo")[];
+  providers: "stripe"[];
   turnaround: Record<string, number>;
   pickupLocations: { id: string; name: string; address: string; emirate: string; hours: string }[];
   zones: { emirate: string; fee: number; freeAbove: number | null; minLeadHours: number }[];
@@ -20,7 +20,7 @@ export interface CheckoutData {
   defaultEmirate: string;
 }
 
-const PROVIDER_LABEL = { stripe: { t: "Card / Apple Pay / Google Pay", s: "Secured by Stripe" }, mamo: { t: "Mamo Pay", s: "Cards, Apple Pay & Google Pay via Mamo" } };
+const PAY_BY_CARD = { t: "Pay by card", s: "Card, Apple Pay or Google Pay. Secured by Stripe." };
 
 export function CheckoutForm(d: CheckoutData) {
   const { lines, estimate } = useCart(d.store);
@@ -32,7 +32,7 @@ export function CheckoutForm(d: CheckoutData) {
   const [pickupId, setPickupId] = useState(d.pickupLocations[0]?.id ?? "");
   const [slot, setSlot] = useState<string>("");
   const [day, setDay] = useState<string>("");
-  const [provider, setProvider] = useState(d.providers[0]);
+  const provider = d.providers[0];
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ msg: string; orderUrl?: string } | null>(null);
@@ -152,14 +152,9 @@ export function CheckoutForm(d: CheckoutData) {
           {d.providers.length === 0 ? (
             <Alert tone="yellow">This shop hasn&apos;t set up online payments yet, so orders can&apos;t be placed online. Please contact the shop directly.</Alert>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {d.providers.map((p) => (
-                <label key={p} className={cn("flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm", provider === p ? "border-store bg-store-soft" : "border-outline-variant")}>
-                  <input type="radio" name="provider" checked={provider === p} onChange={() => setProvider(p)} />
-                  <CreditCard className="h-5 w-5 text-on-surface-variant" />
-                  <span><span className="font-medium">{PROVIDER_LABEL[p].t}</span><span className="block text-xs text-on-surface-variant">{PROVIDER_LABEL[p].s}</span></span>
-                </label>
-              ))}
+            <div className="flex items-center gap-3 rounded-lg border border-store bg-store-soft p-3 text-sm">
+              <CreditCard className="h-5 w-5 text-on-surface-variant" />
+              <span><span className="font-medium">{PAY_BY_CARD.t}</span><span className="block text-xs text-on-surface-variant">{PAY_BY_CARD.s}</span></span>
             </div>
           )}
           <p className="mt-2 text-xs text-on-surface-variant">Online payment only — cash on delivery is not available.</p>

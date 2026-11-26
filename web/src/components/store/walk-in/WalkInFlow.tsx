@@ -6,7 +6,6 @@ import { computeLinePrice, computeOrderTotals, formatAED } from "@/lib/pricing";
 import type { OptionGroup, ProductConfig } from "@/lib/types";
 
 const ACCEPT = ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png";
-const PROVIDER_LABEL = { stripe: "Card / Apple Pay / Google Pay", mamo: "Mamo Pay" };
 
 interface Item {
   id: string; filename: string; pageCount: number | null; pages: number;
@@ -14,7 +13,7 @@ interface Item {
 }
 
 export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesIncludeVat, providers }: {
-  store: string; shopName: string; config: ProductConfig; maxFiles: number; vatRate: number; pricesIncludeVat: boolean; providers: ("stripe" | "mamo")[];
+  store: string; shopName: string; config: ProductConfig; maxFiles: number; vatRate: number; pricesIncludeVat: boolean; providers: "stripe"[];
 }) {
   const group = (key: string): OptionGroup | undefined => config.optionGroups.find((g) => g.key === key);
   const paper = group("paper_size"), colour = group("color"), sides = group("sides");
@@ -25,7 +24,7 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
   const [phone, setPhone] = useState("");
   const [welcome, setWelcome] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
-  const [provider, setProvider] = useState(providers[0]);
+  const provider = providers[0];
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -194,11 +193,9 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
           {providers.length === 0
             ? <Alert tone="yellow">Online payment isn&apos;t set up at this shop yet. Please ask the staff at the counter.</Alert>
             : <div className="space-y-2">
-                {providers.map((p) => (
-                  <label key={p} className={cn("flex items-center gap-3 rounded-xl border p-4", provider === p ? "border-store bg-store-soft" : "border-outline-variant")}>
-                    <input type="radio" name="provider" checked={provider === p} onChange={() => setProvider(p)} /><CreditCard className="h-5 w-5" /><span className="text-sm font-medium">{PROVIDER_LABEL[p]}</span>
-                  </label>
-                ))}
+                <div className="flex items-center gap-3 rounded-xl border border-store bg-store-soft p-4">
+                  <CreditCard className="h-5 w-5" /><span className="text-sm font-medium">Pay by card, Apple Pay or Google Pay</span>
+                </div>
                 <p className="text-xs text-on-surface-variant">Online payment only — no cash. Printing starts as soon as you&apos;ve paid.</p>
               </div>}
           <Button variant="store" className="h-12 w-full text-base" disabled={busy || !provider} onClick={pay} data-testid="pay">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}Pay {formatAED(totals.total)}</Button>

@@ -1,9 +1,10 @@
 import { CountUp } from "@/components/fx/CountUp";
 import { SpecTicker } from "@/components/fx/SpecTicker";
-import { en, type Copy } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import type { Copy } from "@/lib/i18n/en";
 
 /** Full-bleed band with figures that are facts about the product, not claims about customers. */
-export function TrustBand({ copy = en }: { copy?: Copy }) {
+export function TrustBand({ copy = getCopy("en") }: { copy?: Copy }) {
   const t = copy.home.trust;
   return (
     <section className="bg-inverse-surface text-inverse-on-surface">

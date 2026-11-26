@@ -5,14 +5,13 @@ import { Button } from "@/components/ui";
 import { testGatewayAction } from "./actions";
 
 /** Reads the typed key from the sibling form (if any), otherwise tests the saved one. Never receives a secret back. */
-export function GatewayTest({ provider }: { provider: "stripe" | "mamo" }) {
+export function GatewayTest({ provider }: { provider: "stripe" }) {
   const [state, setState] = useState<{ loading?: boolean; ok?: boolean; message?: string }>({});
   async function run(e: React.MouseEvent<HTMLButtonElement>) {
     const form = e.currentTarget.closest("form");
     const key = (form?.elements.namedItem("secretKey") as HTMLInputElement | null)?.value ?? "";
-    const sandbox = !!(form?.elements.namedItem("sandbox") as HTMLInputElement | null)?.checked;
     setState({ loading: true });
-    try { const r = await testGatewayAction(provider, key, sandbox); setState({ ok: r.ok, message: r.message }); }
+    try { const r = await testGatewayAction(provider, key); setState({ ok: r.ok, message: r.message }); }
     catch { setState({ ok: false, message: "Test failed" }); }
   }
   return (

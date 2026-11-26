@@ -4,7 +4,7 @@
 
 ## A. Questions to put to the lawyer first (longest lead time)
 
-1. Does the platform collecting customer payments on behalf of shops and paying them out need a licence or a regulated arrangement (for example a payment facilitator / merchant-acquirer or "retail payment services" arrangement under Central Bank of the UAE rules), or can it operate under the gateway's own marketplace programme (Mamo marketplace/recipients, Stripe Connect equivalent)? **Get legal advice before any real customer money is held.**
+1. Does the platform collecting customer payments on behalf of shops and paying them out need a licence or a regulated arrangement (for example a payment facilitator / merchant-acquirer or "retail payment services" arrangement under Central Bank of the UAE rules), or can it operate under the gateway's own marketplace programme (Stripe Connect)? **Get legal advice before any real customer money is held.**
 2. If a gateway programme is the route: which exact flow is allowed (funds held by the gateway versus our own bank account) and what does the gateway require from us (KYC of our sellers, terms flow-down)?
 3. Mainland versus free-zone entity for the operating company; which jurisdiction governs the contracts.
 4. Is the commission/SaaS fee structure caught by any regulated-activity definition?
@@ -40,4 +40,4 @@ Trade licence (and its expiry), licensing authority, legal business name, author
 
 ## E. Operating-company housekeeping
 
-Trade licence of the platform company, bank accounts, gateway merchant agreements (Stripe / Mamo) signed by an authorised signatory, domain ownership, insurance (cyber / professional indemnity) quote, trademark filing for the QuickPrint name and logo.
+Trade licence of the platform company, bank accounts, gateway merchant agreements (Stripe) signed by an authorised signatory, domain ownership, insurance (cyber / professional indemnity) quote, trademark filing for the QuickPrint name and logo.

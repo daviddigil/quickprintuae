@@ -9,7 +9,7 @@ import { ownerKeys } from "@/server/trust/keys";
 
 export const DEFAULT_PLANS = [
   { code: "starter", name: "Starter", priceMonthly: 199, priceYearly: 1990, orderFeePct: 0, maxOrdersPerMonth: 300, maxStaff: 2, sortOrder: 1,
-    flags: ["walk_in_queue"], features: ["Online storefront", "Stripe & Mamo Pay", "Pickup + in-house delivery", "Walk-in QR print queue", "Hero slider for offers", "All product types", "300 orders / month"] },
+    flags: ["walk_in_queue"], features: ["Online storefront", "Stripe payments", "Pickup + in-house delivery", "Walk-in QR print queue", "Hero slider for offers", "All product types", "300 orders / month"] },
   { code: "growth", name: "Growth", priceMonthly: 499, priceYearly: 4990, orderFeePct: 0, maxOrdersPerMonth: 2000, maxStaff: 10, sortOrder: 2,
     flags: ["walk_in_queue"], features: ["Everything in Starter", "AI business card designer", "Courier integrations (Jeebly, Quiqup…)", "Custom domain", "10 staff"] },
   { code: "enterprise", name: "Enterprise", priceMonthly: 1499, priceYearly: 14990, orderFeePct: 0, maxOrdersPerMonth: null, maxStaff: null, sortOrder: 3,

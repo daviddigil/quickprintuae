@@ -1,7 +1,7 @@
-import { HOME_FAQ } from "./faq-data";
+import { homeFaq } from "./faq-data";
 
 /** Native <details> accordion: works without JavaScript and every answer is in the HTML for search engines and AI assistants. */
-export function FaqSection({ items = HOME_FAQ, heading = "Questions shop owners ask" }: { items?: { q: string; a: string }[]; heading?: string }) {
+export function FaqSection({ items = homeFaq(), heading = "Questions shop owners ask" }: { items?: { q: string; a: string }[]; heading?: string }) {
   return (
     <section id="faq" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 md:py-24">
       <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">

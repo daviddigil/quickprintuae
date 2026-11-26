@@ -51,8 +51,8 @@ try {
   const sa = await page();
   await login(sa, makerEmail, SA, /superadmin/);
   await sa.goto(`${BASE}/superadmin/gateways`, { waitUntil: "load" });
-  assert(await sa.getByTestId("gateway-stripe").count() === 1 && await sa.getByTestId("gateway-mamo").count() === 1, "both gateways listed");
-  assert((await sa.getByTestId("webhook-url-stripe").innerText()).endsWith("/api/webhooks/stripe") && (await sa.getByTestId("webhook-url-mamo").innerText()).endsWith("/api/webhooks/mamo"), "webhook URLs shown");
+  assert(await sa.getByTestId("gateway-stripe").count() === 1 && await sa.locator('[data-testid^="gateway-"]:not([data-testid="gateway-state"]):not([data-testid="gateway-chips"])').count() === 1, "Stripe is the only gateway listed");
+  assert((await sa.getByTestId("webhook-url-stripe").innerText()).endsWith("/api/webhooks/stripe"), "webhook URLs shown");
   const card = sa.getByTestId("gateway-stripe");
   await card.locator('input[name="secretKey"]').fill(KEY); await card.locator('input[name="webhookSecret"]').fill(HOOK); await card.locator('input[name="publishableKey"]').fill("pk_test_e2e");
   await card.locator('input[name="payoutHoldDays"]').fill("0");

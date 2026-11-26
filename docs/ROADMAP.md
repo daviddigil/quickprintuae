@@ -3,11 +3,11 @@
 _QuickPrint UAE — Powered by Nexsofture Tech_
 
 ## v1.0: MVP (this repository)
-- Multi-tenant SaaS: marketing site, self-serve signup with a 14-day trial, subdomain + custom-domain storefronts
+- Multi-tenant SaaS: marketing site, self-serve signup with a free trial (length set by the superadmin, default 7 days), subdomain + custom-domain storefronts
 - Catalog pre-loaded with UAE defaults: documents (A5–A0), confidential printing, global photo sizes, passport/visa photo presets, framed prints, business cards, flyers, brochures, notebooks, posters
 - Server-side pricing engine (tiers, per-page, option multipliers, setup fees, 5% VAT)
 - AI business card designer (Claude) + drag-and-drop editor
-- Prepaid checkout only: Stripe and Mamo Pay into each shop's own account
+- Prepaid checkout only: Stripe is the single gateway (the second gateway was removed)
 - Pickup branches and scheduled delivery slots, with in-house drivers + courier adapters (Jeebly, Quiqup, Careem Box, Aramex)
 - Store admin: orders board, production status, products and pricing, delivery zones, team, settings
 - Super admin: shops, plans, SaaS invoices + dunning, impersonation with audit log, platform health

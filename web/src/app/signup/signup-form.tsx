@@ -7,8 +7,8 @@ import { CardStep } from "@/components/platform/CardStep";
 
 const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
 
-export function SignupForm({ plans, defaultPlan, locale = "en", live, fake }: { plans: { code: string; name: string; price: number; feePct?: number; commission?: boolean }[]; defaultPlan?: string; locale?: Locale; live: boolean; fake: boolean }) {
-  const copy = getCopy(locale), t = copy.signup.form, ar = locale === "ar";
+export function SignupForm({ plans, defaultPlan, locale = "en", live, fake, trialDays }: { trialDays?: number; plans: { code: string; name: string; price: number; feePct?: number; commission?: boolean }[]; defaultPlan?: string; locale?: Locale; live: boolean; fake: boolean }) {
+  const copy = getCopy(locale, trialDays), t = copy.signup.form, ar = locale === "ar";
   // Latin-only fields (email, phone, slug, password) stay left-to-right inside an Arabic form
   const ltr = ar ? ({ dir: "ltr" } as const) : {};
   const [shopName, setShopName] = useState("");
@@ -64,7 +64,7 @@ export function SignupForm({ plans, defaultPlan, locale = "en", live, fake }: { 
     return (
       <div className="space-y-5">
         {progress}
-        <CardStep locale={locale} live={live} fake={fake} email={email} />
+        <CardStep locale={locale} trialDays={trialDays} live={live} fake={fake} email={email} />
       </div>
     );
   }

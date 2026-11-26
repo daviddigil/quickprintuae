@@ -9,6 +9,7 @@ import { ORDER_STATUS_LABEL } from "@/lib/types";
 import { PERSONALISATION_PREFIX } from "@/lib/types";
 import { isImageArtwork, splitLabel } from "@/lib/storefront-catalog";
 import { NEXT_STATUSES } from "@/server/orders";
+import { providerLabel } from "@/server/payments/legacy";
 import { DELIVERY_PROVIDERS } from "@/server/delivery";
 import { Alert, Badge, Button, Card, CardHeader, Input, LinkButton, ORDER_STATUS_TONE, Select, Textarea } from "@/components/ui";
 import { Flash } from "@/components/admin/Flash";
@@ -135,8 +136,8 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
               <Row k={`VAT (${tenant.settings.vatRate ?? 5}%)`} v={formatAED(order.vat)} />
               <Row k="Total" v={formatAED(order.total)} bold />
               <p className="pt-1 text-xs text-on-surface-variant">
-                {order.paidAt ? `Paid ${dubai(order.paidAt)} via ${order.paymentProvider}` : "Not paid yet"}
-                {payments.length > 0 && ` · refs: ${payments.map((p) => `${p.provider}:${p.providerRef} (${p.status})`).join(", ")}`}
+                {order.paidAt ? `Paid ${dubai(order.paidAt)} via ${providerLabel(order.paymentProvider)}` : "Not paid yet"}
+                {payments.length > 0 && ` · refs: ${payments.map((p) => `${providerLabel(p.provider)}:${p.providerRef} (${p.status})`).join(", ")}`}
               </p>
             </div>
           </Card>
@@ -172,7 +173,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
                   </div>
                 </form>
               )}
-              {order.status === "pending_payment" && <p className="text-xs text-on-surface-variant">Orders move to Paid automatically when Stripe / Mamo Pay confirms the payment.</p>}
+              {order.status === "pending_payment" && <p className="text-xs text-on-surface-variant">Orders move to Paid automatically when Stripe confirms the payment.</p>}
             </div>
           </Card>
 

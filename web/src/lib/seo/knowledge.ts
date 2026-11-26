@@ -3,6 +3,8 @@ import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { DEFAULT_PRODUCTS } from "@/lib/catalog-defaults";
 import { displayFeatures } from "@/server/billing/flags";
+import { primeTrialDays } from "@/server/platform-settings";
+import { trialLabel } from "@/lib/i18n/trial";
 import { planTerms, type PlanLd } from "./jsonld";
 import { SITE, abs, siteUrl } from "./site";
 import { MARKETING_PATHS } from "./paths";
@@ -15,10 +17,10 @@ export async function getSeoPlans(): Promise<PlanLd[]> {
 }
 
 /** Answer-first Q→A used by llms-full.txt and (via faqLd) by marketing pages. Keep every answer short and self-contained so it can be quoted. */
-export const PLATFORM_FAQ: { q: string; a: string }[] = [
+export const platformFaq = (days: number): { q: string; a: string }[] => [
   { q: "What is QuickPrint?", a: "QuickPrint is a software-as-a-service platform, built by Nexsofture Tech, that lets print shops in the UAE run their own online store, take prepaid orders for documents, photos, business cards, flyers and more, and manage production, pickup and delivery from one dashboard." },
   { q: "Who is QuickPrint for?", a: "Print shops, typing centres, photo studios and copy shops in the UAE that want online orders without building a website. Their customers (individuals and businesses) order from the shop's own branded storefront." },
-  { q: "How much does QuickPrint cost?", a: "Shops choose one of two billing models. Subscription plans (Starter, Growth, Enterprise) charge a fixed monthly fee in AED with no per-order commission. The Pay per order plan has no monthly fee (AED 0) and charges a 3% commission on each paid order. Prices exclude 5% UAE VAT, and every plan starts with a 14-day free trial with no card needed." },
+  { q: "How much does QuickPrint cost?", a: "Shops choose one of two billing models. Subscription plans (Starter, Growth, Enterprise) charge a fixed monthly fee in AED with no per-order commission. The Pay per order plan has no monthly fee (AED 0) and charges a 3% commission on each paid order. Prices exclude 5% UAE VAT, and every plan starts with a free trial (" + (days === 0 ? "none at the moment" : trialLabel(days, "en")) + "); a card is added to start and charged when the trial ends." },
   { q: "Is there a commission on orders?", a: "Not on subscription plans. Only the Pay per order plan charges a commission (3% of each paid order, settled on the shop's monthly invoice), and it has no monthly fee. Refunded orders are credited back." },
   { q: "What is billed pay-as-you-go?", a: "Metered usage that costs QuickPrint money to deliver: WhatsApp/Meta messages sent by the shop and AI usage (chat replies, AI business-card and banner designs). It is billed on the monthly invoice at the platform rate card, after any allowance included in the plan. Storefront, orders and the walk-in queue are not metered." },
   { q: "How do shops get paid?", a: "Customers pay online through the QuickPrint payment gateway and the money is paid out to the shop's bank account in payout batches, with an order-by-order statement. Orders are prepaid online; cash on delivery is not supported." },
@@ -51,7 +53,7 @@ export const FEATURES: { name: string; text: string }[] = [
   { name: "WhatsApp AI chat cart", text: "AI replies on the shop's WhatsApp Business number, builds a cart from the chat and sends prefilled checkout links, with human takeover at any time." },
   { name: "Billing: subscription or pay per order", text: "Shops pick a fixed monthly subscription with no per-order commission, or the Pay per order plan with AED 0 per month and a commission on each paid order. WhatsApp/Meta messages and AI usage are metered and billed pay-as-you-go on top; shops see usage and commissions on their billing page." },
   { name: "Hero slider for offers", text: "Shops upload offer images with start and end dates and show them as a slider on the storefront." },
-  { name: "Payments", text: "Stripe (cards, Apple Pay, Google Pay) and Mamo Pay. All orders are prepaid; there is no cash on delivery." },
+  { name: "Payments", text: "Stripe (cards, Apple Pay, Google Pay). All orders are prepaid; there is no cash on delivery." },
   { name: "Pickup and scheduled delivery", text: "Pickup branches, delivery fees per emirate, time slots, in-house drivers and courier connectors (Jeebly, Quiqup, Careem Box, Aramex)." },
   { name: "UAE VAT and tax invoices", text: "5% VAT handling, TRN on tax invoices, printable job tickets." },
   { name: "Admin dashboard and platform admin", text: "Orders, production queue, pricing editor, customers, staff, settings; platform operators get plans, billing, impersonation and audit logs." },
@@ -59,17 +61,18 @@ export const FEATURES: { name: string; text: string }[] = [
 
 /** /llms.txt (llmstxt.org format) */
 export async function buildLlmsTxt(): Promise<string> {
+  const days = await primeTrialDays(), PLATFORM_FAQ = platformFaq(days);
   const plans = await getSeoPlans();
   const origin = siteUrl();
   const subs = plans.filter((p) => p.billingModel !== "commission");
   const from = subs.length ? Math.min(...subs.map((p) => p.priceMonthly)) : null;
   const lines: string[] = [
     `# ${SITE.name}`, "",
-    `> ${SITE.name} (by ${SITE.legalName}) is a print-on-demand SaaS for print shops in the UAE. A shop launches its own online printing store in minutes and takes prepaid orders for documents, photos, business cards, flyers and more, with pickup or scheduled delivery, UAE VAT invoices, Stripe and Mamo Pay payments, a walk-in QR print queue and WhatsApp AI ordering.`, "",
+    `> ${SITE.name} (by ${SITE.legalName}) is a print-on-demand SaaS for print shops in the UAE. A shop launches its own online printing store in minutes and takes prepaid orders for documents, photos, business cards, flyers and more, with pickup or scheduled delivery, UAE VAT invoices, Stripe payments, a walk-in QR print queue and WhatsApp AI ordering.`, "",
     "Quick facts:",
     `- Audience: print shops, typing centres and photo studios in the UAE (customers are individuals and businesses ordering from each shop's storefront).`,
-    `- Pricing: subscription plans ${from != null ? `from AED ${fmt(from)} per month` : "in AED"} with no per-order commission, or a Pay per order plan (AED 0 per month, ${plans.find((p) => p.billingModel === "commission")?.orderFeePct ?? 3}% commission per paid order); WhatsApp/Meta messages and AI usage are billed pay-as-you-go; prices exclude 5% VAT; 14-day free trial, no card.`,
-    "- Payments: Stripe and Mamo Pay into the shop's own account. No cash on delivery.",
+    `- Pricing: subscription plans ${from != null ? `from AED ${fmt(from)} per month` : "in AED"} with no per-order commission, or a Pay per order plan (AED 0 per month, ${plans.find((p) => p.billingModel === "commission")?.orderFeePct ?? 3}% commission per paid order); WhatsApp/Meta messages and AI usage are billed pay-as-you-go; prices exclude 5% VAT; ${days === 0 ? "no free trial" : `${trialLabel(days, "en")} free trial`}, card required.`,
+    "- Payments: Stripe; the platform collects and pays shops out to their bank account. No cash on delivery.",
     "- Delivery: pickup, scheduled delivery, in-house drivers, Jeebly, Quiqup, Careem Box, Aramex.", "",
     "## Product",
     `- [${SITE.name} overview](${origin}/): what the platform does and who it is for`,
@@ -91,6 +94,7 @@ export async function buildLlmsTxt(): Promise<string> {
 
 /** /llms-full.txt — complete answer-first knowledge file */
 export async function buildLlmsFull(): Promise<string> {
+  const days = await primeTrialDays(), PLATFORM_FAQ = platformFaq(days);
   const plans = await getSeoPlans();
   const photo = group("size", "photo"), paper = group("paper_size", "document"), passport = group("spec", "passport_photo"), frames = group("frame", "photo_frame"), cards = group("stock", "business_card");
   const L: string[] = [
@@ -99,8 +103,8 @@ export async function buildLlmsFull(): Promise<string> {
     "## Quick facts", "",
     `- Product: ${SITE.name} (${siteUrl()})`, `- Company: ${SITE.legalName}`, "- Market: United Arab Emirates (AED, 5% VAT)",
     "- Customers of the platform: print shops; their end customers order from the shop's storefront",
-    "- Free trial: 14 days; a card is added at signup and charged when the trial ends",
-    "- Payments: Stripe and Mamo Pay into the shop's own account; all orders prepaid; no cash on delivery",
+    days === 0 ? "- Free trial: none at the moment; a card is added at signup and charged today" : `- Free trial: ${trialLabel(days, "en")}; a card is added at signup and charged when the trial ends`,
+    "- Payments: Stripe; the platform collects and pays shops out; all orders prepaid; no cash on delivery",
     "- Fulfilment: pickup or scheduled delivery (own drivers, Jeebly, Quiqup, Careem Box, Aramex)",
     "- Languages: English storefront and admin" + (MARKETING_PATHS.some((m) => m.translated) ? "; Arabic marketing pages" : ""),
     "- Hosting: the software can be deployed in a UAE or Middle East cloud region for data residency (deployment choice of the operator)", "",
@@ -120,7 +124,7 @@ export async function buildLlmsFull(): Promise<string> {
     "### Photo frame styles", "", ...frames.map((s) => `- ${s}`), "",
     "### Business card stocks", "", ...cards.map((s) => `- ${s}`), "",
     "## How it works for a shop", "",
-    "1. Sign up at " + abs("/signup") + " (14-day free trial, card required).", "2. Review the preloaded UAE catalogue and prices; edit anything.", "3. Verify your business with your trade licence, add your bank details for payouts, and set pickup branches and delivery fees per emirate.",
+    "1. Sign up at " + abs("/signup") + " (" + (days === 0 ? "no free trial" : trialLabel(days, "en") + " free trial") + ", card required).", "2. Review the preloaded UAE catalogue and prices; edit anything.", "3. Verify your business with your trade licence, add your bank details for payouts, and set pickup branches and delivery fees per emirate.",
     "4. Share the storefront link (or the walk-in QR); optionally connect WhatsApp and a print agent.", "5. Manage orders, production, couriers and tax invoices from the dashboard.", "",
     "## How it works for a customer", "",
     "1. Open the shop's storefront, choose a product, upload files and pick options (price updates live).", "2. Choose pickup or a delivery slot and pay online.", "3. Track the order; collect it or receive it.", "",

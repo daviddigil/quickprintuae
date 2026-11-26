@@ -12,7 +12,7 @@ A multi-tenant print-on-demand SaaS for UAE print shops. One deployment serves:
 | Super admin (HQ) | `/superadmin` | Platform team. Includes impersonation and SaaS billing |
 
 Products: documents (priced by paper size), confidential documents, photo prints (global sizes), passport/visa photos, framed prints, business cards (AI designer + editor), flyers, brochures, notebooks, posters.
-Payments: Stripe and Mamo Pay, paid into each shop's own account. No cash on delivery.
+Payments: Stripe is the only gateway; the platform collects and pays shops out from the ledger. No cash on delivery.
 Fulfilment: pickup, or a scheduled delivery slot handled by in-house drivers or a courier adapter (Jeebly, Quiqup, Careem Box, Aramex).
 
 ## Architecture
@@ -34,7 +34,7 @@ docs/                     business plan, roadmap
 Key design decisions:
 - **Shared database, row-level tenancy.** Every tenant table has `tenant_id`, and every query is scoped by it. This is the simplest model to operate. Very large shops can move to their own deployment later.
 - **Prices are computed on the server.** The storefront shows an estimate. Checkout recalculates every line with `src/lib/pricing.ts`.
-- **Secrets are encrypted at rest.** Shop Stripe, Mamo and courier keys are encrypted with `ENCRYPTION_KEY`. So are confidential uploads, which are purged once the retention period ends.
+- **Secrets are encrypted at rest.** Gateway and courier keys are encrypted with `ENCRYPTION_KEY`. So are confidential uploads, which are purged once the retention period ends.
 - **Impersonation** issues a 2-hour session that carries `imp=<superadmin id>`. Every action taken during it is audit-logged with the impersonator. Use `/api/v1/superadmin/impersonate/stop` to exit.
 - **SaaS billing** (`src/server/billing`): monthly invoices are subscription + order fee % of paid GMV + 5% VAT. Invoices are charged off-session through the platform Stripe account, with a hosted-checkout fallback. Dunning: past_due after 7 days, suspended after 21.
 
@@ -115,7 +115,7 @@ Traefik works too: use a wildcard certificate via DNS challenge, plus an HTTP-ch
 | Provider | URL | Owner |
 |---|---|---|
 | Platform Stripe (SaaS billing) | `/api/webhooks/platform-stripe` | Platform |
-| Shop Stripe / Mamo Pay | shown in each shop's Admin → Settings → Payments | Each shop |
+| Stripe keys | /superadmin/gateways (platform-held; shops never see them) | Platform |
 
 ### Scheduled jobs
 
@@ -144,7 +144,7 @@ Shop owners create and edit storefront banners from plain-English prompts. Engin
 
 ## Walk-in QR print queue (all plans, incl. Starter)
 
-For a busy counter: the shop shows a QR (`/admin/walk-in` → poster). Customers scan, enter name + mobile, upload documents (documents only), pay online (Stripe/Mamo), and get a ticket with a live status page. Paid jobs enter a priority queue (high priority first, then first-come-first-served; short jobs get a boost) that a small **print agent** on the shop PC drains automatically. One-time walk-ins are saved by phone number.
+For a busy counter: the shop shows a QR (`/admin/walk-in` → poster). Customers scan, enter name + mobile, upload documents (documents only), pay online (Stripe), and get a ticket with a live status page. Paid jobs enter a priority queue (high priority first, then first-come-first-served; short jobs get a boost) that a small **print agent** on the shop PC drains automatically. One-time walk-ins are saved by phone number.
 
 - Shop: `/admin/walk-in` (live queue, QR + poster, settings, print agents, walk-in customers under Customers)
 - Superadmin: per-plan feature flag (Plans), walk-in tiles on the dashboard, per-shop section with disable / open-as-shop

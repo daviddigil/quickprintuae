@@ -1,8 +1,12 @@
 import { pageMetadata } from "@/lib/seo/metadata";
-import { en } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import { primeTrialDays } from "@/server/platform-settings";
 import { HomePage } from "@/components/platform/pages/HomePage";
 
 export const dynamic = "force-dynamic";
-export const metadata = pageMetadata({ ...en.home.meta, path: "/", absoluteTitle: true });
+export async function generateMetadata() {
+  await primeTrialDays();
+  return pageMetadata({ ...getCopy("en").home.meta, path: "/", absoluteTitle: true });
+}
 
 export default function Home() { return <HomePage locale="en" />; }

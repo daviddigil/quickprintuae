@@ -25,7 +25,7 @@ Customer ──WhatsApp──► Meta Cloud API ──signed webhook──► PO
 - **Chat cart ("chatcartpro" idea).** The conversation has a cart. The customer says *"500 business cards and 100 flyers"* → items are added (priced by
   the **same engine as checkout**), the customer gets the cart plus buttons **[Confirm cart] [Change something] [Talk to a human]**, and on *Confirm* (or "checkout")
   receives **one message**: itemised lines with AED prices, subtotal, VAT 5 %, total estimate and **one prefilled storefront link per line** (`?cfg=` carries quantity + options).
-  Files, pickup/delivery slot and online payment (Stripe / Mamo Pay) happen on those links — never in chat. No cash on delivery.
+  Files, pickup/delivery slot and online payment (Stripe) happen on those links — never in chat. No cash on delivery.
 - **AI tools** (all scoped to the shop): `list_products`, `quote_price`, `add_to_cart`, `view_cart`, `remove_from_cart`, `clear_cart`, `send_checkout_links`, `shop_info`, `handoff_to_human`.
   Arguments are validated with zod; prices come only from `computeLinePrice`, so the model can't invent or discount.
 - **No Anthropic key?** A deterministic rule-based assistant handles greetings, menu, quotes, multi-item add, cart, checkout, remove, clear, human. With a key, `claude-opus-5-5` (effort low, tool loop ≤ 8 turns, server-side refusal fallbacks) answers.

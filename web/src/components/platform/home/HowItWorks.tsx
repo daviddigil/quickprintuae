@@ -1,7 +1,8 @@
 import { RegMark } from "@/components/ui";
-import { en, type Copy } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import type { Copy } from "@/lib/i18n/en";
 
-export function HowItWorks({ copy = en }: { copy?: Copy }) {
+export function HowItWorks({ copy = getCopy("en") }: { copy?: Copy }) {
   const how = copy.home.how;
   return (
     <section aria-labelledby="how" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-24">

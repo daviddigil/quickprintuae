@@ -8,7 +8,7 @@ import { publicOrigin, startPayment, verifyOrderToken, walkInStatusPath } from "
 import { limited } from "../../../_gate";
 
 export const runtime = "nodejs";
-const Body = z.object({ provider: z.enum(["stripe", "mamo"]), t: z.string() });
+const Body = z.object({ provider: z.literal("stripe").default("stripe"), t: z.string() });
 
 /** Retry payment for a walk-in order; returns to the walk-in status page afterwards. */
 export async function POST(req: Request, { params }: { params: Promise<{ tenant: string; id: string }> }) {

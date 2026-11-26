@@ -72,7 +72,7 @@ export async function shopInfo(tenant: Tenant) {
     pickup_enabled: d?.pickupEnabled ?? true, pickup_locations: pickups.map((p) => ({ name: p.name, address: p.address, hours: p.hours })),
     delivery_enabled: d?.enabled ?? true, delivery_hours: d ? `${d.openHour}:00–${d.closeHour}:00 UAE time` : null, closed_weekdays: d?.closedWeekdays ?? [],
     delivery_zones: zones.map((z) => ({ emirate: z.emirate, fee_aed: z.fee, free_above_aed: z.freeAbove, same_day: z.sameDay })),
-    payment: "Online payment only (card, Apple Pay, Google Pay via Stripe or Mamo Pay). Cash on delivery is NOT available.", vat_percent: tenant.settings.vatRate ?? 5,
+    payment: "Online payment only (card, Apple Pay, Google Pay via Stripe). Cash on delivery is NOT available.", vat_percent: tenant.settings.vatRate ?? 5,
   };
 }
 

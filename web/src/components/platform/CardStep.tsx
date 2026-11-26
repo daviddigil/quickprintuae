@@ -6,12 +6,12 @@ import { fill, getCopy, type Locale } from "@/lib/i18n";
 type Code = "pending" | "failed" | "cancelled" | "card_reused" | "card_blocked" | "error";
 
 /**
- * Step 2 of signup (and the 'incomplete' admin screen): put a card on file to start the 14-day trial.
+ * Step 2 of signup (and the 'incomplete' admin screen): put a card on file to start the free trial (length: superadmin setting).
  * Live gateway: redirects to the gateway's hosted card page (3-D Secure included; no card data on our servers).
  * Test mode (PAYMENTS_FAKE / local development): a clearly labelled "Use test card" button completes the step without a gateway.
  */
-export function CardStep({ locale = "en", live, fake, email, initial, readQuery }: { locale?: Locale; live: boolean; fake: boolean; email?: string; initial?: string; /** read ?card=... from the URL (set by the gateway return route) */ readQuery?: boolean }) {
-  const t = getCopy(locale).signup.card;
+export function CardStep({ locale = "en", live, fake, email, initial, readQuery, trialDays }: { locale?: Locale; trialDays?: number; live: boolean; fake: boolean; email?: string; initial?: string; /** read ?card=... from the URL (set by the gateway return route) */ readQuery?: boolean }) {
+  const t = getCopy(locale, trialDays).signup.card;
   const [busy, setBusy] = useState<"live" | "fake" | null>(null);
   const first = initial && initial in t ? (initial as Code) : null;
   const [error, setError] = useState<string | null>(first && first !== "pending" ? (t[first] as string) : null);

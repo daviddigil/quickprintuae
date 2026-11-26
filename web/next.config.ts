@@ -25,7 +25,7 @@ const CSP = [
   "worker-src 'self' blob:",
   `connect-src 'self' https://api.stripe.com https://m.stripe.network https://graph.facebook.com https://www.facebook.com https://connect.facebook.net${dev ? " ws: wss:" : ""}`,
   "frame-src https://js.stripe.com https://hooks.stripe.com https://m.stripe.network https://www.facebook.com https://web.facebook.com https://staticxx.facebook.com",
-  "form-action 'self' https://hooks.stripe.com https://*.stripe.com https://*.mamopay.com https://www.facebook.com",
+  "form-action 'self' https://hooks.stripe.com https://*.stripe.com https://www.facebook.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",

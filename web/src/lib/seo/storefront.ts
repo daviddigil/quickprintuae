@@ -61,7 +61,7 @@ export async function shopPlaces(t: Pick<Tenant, "id">) {
   return { pickups, zones };
 }
 
-export const paymentLabels = async (t: Tenant) => (await enabledProviders(t)).map((p) => (p === "stripe" ? "Card, Apple Pay & Google Pay (Stripe)" : "Mamo Pay"));
+export const paymentLabels = async (t: Tenant) => (await enabledProviders(t)).map(() => "Card, Apple Pay & Google Pay (Stripe)");
 
 export async function shopLd(t: Tenant): Promise<LdNode> {
   const [catalog, { zones }] = await Promise.all([shopCatalog(t), shopPlaces(t)]);

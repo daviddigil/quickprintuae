@@ -45,7 +45,7 @@ try {
   step("signup step 1 creates an 'incomplete' shop, no trial yet");
   await axe(a, "signup card step");
   await a.goto(`${BASE}/admin`, { waitUntil: "networkidle" });
-  assert(await a.getByRole("heading", { name: /Add a card to start your 14-day trial/ }).isVisible(), "incomplete admin shows the card screen");
+  assert(await a.getByRole("heading", { name: /Add a card to start your free trial/ }).isVisible(), "incomplete admin shows the card screen");
   assert(!(await a.getByRole("link", { name: "Orders" }).count()), "no admin navigation while incomplete");
   const sf = await (await br.newContext()).newPage();
   assert((await sf.goto(`${BASE}/s/${slugA}`)).status() === 404, "incomplete shop is not served on the storefront");
@@ -57,10 +57,12 @@ try {
   await a.getByTestId("use-test-card").click(); await done;
   await a.waitForURL(/welcome=1/, { timeout: 60000 }); await a.waitForLoadState("networkidle");
   t = (await sql`select status, card_status, trial_ends_at, card_fingerprint_hash from tenants where slug=${slugA}`)[0];
+  const trialSetting = (await sql`select value from platform_settings where key='trialDays'`)[0]?.value;
+  const expectDays = Number.isFinite(Number(trialSetting)) && trialSetting != null ? Number(trialSetting) : 7; // superadmin setting, default 7
   const days = (new Date(t.trial_ends_at) - Date.now()) / 86400000;
-  assert(t.status === "trial" && t.card_status === "on_file" && days > 13.9 && days < 14.1 && t.card_fingerprint_hash, "test card starts a 14 day trial: " + JSON.stringify(t));
+  assert(t.status === "trial" && t.card_status === "on_file" && Math.abs(days - expectDays) < 0.1 && t.card_fingerprint_hash, `test card starts a ${expectDays} day trial: ` + JSON.stringify(t));
   assert(await a.getByRole("link", { name: "Orders" }).first().isVisible(), "admin panel unlocked");
-  step("with the test card the 14-day trial starts and the panel opens");
+  step("with the test card the free trial starts and the panel opens");
 
   const c = await newPage();
   await signup(c, { base: BASE, slug: slugC, name: `Reuse ${stamp}`, cardId: "onb-" + stamp, expectCardError: true });

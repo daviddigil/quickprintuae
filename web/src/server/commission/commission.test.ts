@@ -38,7 +38,7 @@ async function order(tenantId: string, subtotal: number, items = 1) {
   for (let i = 0; i < items; i++) await db.insert(schema.orderItems).values({ orderId: o.id, productName: "Doc", kind: "document", quantity: 1, unitPrice: subtotal / items, lineTotal: subtotal / items });
   return o;
 }
-const pay = (id: string) => markOrderPaid(id, "mamo", `ref-${id}`);
+const pay = (id: string) => markOrderPaid(id, "stripe", `ref-${id}`);
 const comm = (orderId: string) => db.query.orderCommissions.findFirst({ where: eq(schema.orderCommissions.orderId, orderId) });
 after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); if (planId) await db.delete(schema.plans).where(eq(schema.plans.id, planId)); });
 

@@ -1,5 +1,5 @@
 // End-to-end business flow against a running server (BASE, default http://localhost:3200)
-// started with PAYMENTS_FAKE=1 DELIVERY_FAKE=1 and the demo shop's Mamo enabled.
+// started with PAYMENTS_FAKE=1 DELIVERY_FAKE=1 and the platform gateway in fake mode.
 import { chromium } from "playwright";
 import { PDFDocument } from "pdf-lib";
 import { writeFileSync } from "fs";
@@ -50,7 +50,7 @@ const body = await page.locator("body").innerText();
 const orderNo = body.match(/[A-Z]{2,4}-\d{4,}/)?.[0];
 if (!/Paid|Printing/i.test(body)) throw new Error("order not paid: " + body.slice(0, 400));
 await page.screenshot({ path: `${OUT}/order.png`, fullPage: true });
-step(`checkout → fake Mamo payment → order ${orderNo} paid`);
+step(`checkout → fake Stripe payment → order ${orderNo} paid`);
 
 // ---------- shop owner ----------
 const ctx2 = await browser.newContext({ viewport: { width: 1280, height: 900 } });

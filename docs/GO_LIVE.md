@@ -7,8 +7,8 @@ Related: `docs/SECURITY.md`, `docs/RUNBOOKS.md`, `docs/LEGAL_CHECKLIST.md`, `doc
 
 | # | Item | Owner | Status | Notes |
 |---|---|---|---|---|
-| 0.1 | **Legal advice: does holding customer funds for sellers and paying them out need a licensed payment facilitator / acquirer arrangement in the UAE?** | Founder + lawyer | todo | **Get legal advice. Do not assume either answer.** Decides whether we go through a gateway marketplace programme (Mamo recipients / Stripe Connect equivalent) or need our own licence. Longest lead time. See `docs/LEGAL_CHECKLIST.md` |
-| 0.2 | Gateway approvals: Stripe account live mode, Mamo business + marketplace/recipients approval | Founder | todo | Mamo docs still owed by the owner (recurring + recipients) |
+| 0.1 | **Legal advice: does holding customer funds for sellers and paying them out need a licensed payment facilitator / acquirer arrangement in the UAE?** | Founder + lawyer | todo | **Get legal advice. Do not assume either answer.** Decides whether we go through a gateway marketplace programme (Stripe Connect) or need our own licence. Longest lead time. See `docs/LEGAL_CHECKLIST.md` |
+| 0.2 | Gateway approvals: Stripe account in live mode (card payments, Apple Pay, payouts as agreed with counsel) | Founder | todo | Stripe is the only gateway |
 | 0.3 | Operating entity, trade licence, bank account(s), decision on client-funds account | Founder + accountant | todo | |
 | 0.4 | Accountant answers on VAT, who issues the customer tax invoice, e-invoicing readiness | Accountant | todo | Questions in `docs/LEGAL_CHECKLIST.md` section C |
 
@@ -92,7 +92,7 @@ Recommendation: pilot on one VPS (Docker compose, Caddy, managed Postgres with P
 
 ## Phase 7: pilot, then live
 
-1. **Pilot (2 to 4 weeks)**: 3 to 5 friendly shops, **test-mode gateways only** (Stripe test keys, Mamo sandbox). Real signup, card setup, verification, orders, ledger, payout batch exported and "paid" against a fake bank reference. Daily check of `/superadmin` reconciliation. Collect bugs and support questions.
+1. **Pilot (2 to 4 weeks)**: 3 to 5 friendly shops, **test-mode gateways only** (Stripe test keys). Real signup, card setup, verification, orders, ledger, payout batch exported and "paid" against a fake bank reference. Daily check of `/superadmin` reconciliation. Collect bugs and support questions.
 2. **Soft live**: live gateway keys, only verified shops, **low payout limit** (for example AED 2,000 per shop per week and a platform-wide daily cap), longer hold days (7+), manual review of every payout batch by two people if possible, daily reconciliation.
 3. **Raise limits** gradually after 4 clean weeks (no unexplained ledger difference, no unhandled dispute).
 4. Support: a named support inbox and WhatsApp number, response targets, escalation path to Engineering; runbooks printed.
@@ -113,4 +113,4 @@ Recommendation: pilot on one VPS (Docker compose, Caddy, managed Postgres with P
 
 ## Still pending from the owner
 
-Mamo docs (recurring + marketplace/recipients), Meta Tech Provider credentials, real logo file, native Arabic review, usage rates, support hours.
+Meta Tech Provider credentials, real logo file, native Arabic review, usage rates, support hours.

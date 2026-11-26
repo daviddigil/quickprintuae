@@ -8,7 +8,7 @@ import { enabledProviders } from "@/server/payments";
 import { publicOrigin, startPayment, verifyOrderToken } from "@/server/checkout";
 
 export const runtime = "nodejs";
-const Body = z.object({ provider: z.enum(["stripe", "mamo"]), t: z.string().optional() });
+const Body = z.object({ provider: z.literal("stripe").default("stripe"), t: z.string().optional() });
 
 /** Retry payment for an order still awaiting payment. */
 export async function POST(req: Request, { params }: { params: Promise<{ tenant: string; id: string }> }) {

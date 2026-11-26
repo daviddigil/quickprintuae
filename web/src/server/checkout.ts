@@ -83,7 +83,7 @@ export const CheckoutInput = z.object({
     notes: z.string().trim().max(500).optional(),
   }).optional(),
   slotStart: z.string().datetime(),
-  provider: z.enum(["stripe", "mamo"]),
+  provider: z.literal("stripe").default("stripe"),
   notes: z.string().max(1000).optional(),
 });
 export type CheckoutInputT = z.infer<typeof CheckoutInput>;
@@ -208,7 +208,7 @@ export const WalkInCheckoutInput = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(7).max(30),
   files: z.array(WalkInFile).min(1).max(50),
-  provider: z.enum(["stripe", "mamo"]),
+  provider: z.literal("stripe").default("stripe"),
 });
 export type WalkInCheckoutInputT = z.infer<typeof WalkInCheckoutInput>;
 

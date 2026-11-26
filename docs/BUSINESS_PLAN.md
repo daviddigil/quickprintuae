@@ -6,7 +6,7 @@ _Powered by Nexsofture Tech_
 
 ## 1. One-line pitch
 
-QuickPrint gives every small UAE print shop a branded online store. Customers upload files, get an exact price, pay upfront (card, Apple Pay, Mamo Pay) and choose pickup or a delivery slot. The shop pays a monthly subscription plus a small fee per order.
+QuickPrint gives every small UAE print shop a branded online store. Customers upload files, get an exact price, pay upfront (card, Apple Pay, Google Pay via Stripe) and choose pickup or a delivery slot. The shop pays a monthly subscription plus a small fee per order.
 
 ## 2. The problem
 
@@ -42,7 +42,7 @@ Sizing approach (to be validated):
 |---|---|---|
 | Large UAE online printers with their own presses | Established Dubai online-print brands | We don't compete for their customers. We arm the many small shops they compete against. |
 | Global web-to-print platforms | International online print brands that ship to the UAE | Slower delivery to the UAE, no local pickup, foreign pricing |
-| Web-to-print software (B2B) | International W2P / print-MIS vendors | Usually expensive, built for Western markets, no Mamo Pay or local couriers, long setups |
+| Web-to-print software (B2B) | International W2P / print-MIS vendors | Usually expensive, built for Western markets, no local payment support or local couriers, long setups |
 | Generic e-commerce builders | Shopify, Zid, Salla, WooCommerce | Can't price by page, paper size or tier, and have no file workflow or slot scheduling. The shop has to build everything. |
 | Status quo | WhatsApp + cash | Our real competitor. We must be easier than WhatsApp. |
 
@@ -63,18 +63,18 @@ Sizing approach (to be validated):
 | Growth | 499 | 4,990 | 1% | 2,000 orders/mo, 10 staff, AI designer, couriers, custom domain |
 | Enterprise | 1,499 | 14,990 | 0.5% | Unlimited, multi-branch, API |
 
-All prices exclude 5% VAT. There is a 14-day trial with no card required.
+All prices exclude 5% VAT. Every plan starts with a free trial whose length the superadmin sets (default 7 days, /superadmin/settings/trial); a card is required to start and is charged when the trial ends.
 
 Rationale:
 - Anchor the price below one part-time staff salary. The tool replaces hours of quoting and WhatsApp file chasing.
 - The order fee keeps the entry price low and lets us share in the upside. It is capped by the declining percentage on higher tiers.
-- Payment processing is paid by the shop directly to Stripe or Mamo Pay (their own merchant account). That avoids becoming a payment facilitator, which brings CBUAE licensing questions.
+- Payment processing runs through Stripe. Who holds customer funds (platform or the shop's own account) is a legal question to settle before launch (see LEGAL_CHECKLIST).
 
 ## 7. Unit economics
 
 ### Example shop (assumption)
 - 400 online orders/month × AED 45 average order value = **AED 18,000 GMV/month**
-- Payment fees (shop pays its provider): about 2.5–3% + fixed fee per transaction ≈ **AED 600–900** (verify current Stripe UAE and Mamo Pay pricing)
+- Payment fees (shop pays its provider): about 2.5–3% + fixed fee per transaction ≈ **AED 600–900** (verify current Stripe UAE pricing)
 - QuickPrint on Growth: AED 499 + 1% × 18,000 = **AED 679 / month** (≈ 3.8% of online GMV)
 - Value to the shop: about 2 staff-hours a day saved on quoting and file handling, no unpaid jobs, after-hours orders and delivery revenue. It should pay back if it adds roughly 15 orders a month or saves about 30 staff hours.
 
@@ -116,12 +116,12 @@ Sensitivities: each ±10 shops at month 12 moves MRR by about ±AED 6.2k. Shifti
 
 ## 9. Go-to-market
 
-1. **Pilot (months 1–2):** 5 design-partner shops in Karama / Bur Dubai, free for 3 months in exchange for weekly feedback and a video testimonial. We do their onboarding: load their real price list and set up their Stripe or Mamo account.
+1. **Pilot (months 1–2):** 5 design-partner shops in Karama / Bur Dubai, free for 3 months in exchange for weekly feedback and a video testimonial. We do their onboarding: load their real price list and set up their Stripe account.
 2. **Field sales in clusters:** Karama, Bur Dubai, Deira and Al Qusais (Dubai); Rolla, Al Nahda and Al Qasimia (Sharjah); Ajman; Hamdan and Electra St and Musaffah (Abu Dhabi). Walk-in demos on a tablet: "your store is live in 5 minutes."
 3. **Typing centres and PRO offices:** a huge flow of document, passport-photo and visa-photo printing. Offer them a reseller or referral margin.
 4. **WhatsApp first:** every storefront link is built to be shared on WhatsApp, Instagram bio and Google Business Profile. The WhatsApp AI chat cart (coexistence with the shop's existing number) is built; real-number onboarding needs a Meta app and review.
 5. **Local SEO for shops:** "passport photo near me Karama" and "print documents Dubai Marina delivery". Storefront pages are SEO-ready per shop.
-6. **Partnerships:** Mamo Pay (UAE SME payments) and courier aggregators for co-marketing. Free-zone business setup consultants can bundle "new licence → business cards" with a referral fee.
+6. **Partnerships:** courier aggregators for co-marketing. Free-zone business setup consultants can bundle "new licence → business cards" with a referral fee.
 7. **Seasonal campaigns:** National Day, Ramadan/Eid gifting, back-to-school, GITEX and exhibition season.
 
 ## 10. Risks and compliance
@@ -131,7 +131,7 @@ Sensitivities: each ±10 shops at month 12 moves MRR by about ±AED 6.2k. Shifti
 | **VAT (FTA)** | Shops must issue compliant tax invoices (TRN, 5% VAT shown) | Built in: VAT on every order, TRN on invoices. QuickPrint itself must register for VAT once over the mandatory threshold (AED 375k taxable supplies; confirm with a tax agent). |
 | **E-invoicing** | The UAE has announced a phased e-invoicing mandate (rollout starting around 2026–2027, large businesses first) | Keep invoice data structured. Plan integration with an accredited service provider before the mandate reaches SMEs. Confirm dates with a tax advisor. |
 | **Data protection (PDPL, Federal Decree-Law 45/2021)** | Confidential documents, passport and ID photos are sensitive personal data | Encryption at rest, auto-deletion after retention, access logs, in-region hosting (UAE/ME cloud region), DPA template for shops, privacy policy. Get legal review. |
-| **Payments** | Becoming a payment facilitator needs licensing. Provider KYC can block shops. | Shops connect their **own** Stripe or Mamo Pay merchant accounts; we never hold their funds. Help shops through KYC during onboarding. |
+| **Payments** | Becoming a payment facilitator needs licensing. Provider KYC can block shops. | Stripe is the single gateway; the structure (platform-held vs the shop's own account) is confirmed with legal counsel before launch. Help shops through KYC during onboarding. |
 | **Trade licence** | The SaaS company needs a licence covering software/IT services | Free-zone licence (e.g. a tech-focused free zone) is typically the cheapest route. Mainland only if selling to government. |
 | **Content liability** | Customers uploading copyrighted, offensive or forged documents (e.g. fake IDs) | Terms of service, shop right to refuse, audit logs. Consider flagging uploads that look like official documents in confidential mode. |
 | **Concentration** | Dependence on Stripe / Anthropic / couriers | Adapter architecture (payments, delivery, AI). The AI designer falls back to templates. |

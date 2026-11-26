@@ -1,13 +1,12 @@
 import "server-only";
 import { activeGateways, type PlatformProvider } from "@/server/payments/platform";
 import { fakeSubscriptionGateway } from "./fake";
-import { mamoSubscriptionGateway } from "./mamo";
 import { stripeSubscriptionGateway } from "./stripe";
 import type { SubscriptionGateway } from "./types";
 
 export * from "./types";
 
-const REAL: Record<PlatformProvider, SubscriptionGateway> = { stripe: stripeSubscriptionGateway, mamo: mamoSubscriptionGateway };
+const REAL: Record<PlatformProvider, SubscriptionGateway> = { stripe: stripeSubscriptionGateway };
 
 /** PAYMENTS_FAKE=1, or local development with no live gateway: the card step offers a "Use test card" button. */
 export const fakeFlag = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");

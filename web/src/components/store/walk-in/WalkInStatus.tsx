@@ -13,7 +13,7 @@ const JOB_LABEL: Record<string, { t: string; tone: "gray" | "blue" | "purple" | 
 };
 
 export function WalkInStatus({ store, orderId, token, providers, initial, shopName }: {
-  store: string; orderId: string; token: string; providers: ("stripe" | "mamo")[]; initial: StatusData; shopName: string;
+  store: string; orderId: string; token: string; providers: "stripe"[]; initial: StatusData; shopName: string;
 }) {
   const [data, setData] = useState<StatusData>(initial);
   const [payBusy, setPayBusy] = useState(false);
@@ -33,7 +33,7 @@ export function WalkInStatus({ store, orderId, token, providers, initial, shopNa
     return () => clearInterval(id);
   }, [done, refresh]);
 
-  async function pay(provider: "stripe" | "mamo") {
+  async function pay(provider: "stripe") {
     setPayBusy(true); setErr(null);
     const res = await fetch(`/api/v1/store/${store}/walk-in/orders/${orderId}/pay`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider, t: token }) });
     const j = await res.json().catch(() => ({}));
@@ -70,7 +70,7 @@ export function WalkInStatus({ store, orderId, token, providers, initial, shopNa
           {providers.map((p) => (
             <Button key={p} variant="store" className="w-full py-3" disabled={payBusy} onClick={() => pay(p)} data-testid={`pay-${p}`}>
               {payBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              Pay {formatAED(data.total)}{providers.length > 1 ? ` · ${p === "stripe" ? "Card / Apple Pay" : "Mamo Pay"}` : ""}
+              Pay {formatAED(data.total)}
             </Button>
           ))}
           {err && <p className="text-sm text-critical">{err}</p>}

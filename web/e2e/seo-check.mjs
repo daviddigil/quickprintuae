@@ -62,7 +62,7 @@ await check("llms.txt: llmstxt.org structure (H1, blockquote summary, H2 section
 });
 await check("llms-full.txt: answer-first knowledge (quick facts, AED pricing, products, FAQ)", async () => {
   const { r, t } = await text("/llms-full.txt"); eq(r.status, 200, "status"); truthy(t.length > 4000, "substantial");
-  for (const s of ["## Quick facts", "## Pricing (AED", "## Features", "## Frequently asked questions", "No cash on delivery".toLowerCase() === "" ? "" : "cash on delivery", "Photo print sizes", "5% VAT", "Mamo Pay", "WhatsApp"]) truthy(!s || t.includes(s), "missing: " + s);
+  for (const s of ["## Quick facts", "## Pricing (AED", "## Features", "## Frequently asked questions", "No cash on delivery".toLowerCase() === "" ? "" : "cash on delivery", "Photo print sizes", "5% VAT", "Stripe", "WhatsApp"]) truthy(!s || t.includes(s), "missing: " + s);
   truthy(/\*\*Starter\*\*: AED \d/.test(t) && /Pay per order\*\*: AED 0 per month; \d+(\.\d+)?% commission/.test(t), "plans (subscription + pay per order) rendered from the database"); truthy(/pay-as-you-go/i.test(t) && /walk-in/i.test(t), "usage billing + walk-in covered");
 });
 await check("manifest, OG image, icons, security.txt", async () => {

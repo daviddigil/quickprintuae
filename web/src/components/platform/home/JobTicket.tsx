@@ -1,8 +1,9 @@
 import { Badge, CropMarks, ProofLabel } from "@/components/ui";
-import { en, type Copy } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import type { Copy } from "@/lib/i18n/en";
 
 /** Illustrative order ticket for the hero. All figures are example data and labelled as such. */
-export function JobTicket({ copy = en }: { copy?: Copy }) {
+export function JobTicket({ copy = getCopy("en") }: { copy?: Copy }) {
   const t = copy.home.ticket;
   return (
     <CropMarks className="mx-auto w-full max-w-md">

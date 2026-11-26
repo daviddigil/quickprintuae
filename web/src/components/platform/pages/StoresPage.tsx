@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin, Clock, Phone, MessageCircle, ArrowUpRight } from "lucide-react";
 import { MarketingFooter, MarketingNav } from "@/components/platform/MarketingNav";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { primeTrialDays } from "@/server/platform-settings";
 import { fill, getCopy, hrefFor, type Locale } from "@/lib/i18n";
 import { EMIRATES } from "@/lib/types";
 import { areasWithShops, countBy, filterShops, type DirectoryShop } from "@/lib/directory";
@@ -41,6 +42,7 @@ function ShopCard({ s, t }: { s: DirectoryShop; t: ReturnType<typeof getCopy>["s
 
 /** Live stores directory, shared by "/stores" (en) and "/ar/stores" (ar). Filters are plain URL query params (works without JS). */
 export async function StoresPage({ locale, search }: { locale: Locale; search: StoresSearch }) {
+  await primeTrialDays();
   const copy = getCopy(locale), t = copy.storesPage;
   const all = await getDirectoryShops();
   const emirate = EMIRATES.includes(search.emirate as never) ? search.emirate : undefined;

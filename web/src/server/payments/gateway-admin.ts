@@ -8,8 +8,10 @@ import { testPaymentCredentials } from "./index";
 
 export const PROVIDERS: { code: PlatformProvider; name: string; blurb: string }[] = [
   { code: "stripe", name: "Stripe", blurb: "Cards, Apple Pay, Google Pay. Keys: dashboard.stripe.com, Developers, API keys." },
-  { code: "mamo", name: "Mamo Pay", blurb: "UAE payment links: cards, Apple Pay, Google Pay. Key: Mamo dashboard, Developer." },
 ];
+
+/** Events the platform webhook (/api/webhooks/stripe) handles; the superadmin page lists exactly these. */
+export const STRIPE_EVENTS = ["checkout.session.completed", "payment_intent.succeeded", "charge.refunded", "charge.dispute.created", "charge.dispute.closed", "setup_intent.succeeded", "setup_intent.setup_failed"] as const;
 
 export interface GatewayInput {
   secretKey?: string; webhookSecret?: string; publishableKey?: string;
@@ -23,9 +25,9 @@ export async function gatewayView(provider: PlatformProvider) {
   const g = await getPlatformGateway(provider);
   const row = await db.query.platformGateways.findFirst({ where: eq(schema.platformGateways.provider, provider) });
   const checks = [
-    { key: "secret", label: provider === "stripe" ? "Secret key" : "API key", ok: !!g.secretKey, hint: "Paste it below and save." },
-    { key: "webhook", label: "Webhook signing secret", ok: !!g.webhookSecret, hint: provider === "stripe" ? "Create the webhook endpoint in Stripe, then paste its signing secret (whsec_…)." : "Choose a secret, set it as the auth header value when registering the Mamo webhook, and paste the same value here." },
-    ...(provider === "stripe" ? [{ key: "pub", label: "Publishable key", ok: !!g.publishableKey, hint: "Needed for card-on-file at signup (pk_…)." }] : []),
+    { key: "secret", label: "Secret key", ok: !!g.secretKey, hint: "Paste it below and save." },
+    { key: "webhook", label: "Webhook signing secret", ok: !!g.webhookSecret, hint: "Create the webhook endpoint in Stripe, then paste its signing secret (whsec_…)." },
+    { key: "pub", label: "Publishable key", ok: !!g.publishableKey, hint: "Needed for card-on-file at signup (pk_…)." },
     { key: "tested", label: "Credentials tested", ok: row?.lastTestOk === true, hint: "Press Test credentials." },
     { key: "enabled", label: "Enabled at checkout", ok: g.enabled, hint: "Tick Enabled and save." },
   ];
@@ -33,7 +35,7 @@ export async function gatewayView(provider: PlatformProvider) {
     provider, enabled: g.enabled, sandbox: g.sandbox, recipientPaysFees: g.recipientPaysFees, payoutHoldDays: g.payoutHoldDays, source: g.source,
     secretMask: last4(g.secretKey), webhookMask: last4(g.webhookSecret), publishableKey: g.publishableKey,
     lastTestAt: row?.lastTestAt ?? null, lastTestOk: row?.lastTestOk ?? null,
-    webhookUrl: `${env.appUrl}/api/webhooks/${provider}`, checks, ready: checks.every((c) => c.ok),
+    webhookUrl: `${env.appUrl}/api/webhooks/stripe`, checks, ready: checks.every((c) => c.ok),
     fake: ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? ""),
   };
 }
@@ -70,11 +72,11 @@ export async function saveGateway(provider: PlatformProvider, input: GatewayInpu
 }
 
 /** Test the typed key, or the saved key when none was typed. Records the result on the row. */
-export async function testGateway(provider: PlatformProvider, typedKey?: string, sandbox?: boolean) {
+export async function testGateway(provider: PlatformProvider, typedKey?: string) {
   const g = await getPlatformGateway(provider);
   const key = typedKey?.trim() || g.secretKey;
   if (!key) return { ok: false, message: "Enter or save a key first." };
-  const r = await testPaymentCredentials(provider, provider === "stripe" ? { secretKey: key } : { apiKey: key, sandbox: sandbox ?? g.sandbox });
+  const r = await testPaymentCredentials(provider, { secretKey: key });
   if (!typedKey?.trim()) {
     await db.update(schema.platformGateways).set({ lastTestAt: new Date(), lastTestOk: r.ok }).where(eq(schema.platformGateways.provider, provider));
   }

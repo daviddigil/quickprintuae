@@ -27,9 +27,9 @@ export interface SetupUrls { returnUrl: string; cancelUrl: string }
  * touches our servers; we keep only brand, last 4 digits, expiry, the payment-method id and a SHA-256 of the card fingerprint.
  */
 export interface SubscriptionGateway {
-  code: "stripe" | "mamo" | "fake";
+  code: "stripe" | "fake";
   label: string;
-  /** false = implementation exists but cannot take real cards yet (e.g. Mamo, waiting for provider docs) */
+  /** false = implementation exists but cannot take real cards yet (kept for gateways that are not fully built) */
   ready: boolean;
   createSetup(tenant: Tenant, urls: SetupUrls): Promise<SetupStart>;
   confirmSetup(tenant: Tenant, ref: string): Promise<SetupOutcome>;

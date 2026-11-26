@@ -13,7 +13,7 @@ import { RESERVED_SLUGS, SignupBody } from "./schema";
 
 /**
  * Step 1 of signup: account details. Creates the shop as 'incomplete' (no trial yet) and signs the owner in.
- * Step 2 (card) starts the 14-day trial: see /api/v1/billing/card/*.
+ * Step 2 (card) starts the free trial (length: platform_settings trialDays): see /api/v1/billing/card/*.
  */
 export async function POST(req: Request) {
   const ip = clientIp(req) ?? "local";

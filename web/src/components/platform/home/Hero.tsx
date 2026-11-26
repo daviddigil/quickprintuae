@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { en, type Copy } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import type { Copy } from "@/lib/i18n/en";
 import { hrefFor } from "@/lib/i18n";
 import { JobTicket } from "./JobTicket";
 import { Icon } from "./icons";
 
 /** Left-aligned hero with a real UI panel. Everything is readable on first paint; nothing waits for JavaScript. */
-export function Hero({ copy = en }: { copy?: Copy }) {
+export function Hero({ copy = getCopy("en") }: { copy?: Copy }) {
   const { hero } = copy.home, h = (p: string) => hrefFor(copy.locale, p);
   return (
     <section className="relative overflow-hidden border-b border-outline-variant/60">

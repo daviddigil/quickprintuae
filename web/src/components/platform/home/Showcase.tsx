@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge, ProofLabel, Sparkline, Tabs } from "@/components/ui";
-import { en, type Copy as DictCopy } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import type { Copy as DictCopy } from "@/lib/i18n/en";
 import { hrefFor } from "@/lib/i18n";
 import { Icon } from "./icons";
 
@@ -32,7 +33,7 @@ const chip = "inline-flex min-h-8 items-center rounded-full border px-3 text-xs 
 const chipOn = `${chip} border-primary bg-primary-container text-on-primary-container`;
 const chipOff = `${chip} border-outline-variant text-on-surface-variant`;
 
-export function StorefrontPanel({ copy = en }: { copy?: DictCopy }) {
+export function StorefrontPanel({ copy = getCopy("en") }: { copy?: DictCopy }) {
   const t = copy.home.showcase.store;
   return (
     <Panel title={t.title} example={copy.common.example}>
@@ -52,7 +53,7 @@ export function StorefrontPanel({ copy = en }: { copy?: DictCopy }) {
 }
 
 const QUEUE_TONES = ["blue", "yellow", "gray", "gray"] as const;
-export function QueuePanel({ copy = en }: { copy?: DictCopy }) {
+export function QueuePanel({ copy = getCopy("en") }: { copy?: DictCopy }) {
   const t = copy.home.showcase.queue;
   return (
     <Panel title={t.title} example={copy.common.example}>
@@ -76,7 +77,7 @@ export function QueuePanel({ copy = en }: { copy?: DictCopy }) {
   );
 }
 
-export function ChatPanel({ copy = en }: { copy?: DictCopy }) {
+export function ChatPanel({ copy = getCopy("en") }: { copy?: DictCopy }) {
   const t = copy.home.showcase.chat;
   return (
     <Panel title={t.title} example={copy.common.example}>
@@ -116,7 +117,7 @@ function AdminPanel({ copy }: { copy: DictCopy }) {
 }
 
 /** Tabbed product tour. All four panels are in the HTML (inactive ones hidden), so the text is crawlable. */
-export function Showcase({ copy = en }: { copy?: DictCopy }) {
+export function Showcase({ copy = getCopy("en") }: { copy?: DictCopy }) {
   const sc = copy.home.showcase, h = (p: string) => hrefFor(copy.locale, p);
   const tab = (id: string, copyTab: { label: string; title: string; points: string[] }, href: string, panel: React.ReactNode) => ({
     id, label: copyTab.label, content: <div className="grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14"><Copy title={copyTab.title} points={copyTab.points} href={href} more={sc.learnMore} />{panel}</div>,

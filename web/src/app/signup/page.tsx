@@ -1,9 +1,13 @@
 import { pageMetadata } from "@/lib/seo/metadata";
-import { en } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import { primeTrialDays } from "@/server/platform-settings";
 import { SignupPage } from "@/components/platform/pages/SignupPage";
 
 export const dynamic = "force-dynamic";
-export const metadata = pageMetadata({ ...en.signup.meta, path: "/signup" });
+export async function generateMetadata() {
+  await primeTrialDays();
+  return pageMetadata({ ...getCopy("en").signup.meta, path: "/signup" });
+}
 
 export default async function Signup({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
   const { plan } = await searchParams;

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { en, type Copy } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import type { Copy } from "@/lib/i18n/en";
 import { hrefFor } from "@/lib/i18n";
 
-export function FinalCta({ copy = en }: { copy?: Copy }) {
+export function FinalCta({ copy = getCopy("en") }: { copy?: Copy }) {
   const f = copy.home.final, h = (p: string) => hrefFor(copy.locale, p);
   return (
     <section className="px-4 pb-16 sm:px-6 md:pb-24">

@@ -131,7 +131,7 @@ export default async function StoreHome({ params, searchParams }: { params: Prom
 
       <section className="mx-auto grid max-w-6xl gap-4 px-4 py-12 sm:grid-cols-4">
         {[
-          { i: CreditCard, t: "Online payment only", d: providers.length ? `Secured by ${providers.map((p) => (p === "stripe" ? "Stripe" : "Mamo Pay")).join(" & ")}. No cash on delivery.` : "Secure card payments. No cash on delivery." },
+          { i: CreditCard, t: "Online payment only", d: providers.length ? "Secured by Stripe. No cash on delivery." : "Secure card payments. No cash on delivery." },
           { i: Lock, t: "Confidential handling", d: "Encrypted uploads, sealed envelopes, files auto-deleted after collection." },
           { i: Clock, t: "Same-day options", d: "Documents and passport photos ready in as little as 1–2 hours." },
           { i: MapPin, t: "UAE-wide delivery", d: "All seven emirates with scheduled time slots." },

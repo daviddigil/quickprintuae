@@ -5,7 +5,7 @@ export const alt = `${SITE.name} — ${SITE.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const chips = ["Walk-in QR queue", "WhatsApp AI orders", "Mamo Pay & Stripe", "UAE VAT invoices"];
+const chips = ["Walk-in QR queue", "WhatsApp AI orders", "Stripe payments", "UAE VAT invoices"];
 
 export default function OpengraphImage() {
   return new ImageResponse(

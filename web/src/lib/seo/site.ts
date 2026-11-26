@@ -5,9 +5,9 @@ export const SITE = {
   tagline: "Print-on-demand platform for print shops in the UAE",
   /** 70–160 chars: used as the default meta description */
   description:
-    "Launch your UAE print shop online in minutes: documents, photos, business cards, WhatsApp AI orders, walk-in QR queue, VAT invoices, Mamo Pay and Stripe.",
+    "Launch your UAE print shop online in minutes: documents, photos, business cards, WhatsApp AI orders, walk-in QR queue, VAT invoices and Stripe payments.",
   longDescription:
-    "QuickPrint lets print shops in the UAE launch an online store in minutes: documents, photos, business cards, flyers, walk-in QR queue, WhatsApp AI ordering, VAT-ready invoices, Mamo Pay and Stripe, pickup and scheduled delivery.",
+    "QuickPrint lets print shops in the UAE launch an online store in minutes: documents, photos, business cards, flyers, walk-in QR queue, WhatsApp AI ordering, VAT-ready invoices, Stripe payments, pickup and scheduled delivery.",
   defaultTitle: "QuickPrint — Online printing platform for UAE print shops",
   locales: ["en", "ar"] as const,
   defaultLocale: "en" as const,

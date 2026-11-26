@@ -11,7 +11,7 @@ export const en = {
     poweredBy: "Powered by",
     seeLiveStore: "See a live store",
     startFree2: "Start free in 2 minutes",
-    freeNote: "14 days free. Add a card to start; it is charged after the trial.",
+    freeNote: "{trialDays} free. Add a card to start; it is charged after the trial. ||0: Start now. Your card is charged today.",
   },
   nav: {
     features: "Features", solutions: "Solutions", pricing: "Pricing", faq: "FAQ", demo: "Live demo", liveStores: "Live stores",
@@ -22,13 +22,13 @@ export const en = {
     tagline: "Online storefront, order queue and invoicing for print shops in the UAE.",
     note: "AED · excl. 5% VAT",
     product: "Product", solutions: "Solutions", start: "Start",
-    liveDemo: "Live demo store", startTrial: "Start free for 14 days",
+    liveDemo: "Live demo store", startTrial: "Start free for {trialDays} ||0: Start now",
     copyright: "© {year} QuickPrint UAE",
   },
   home: {
     meta: {
       title: "QuickPrint — Online printing platform for UAE print shops",
-      description: "Launch your UAE print shop online in minutes: documents, photos, business cards, WhatsApp AI orders, walk-in QR queue, VAT invoices, Mamo Pay and Stripe.",
+      description: "Launch your UAE print shop online in minutes: documents, photos, business cards, WhatsApp AI orders, walk-in QR queue, VAT invoices and Stripe payments.",
     },
     hero: {
       label: "Online print shop software · UAE",
@@ -109,7 +109,7 @@ export const en = {
         { value: 5, suffix: "%", text: "", label: "VAT on every order, added or included as you choose" },
         { value: 0, suffix: "", text: "TRN", label: "printed on every tax invoice, ready for your FTA records" },
         { value: 7, suffix: "", text: "", label: "emirates, each with its own delivery fee and lead time" },
-        { value: 14, suffix: "", text: "", label: "days free on every plan, card charged only after the trial" },
+        { value: 7, suffix: "", text: "", label: "days free on every plan, card charged only after the trial" },
       ],
       specsAria: "Print specifications supported",
       specs: ["A5 · A4 · A3", "80 · 150 · 350 gsm", "85 × 55 mm cards", "UAE passport 43 × 55 mm", "AED · 5% VAT", "Pickup and delivery"],
@@ -137,7 +137,7 @@ export const en = {
   priceTable: {
     periodAria: "Billing period", monthly: "Monthly", yearly: "Yearly", saves: "Yearly saves about 2 months", popular: "Most popular",
     perMonth: "/month", billedYear: "Billed {amount} a year", billedMonth: "Billed monthly", noFee: "No fee on orders. Excludes VAT.",
-    startTrial: "Start 14 days free", otherWay: "Other way to pay", paygLine: "a month, then {pct}% of each paid order",
+    startTrial: "Start {trialDays} free ||0: Start now", otherWay: "Other way to pay", paygLine: "a month, then {pct}% of each paid order",
     paygBody: "No monthly fee. You pay only when a customer pays you. Best for a new shop or a quiet season. Excludes VAT.", paygCta: "Start with pay per order",
     // display-only translations of plan data that lives in the database (empty for English)
     everythingIn: "Everything in {plan}",
@@ -164,7 +164,7 @@ export const en = {
     emirateLabel: "Emirate", areaLabel: "Area", allEmirates: "All emirates", allAreas: "All areas", searchLabel: "Search shops", searchPlaceholder: "Shop name or street", apply: "Show shops", clear: "Clear filters",
     countOne: "{n} shop", countMany: "{n} shops", openStore: "Open store", whatsapp: "WhatsApp", call: "Call", hours: "Hours",
     emptyH: "No shops here yet", emptyLead: "Try another area, or tell your local print shop they can take online orders with QuickPrint.",
-    ownerH: "Own a print shop?", ownerLead: "List your shop here for free with your 14-day trial, and let nearby customers find you.", ownerCta: "Start free",
+    ownerH: "Own a print shop?", ownerLead: "List your shop here for free during your {trialDays} free trial, and let nearby customers find you. ||0: List your shop here for free and let nearby customers find you.", ownerCta: "Start free",
     emirates: { "Abu Dhabi": "Abu Dhabi", Dubai: "Dubai", Sharjah: "Sharjah", Ajman: "Ajman", "Umm Al Quwain": "Umm Al Quwain", "Ras Al Khaimah": "Ras Al Khaimah", Fujairah: "Fujairah" } as Record<string, string>,
   },
   pricingPage: {
@@ -173,12 +173,12 @@ export const en = {
       description: "QuickPrint UAE plans for print shops: a monthly subscription with no fee on orders, or pay per order with no monthly fee. WhatsApp and AI are pay as you go.",
     },
     label: "Pricing · AED · excl. 5% VAT", h1: "Pricing for print shops of every size",
-    lead: "Pay a fixed monthly fee, or pay a percentage only when an order is paid. Every plan starts with 14 days free.",
+    lead: "Pay a fixed monthly fee, or pay a percentage only when an order is paid. Every plan starts with {trialDays} free. ||0: Pay a fixed monthly fee, or pay a percentage only when an order is paid.",
     updating: "Plans are being updated. Please check back shortly.",
     billingH: "How you are billed", billingLead: "Two ways to pay for the platform, and usage that is billed on top of both.", compareH: "Compare plans",
     faqHeading: "Billing questions",
     faq: [
-      { q: "Is there a free trial?", a: "Yes. Every plan starts with 14 days free. You add a card to start, and it is charged automatically when the trial ends. Cancel before then and you pay nothing. You can switch plans during the trial." },
+      { q: "Is there a free trial?", a: "Yes. Every plan starts with {trialDays} free. You add a card to start, and it is charged automatically when the trial ends. Cancel before then and you pay nothing. You can switch plans during the trial. ||0: No. Plans are billed from the day you sign up: you add a card to start and it is charged today. You can cancel any time." },
       { q: "Do prices include VAT?", a: "No. Prices are in AED and exclude 5% VAT. VAT is added to your invoice, and each invoice shows your subscription, any order fee and any usage." },
       { q: "When does the order fee apply?", a: "Only on the Pay per order plan. It is a percentage of paid orders in the month, billed with your invoice. Refunded and unpaid orders do not count. Subscription plans never charge a fee on orders." },
       { q: "What is billed by usage?", a: "WhatsApp messages sent through the Meta API and AI features, such as chat replies and card designs. Some plans include a free allowance each month. Anything above it is billed at the rate on your billing page." },
@@ -187,9 +187,9 @@ export const en = {
     ],
   },
   signup: {
-    meta: { title: "Start your free trial", description: "Create your QuickPrint print shop store in about two minutes. 14 days free on every plan; add a card to start. Prices in AED, excluding 5% VAT." },
+    meta: { title: "Start your free trial", description: "Create your QuickPrint print shop store in about two minutes. {trialDays} free on every plan; add a card to start. Prices in AED, excluding 5% VAT. ||0: Create your QuickPrint print shop store in about two minutes. Add a card to start. Prices in AED, excluding 5% VAT." },
     headline: "Your print shop, open online 24/7.",
-    bullets: ["Storefront loaded with documents, photos, passport photos, cards, flyers and more", "Prepaid orders, paid out to your bank account", "Pickup and scheduled delivery across all 7 emirates", "14 days free, then your card is charged unless you cancel"],
+    bullets: ["Storefront loaded with documents, photos, passport photos, cards, flyers and more", "Prepaid orders, paid out to your bank account", "Pickup and scheduled delivery across all 7 emirates", "{trialDays} free, then your card is charged unless you cancel ||0: Your card is charged today, and you can cancel any time"],
     haveAccount: "Already have an account? ", signIn: "Sign in",
     createH: "Create your print shop", sub: "Two steps: your details, then a card. About 2 minutes.",
     form: {
@@ -197,13 +197,13 @@ export const en = {
       slugHint: "Letters, numbers and dashes. You can add your own domain later.", available: "✓ Available", emirate: "Emirate", ownerName: "Your name", mobile: "Mobile",
       email: "Work email", password: "Password", passwordHint: "(at least 8 characters)", plan: "Plan",
       planPayg: "{name}: AED 0 a month, {pct}% per paid order", planSub: "{name}: AED {price} a month",
-      note: "Free for 14 days. Next you add a card, and it is charged only when the trial ends. You can change plan any time.", submit: "Continue to card", loading: "Setting up your shop…",
+      note: "Free for {trialDays}. Next you add a card, and it is charged only when the trial ends. You can change plan any time. ||0: Next you add a card, and it is charged today. You can change plan any time.", submit: "Continue to card", loading: "Setting up your shop…",
       terms: "By creating a shop you agree to the Terms and Privacy Policy.", failed: "Signup failed",
       emirates: {} as Record<string, string>,
     },
     card: {
-      h: "Add a card to start your 14-day trial", lead: "Your shop is created. Add a card to open your 14 days free.",
-      noCharge: "You are not charged today. Your card is charged automatically when the 14-day trial ends, unless you cancel first.",
+      h: "Add a card to start your free trial ||0: Add a card to start", lead: "Your shop is created. Add a card to open your {trialDays} free. ||0: Your shop is created. Add a card to open it.",
+      noCharge: "You are not charged today. Your card is charged automatically when your free trial ({trialDays}) ends, unless you cancel first. ||0: Your card is charged today. You can cancel any time.",
       secure: "You enter your card on the payment provider's secure page. QuickPrint never sees or stores your card number.",
       cta: "Add card and start my trial", opening: "Opening the secure card page…", testCta: "Use test card", testNote: "Test mode. No real card is charged.",
       pending: "We are confirming your card. This usually takes a few seconds. Refresh this page in a moment.",
@@ -213,14 +213,14 @@ export const en = {
       error: "Something went wrong. Please try again.", signedInAs: "Signed in as {email}.", signOut: "Sign out",
     },
     waitlist: {
-      h: "We are opening soon", lead: "QuickPrint is getting ready to open to print shops. Leave your email and we will tell you the moment you can start your 14-day trial.",
+      h: "We are opening soon", lead: "QuickPrint is getting ready to open to print shops. Leave your email and we will tell you the moment you can start your free trial. ||0: QuickPrint is getting ready to open to print shops. Leave your email and we will tell you the moment you can start.",
       email: "Work email", shop: "Shop name (optional)", submit: "Join the waitlist", sending: "Joining…",
       done: "Thank you. You are on the list, and we will email you when signup opens.", failed: "Enter a valid email address.",
     },
   },
   solutions: {
     related: "More ways QuickPrint helps", whatYouGet: "What you get", howItWorks: "How it works", faq: "Common questions", step: "Step",
-    ctaStart: "Start free for 14 days", ctaPricing: "See pricing", ctaDemo: "See a live store", home: "Home", solutions: "Solutions",
+    ctaStart: "Start free for {trialDays} ||0: Start now", ctaPricing: "See pricing", ctaDemo: "See a live store", home: "Home", solutions: "Solutions",
     pages: {
       "print-shops": {
         meta: { title: "Online ordering for print shops in the UAE", description: "Give your UAE print shop a branded online store: exact AED prices, files uploaded, paid before you print, pickup or scheduled delivery, and VAT invoices." },

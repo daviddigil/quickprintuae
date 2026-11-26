@@ -38,7 +38,7 @@ Each runbook: **Detect, Contain, Fix, Verify, Record**. Everything privileged (g
 - **Record**: root cause.
 
 ## 6. Leaked key (gateway, email, S3, AUTH_SECRET, ENCRYPTION_KEY)
-1. **Revoke first**: roll the key at the provider (Stripe dashboard roll key, Resend revoke, S3 access key delete, Mamo key regenerate).
+1. **Revoke first**: roll the key at the provider (Stripe dashboard roll key, Resend revoke, S3 access key delete).
 2. Update the new key in the app (gateway keys: `/superadmin/gateways` with step-up; env keys: secret store then redeploy).
 3. Check provider logs for use between leak and revoke; for gateways review refunds and payouts in that window.
 4. Rotate related webhook secrets. Audit log review for the same window. Notify the lawyer if personal data may be exposed (PDPL breach duties, ask for the timeline).

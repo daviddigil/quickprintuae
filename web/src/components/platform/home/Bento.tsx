@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Badge, CropMarks, InkBar, ProofLabel } from "@/components/ui";
 import { SpotlightCard } from "@/components/fx/SpotlightCard";
-import { en, type Copy } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import type { Copy } from "@/lib/i18n/en";
 import { Icon, type IconName } from "./icons";
 
 function Head({ icon, title, text, light }: { icon: IconName; title: string; text: string; light?: boolean }) {
@@ -15,7 +16,7 @@ function Head({ icon, title, text, light }: { icon: IconName; title: string; tex
 }
 
 /** Asymmetric feature grid. Surface, radius and texture change by role so no two neighbours look the same. */
-export function Bento({ copy = en }: { copy?: Copy }) {
+export function Bento({ copy = getCopy("en") }: { copy?: Copy }) {
   const t = copy.home.bento;
   return (
     <section id="features" className="scroll-mt-20 border-y border-outline-variant/60 bg-surface-low">
@@ -27,7 +28,7 @@ export function Bento({ copy = en }: { copy?: Copy }) {
         <div className="mt-10 grid gap-4 md:grid-cols-6 lg:grid-cols-12">
           <SpotlightCard className="rounded-shape-xl border border-outline-variant bg-surface-lowest p-6 md:col-span-3 lg:col-span-4">
             <Head icon="card" title={t.pay.title} text={t.pay.text} />
-            <div className="mt-5 flex flex-wrap gap-2"><Badge tone="blue">Stripe</Badge><Badge tone="magenta">Mamo Pay</Badge><Badge>Apple Pay</Badge><Badge>Google Pay</Badge></div>
+            <div className="mt-5 flex flex-wrap gap-2"><Badge tone="blue">Stripe</Badge><Badge>Apple Pay</Badge><Badge>Google Pay</Badge></div>
           </SpotlightCard>
 
           <div className="rounded-shape-lg bg-surface-container p-6 md:col-span-3 lg:col-span-4">

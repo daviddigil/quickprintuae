@@ -3,6 +3,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { en } from "@/lib/i18n/en";
 import { ar } from "@/lib/i18n/ar";
+import { getCopy } from "@/lib/i18n";
 import { SOLUTION_SLUGS, isSolutionSlug } from "@/lib/i18n";
 import assert from "node:assert/strict";
 import { jsonLdString, printShopLd, productLd, faqLd, breadcrumbLd, softwareApplicationLd } from "./jsonld";
@@ -65,12 +66,13 @@ test("Arabic and English dictionaries: same shape, meta lengths, billing figures
   const ks = (o: unknown, pre = ""): string[] => (o && typeof o === "object" ? Object.entries(o).flatMap(([k, v]) => ks(v, `${pre}.${k}`)) : [pre]);
   // identical key paths (array lengths included)
   assert.deepEqual(ks(shape(ar)).sort(), ks(shape(en)).sort());
-  const metas = [en.home.meta, ar.home.meta, en.pricingPage.meta, ar.pricingPage.meta, en.signup.meta, ar.signup.meta, ...SOLUTION_SLUGS.flatMap((s) => [en.solutions.pages[s].meta, ar.solutions.pages[s].meta])];
+  const E = getCopy("en", 7), A = getCopy("ar", 7); // tokens filled
+  const metas = [E.home.meta, A.home.meta, E.pricingPage.meta, A.pricingPage.meta, E.signup.meta, A.signup.meta, ...SOLUTION_SLUGS.flatMap((s) => [E.solutions.pages[s].meta, A.solutions.pages[s].meta])];
   for (const m of metas) assert.ok(m.description.length >= 70 && m.description.length <= 160, `description ${m.description.length}: ${m.description}`);
-  for (const m of [ar.pricingPage.meta, ar.signup.meta, ...SOLUTION_SLUGS.map((s) => ar.solutions.pages[s].meta)]) assert.ok(m.title.length + " | QuickPrint".length <= 65 && m.title.length >= 17, m.title);
+  for (const m of [A.pricingPage.meta, A.signup.meta, ...SOLUTION_SLUGS.map((s) => A.solutions.pages[s].meta)]) assert.ok(m.title.length + " | QuickPrint".length <= 65 && m.title.length >= 17, m.title);
   // billing figures stay exactly as in English
   const figures = (c: typeof en) => JSON.stringify([c.home.faq, c.pricingPage.faq, c.billing, c.home.pricing, c.priceTable.paygLine, c.signup.form]).match(/\b\d[\d,.]*%?/g)!.map((x) => x.replace(/[,.]$/, "")).sort();
-  assert.deepEqual(figures(ar), figures(en));
+  assert.deepEqual(figures(A), figures(E));
   assert.match(JSON.stringify(ar.billing), /AED 499/); assert.match(JSON.stringify(ar.billing.payg), /\{pct\}%/);
   // Arabic copy never uses Arabic-Indic digits (numbers stay as is)
   assert.ok(!/[\u0660-\u0669]/.test(JSON.stringify(ar)));

@@ -16,7 +16,7 @@ export type SetupResult =
 /**
  * A card is now on file for this shop (gateway confirmed, or the test-card button).
  * - refuses a card already attached to another non-cancelled shop (one card = one free trial) and blocklisted cards
- * - starts the 14-day trial when the shop was 'incomplete'
+ * - starts the free trial (length from the superadmin setting) when the shop was 'incomplete'
  * Idempotent: running it twice for the same card changes nothing.
  */
 export async function completeCardSetup(tenantId: string, card: CardInfo, source: { gateway: string; eventId?: string }): Promise<SetupResult> {

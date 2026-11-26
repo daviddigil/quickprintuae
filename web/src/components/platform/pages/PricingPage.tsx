@@ -6,10 +6,12 @@ import { FinalCta } from "@/components/platform/home/FinalCta";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { faqLd } from "@/lib/seo/jsonld";
 import { getCopy, type Locale } from "@/lib/i18n";
+import { primeTrialDays } from "@/server/platform-settings";
 import { getPublicPlans, getPublicUsageRates } from "@/server/billing/public-plans";
 
 /** Pricing page, shared by "/pricing" (en) and "/ar/pricing" (ar). */
 export async function PricingPage({ locale }: { locale: Locale }) {
+  const trialDays = await primeTrialDays();
   const copy = getCopy(locale), t = copy.pricingPage;
   const [plans, usageRates] = await Promise.all([getPublicPlans(), getPublicUsageRates()]);
   return (
@@ -22,7 +24,7 @@ export async function PricingPage({ locale }: { locale: Locale }) {
           <h1 className="mt-5 max-w-3xl font-display text-display font-bold">{t.h1}</h1>
           <p className="measure mt-5 text-lg text-on-surface-variant">{t.lead}</p>
           <div className="mt-10">
-            {plans.length ? <PricingTable plans={plans} locale={locale} /> : <p className="text-on-surface-variant">{t.updating}</p>}
+            {plans.length ? <PricingTable plans={plans} locale={locale} trialDays={trialDays} /> : <p className="text-on-surface-variant">{t.updating}</p>}
           </div>
         </section>
         {plans.length > 0 && (

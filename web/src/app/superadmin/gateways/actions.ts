@@ -10,7 +10,7 @@ const on = (fd: FormData, k: string) => fd.get(k) === "on" || fd.get(k) === "tru
 
 export async function saveGatewayAction(fd: FormData) {
   await requireSuperadmin();
-  const provider = str(fd, "provider") === "mamo" ? "mamo" : "stripe";
+  const provider = "stripe" as const;
   const go = (msg: string, err?: boolean): never => redirect(`/superadmin/gateways?${err ? "error" : "ok"}=${encodeURIComponent(msg)}`);
   await stepUpForMoney("gateway_keys", "/superadmin/gateways");
   const r = await saveGateway(provider, {
@@ -19,12 +19,12 @@ export async function saveGatewayAction(fd: FormData) {
   });
   if (!r.ok) return go(r.error, true);
   await audit("gateway.update", { provider, changed: r.changed });
-  return go(`${provider === "stripe" ? "Stripe" : "Mamo Pay"} saved${r.changed.length ? ` (${r.changed.join(", ")})` : ""}.`);
+  return go(`Stripe saved${r.changed.length ? ` (${r.changed.join(", ")})` : ""}.`);
 }
 
-export async function testGatewayAction(provider: "stripe" | "mamo", typedKey: string, sandbox: boolean) {
+export async function testGatewayAction(provider: "stripe", typedKey: string) {
   await requireSuperadmin();
-  const r = await testGateway(provider, typedKey, sandbox);
+  const r = await testGateway(provider, typedKey);
   await audit("gateway.test", { provider, ok: r.ok, typed: !!typedKey.trim() });
   return r;
 }

@@ -49,7 +49,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-## 4. Run (the demo switches simulate payment + courier; in plain `npm run dev` payment is simulated automatically when a shop has no Stripe/Mamo keys)
+## 4. Run (the demo switches simulate payment + courier; in plain `npm run dev` payment is simulated automatically when a shop has no Stripe keys)
 Mac/Linux:
 ```
 PAYMENTS_FAKE=1 DELIVERY_FAKE=1 npm run dev

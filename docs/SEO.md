@@ -4,7 +4,7 @@
 Make QuickPrint (marketing site) and every shop storefront findable in Google/Bing, and citeable by AI answer engines (Google AI Overviews, ChatGPT search, Perplexity, Claude, Gemini, Apple) for the UAE (en-AE, ar-AE) and globally.
 
 ## Keyword clusters
-- **Platform (B2B):** print shop software UAE · online printing store software · web-to-print platform Dubai · WhatsApp ordering for print shops · print shop QR queue · VAT invoice software UAE · Mamo Pay / Stripe print shop
+- **Platform (B2B):** print shop software UAE · online printing store software · web-to-print platform Dubai · WhatsApp ordering for print shops · print shop QR queue · VAT invoice software UAE · Stripe print shop
 - **Shops (B2C, per emirate):** online printing Dubai / Abu Dhabi / Sharjah · business cards Dubai · passport photo printing UAE · photo printing and frames · document printing and binding · flyers and brochures · confidential document printing · same-day delivery printing
 - **Arabic:** طباعة اونلاين دبي · كروت شخصية · طباعة صور جواز · برنامج مطابع الإمارات
 

@@ -88,9 +88,9 @@ export const tenants = pgTable("tenants", {
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   stripeCustomerId: text("stripe_customer_id"),
-  /** how customer payments for orders reach this shop: 'own' = shop's own Stripe/Mamo keys, 'platform' = collected on the platform Mamo account and split to the shop's recipient */
+  /** how customer payments for orders reach this shop: 'own' = legacy shop-held keys, 'platform' = collected on the platform Stripe account */
   payoutMode: text("payout_mode").notNull().default("platform"),
-  /** Mamo recipient (REP-…) registered for this shop's bank account (UAE IBAN) */
+  /** Legacy payout-recipient id from the retired second gateway (history only, unused) */
   mamoRecipientId: text("mamo_recipient_id"),
   payoutAccountName: text("payout_account_name"),
   payoutIbanEnc: text("payout_iban_enc"),
@@ -266,14 +266,14 @@ export const offerRedemptions = pgTable("offer_redemptions", {
 
 export const platformGateways = pgTable("platform_gateways", {
   id: id(),
-  provider: text("provider").notNull().unique(), // 'mamo' | 'meta_whatsapp'
+  provider: text("provider").notNull().unique(), // 'stripe' | 'meta_whatsapp' (legacy rows of the retired gateway are disabled, never deleted)
   apiKeyEnc: text("api_key_enc"),
   webhookSecretEnc: text("webhook_secret_enc"),
   sandbox: boolean("sandbox").notNull().default(true),
   enabled: boolean("enabled").notNull().default(false),
   /** marketplace: does the shop (recipient) bear the gateway's processing fee? */
   recipientPaysFees: boolean("recipient_pays_fees").notNull().default(true),
-  /** days the shop's share is held before payout (0 = Mamo's normal payout schedule) */
+  /** days the shop's share is held before payout (0 = no extra hold) */
   payoutHoldDays: integer("payout_hold_days").notNull().default(0),
   lastTestAt: timestamp("last_test_at", { withTimezone: true }),
   lastTestOk: boolean("last_test_ok"),
@@ -293,7 +293,7 @@ export const whatsappActivationRequests = pgTable("whatsapp_activation_requests"
   createdAt: createdAt(),
 });
 
-/** One row per platform-routed order payment: what was collected, what the platform keeps, what the shop is owed (paid out by Mamo). Reporting/reconciliation ledger — the platform does not hold shop funds itself. */
+/** One row per platform-routed order payment: what was collected, what the platform keeps, what the shop is owed (paid out from the ledger in payout batches). Reporting/reconciliation ledger — the platform does not hold shop funds itself. */
 export const orderSettlements = pgTable("order_settlements", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
@@ -467,7 +467,7 @@ export const orders = pgTable("orders", {
   internalNotes: text("internal_notes"),
   /** 'online' (storefront) | 'walk_in' (QR queue in the shop) */
   source: text("source").notNull().default("online"),
-  /** 'own' (shop's own gateway keys) | 'platform' (platform Mamo account + split to the shop) */
+  /** 'own' (shop's own gateway keys) | 'platform' (platform Stripe account + split to the shop) */
   paymentRoute: text("payment_route").notNull().default("own"),
   walkInCustomerId: uuid("walk_in_customer_id").references(() => walkInCustomers.id, { onDelete: "set null" }),
   ticketNo: text("ticket_no"),
@@ -742,7 +742,7 @@ export const saasInvoices = pgTable("saas_invoices", {
   total: money("total").notNull(),
   status: invoiceStatus("status").notNull().default("open"),
   stripeRef: text("stripe_ref"),
-  /** which gateway collected it: stripe | mamo */
+  /** which gateway collected it: stripe (older rows may hold the retired gateway's code) */
   gateway: text("gateway").notNull().default("stripe"),
   gatewayRef: text("gateway_ref"),
   paymentUrl: text("payment_url"),

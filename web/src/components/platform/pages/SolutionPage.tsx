@@ -8,12 +8,14 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { abs } from "@/lib/seo/site";
 import { breadcrumbLd, faqLd } from "@/lib/seo/jsonld";
 import { localizedPath } from "@/lib/seo/metadata";
+import { primeTrialDays } from "@/server/platform-settings";
 import { getCopy, hrefFor, type Locale, type SolutionSlug } from "@/lib/i18n";
 
 const labelOf = (c: ReturnType<typeof getCopy>, slug: string) => (slug === "print-shops" ? c.nav.printShops : slug === "walk-in-queue" ? c.nav.walkIn : c.nav.whatsapp);
 
 /** Solution landing page, shared by "/solutions/<slug>" (en) and "/ar/solutions/<slug>" (ar). */
-export function SolutionPage({ locale, slug }: { locale: Locale; slug: SolutionSlug }) {
+export async function SolutionPage({ locale, slug }: { locale: Locale; slug: SolutionSlug }) {
+  await primeTrialDays();
   const copy = getCopy(locale), s = copy.solutions, page = s.pages[slug], h = (p: string) => hrefFor(locale, p);
   const faq = [...page.faq.map((i) => copy.home.faq[i]), ...page.extraFaq];
   const panel = page.panel === "store" ? <StorefrontPanel copy={copy} /> : page.panel === "queue" ? <QueuePanel copy={copy} /> : <ChatPanel copy={copy} />;

@@ -3,12 +3,14 @@ import Link from "next/link";
 import { getPublicPlans } from "@/server/billing/public-plans";
 import { SignupForm } from "@/app/signup/signup-form";
 import { PoweredBy } from "@/components/PoweredBy";
+import { primeTrialDays } from "@/server/platform-settings";
 import { getCopy, hrefFor, type Locale } from "@/lib/i18n";
 import { setupMode } from "@/server/billing/gateway";
 import { WaitlistForm } from "@/components/platform/WaitlistForm";
 
 /** Sign-up page, shared by "/signup" (en) and "/ar/signup" (ar). The form posts to the same API in both languages. */
 export async function SignupPage({ locale, plan }: { locale: Locale; plan?: string }) {
+  const trialDays = await primeTrialDays();
   const copy = getCopy(locale), t = copy.signup;
   const plans = await getPublicPlans();
   const mode = await setupMode(); // production with no live gateway: waitlist instead of signup
@@ -32,9 +34,9 @@ export async function SignupPage({ locale, plan }: { locale: Locale; plan?: stri
             <>
               <h2 className="text-2xl font-bold">{t.createH}</h2>
               <p className="mb-6 text-sm text-on-surface-variant">{t.sub}</p>
-              <SignupForm plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.priceMonthly, feePct: p.orderFeePct, commission: p.billingModel === "commission" }))} defaultPlan={plan} locale={locale} live={!!mode.live} fake={mode.fake} />
+              <SignupForm plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.priceMonthly, feePct: p.orderFeePct, commission: p.billingModel === "commission" }))} defaultPlan={plan} locale={locale} live={!!mode.live} fake={mode.fake} trialDays={trialDays} />
             </>
-          ) : <WaitlistForm locale={locale} />}
+          ) : <WaitlistForm locale={locale} trialDays={trialDays} />}
           <PoweredBy className="mt-8" label={copy.common.poweredBy} />
         </div>
       </section>

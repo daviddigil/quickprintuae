@@ -33,7 +33,7 @@ export async function setOrderStatus(orderId: string, status: OrderStatus, messa
  * Idempotent: called by payment webhooks and the return-URL verifier.
  * Returns true if this call transitioned the order to paid.
  */
-export async function markOrderPaid(orderId: string, provider: "stripe" | "mamo", providerRef: string, raw?: unknown, opts: { gatewayFee?: number } = {}) {
+export async function markOrderPaid(orderId: string, provider: "stripe", providerRef: string, raw?: unknown, opts: { gatewayFee?: number } = {}) {
   const order = await db.query.orders.findFirst({ where: eq(schema.orders.id, orderId) });
   if (!order || order.status !== "pending_payment") return false;
   await db.update(schema.payments).set({ status: "succeeded", raw: raw as object }).where(and(eq(schema.payments.orderId, orderId), eq(schema.payments.providerRef, providerRef)));

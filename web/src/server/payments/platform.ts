@@ -1,9 +1,11 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
+import { LEGACY_PLAN_FEATURE, LEGACY_PROVIDER } from "./legacy";
 import { db, schema } from "@/db";
 import { decrypt } from "@/lib/crypto";
 
-export type PlatformProvider = "stripe" | "mamo";
+/** Stripe is the only payment gateway. (Rows of other providers in platform_gateways are legacy history and are never used.) */
+export type PlatformProvider = "stripe";
 
 export interface PlatformGatewayConfig {
   provider: PlatformProvider;
@@ -30,16 +32,29 @@ export async function getPlatformGateway(provider: PlatformProvider): Promise<Pl
     const extra = (row.config ?? {}) as { publishableKey?: string };
     return { provider, enabled: row.enabled, sandbox: row.sandbox, secretKey: dec(row.apiKeyEnc), webhookSecret: dec(row.webhookSecretEnc), publishableKey: extra.publishableKey ?? null, recipientPaysFees: row.recipientPaysFees, payoutHoldDays: row.payoutHoldDays, source: "db" };
   }
-  const env = provider === "stripe"
-    ? { key: process.env.PLATFORM_STRIPE_SECRET_KEY, hook: process.env.PLATFORM_STRIPE_WEBHOOK_SECRET, pub: process.env.PLATFORM_STRIPE_PUBLISHABLE_KEY as string | undefined }
-    : { key: process.env.PLATFORM_MAMO_API_KEY, hook: process.env.PLATFORM_MAMO_WEBHOOK_SECRET, pub: undefined };
+  const env = { key: process.env.PLATFORM_STRIPE_SECRET_KEY, hook: process.env.PLATFORM_STRIPE_WEBHOOK_SECRET, pub: process.env.PLATFORM_STRIPE_PUBLISHABLE_KEY as string | undefined };
   if (env.key) return { provider, enabled: true, sandbox: !/^sk_live|^live/i.test(env.key), secretKey: env.key, webhookSecret: env.hook ?? null, publishableKey: env.pub ?? null, recipientPaysFees: true, payoutHoldDays: 0, source: "env" };
   return { provider, enabled: false, sandbox: true, secretKey: null, webhookSecret: null, publishableKey: null, recipientPaysFees: true, payoutHoldDays: 0, source: "none" };
 }
 
 /** Gateways that can take real money right now (enabled and keyed). */
 export async function activeGateways(): Promise<PlatformProvider[]> {
-  const out: PlatformProvider[] = [];
-  for (const p of ["stripe", "mamo"] as const) { const g = await getPlatformGateway(p); if (g.enabled && g.secretKey) out.push(p); }
-  return out;
+  await retireLegacyGateways();
+  const g = await getPlatformGateway("stripe");
+  return g.enabled && g.secretKey ? ["stripe"] : [];
+}
+
+/**
+ * Idempotent clean-up of the removed second-gateway integration (history is kept, nothing is dropped): any platform_gateways row of a provider
+ * other than stripe/meta_whatsapp is disabled, and the old plan feature text is rewritten. Runs once per process; safe to run any time.
+ */
+const retired = globalThis as unknown as { __qpRetired?: boolean };
+export async function retireLegacyGateways() {
+  if (retired.__qpRetired) return;
+  try {
+    await db.update(schema.platformGateways).set({ enabled: false, updatedAt: new Date() })
+      .where(and(eq(schema.platformGateways.provider, LEGACY_PROVIDER), eq(schema.platformGateways.enabled, true)));
+    await db.execute(sql`UPDATE plans SET features = replace(features::text, ${LEGACY_PLAN_FEATURE}, 'Stripe payments')::jsonb WHERE features::text LIKE ${"%" + LEGACY_PLAN_FEATURE + "%"}`);
+    retired.__qpRetired = true;
+  } catch (e) { console.error("[payments] retireLegacyGateways failed", e); }
 }

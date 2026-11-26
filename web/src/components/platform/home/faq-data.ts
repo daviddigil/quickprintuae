@@ -1,4 +1,4 @@
-import { en } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
 
-/** Home page FAQ (English). Exported as data so structured data (FAQPage JSON-LD) can reuse the exact same answers. The Arabic list lives in src/lib/i18n/ar.ts. */
-export const HOME_FAQ: { q: string; a: string }[] = en.home.faq;
+/** Home page FAQ (English), with the trial length filled. A function so it reflects the superadmin setting. */
+export const homeFaq = (): { q: string; a: string }[] => getCopy("en").home.faq;

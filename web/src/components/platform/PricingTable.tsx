@@ -19,8 +19,8 @@ export interface PublicUsageRate { kind: string; label: string; unit: string; pr
 const aed = (n: number) => `AED ${n.toLocaleString("en-AE")}`;
 
 /** Plan cards with a monthly/yearly switch. The popular plan (middle of three) is the only filled card. */
-export function PricingTable({ plans, locale = "en" }: { plans: PublicPlan[]; locale?: Locale }) {
-  const t = getCopy(locale).priceTable, signup = hrefFor(locale, "/signup");
+export function PricingTable({ plans, locale = "en", trialDays }: { plans: PublicPlan[]; locale?: Locale; trialDays?: number }) {
+  const t = getCopy(locale, trialDays).priceTable, signup = hrefFor(locale, "/signup");
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   const yearly = period === "yearly";
   const subs = plans.filter((p) => p.billingModel !== "commission");

@@ -110,7 +110,6 @@ export interface Address {
 
 export interface PaymentSettings {
   stripe?: { enabled: boolean; publishableKey?: string; secretKeyEnc?: string; webhookSecretEnc?: string };
-  mamo?: { enabled: boolean; apiKeyEnc?: string; sandbox?: boolean; webhookSecretEnc?: string };
 }
 
 export type DeliveryProviderCode = "inhouse" | "jeebly" | "quiqup" | "careem_box" | "aramex" | "manual";

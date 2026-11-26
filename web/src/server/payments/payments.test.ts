@@ -12,7 +12,6 @@ import { decrypt } from "@/lib/crypto";
 import Stripe from "stripe";
 import { POST as stripePlatformHook } from "@/app/api/webhooks/stripe/route";
 import { POST as stripeTenantHook } from "@/app/api/webhooks/stripe/[tenantId]/route";
-import { POST as mamoTenantHook } from "@/app/api/webhooks/mamo/[tenantId]/route";
 
 const suffix = Date.now().toString(36);
 const created: string[] = [];
@@ -67,7 +66,7 @@ test("charge.refunded: full refund reverses the sale (order refunded, negative l
 });
 
 test("the old per-shop webhook routes answer 410 Gone", async () => {
-  for (const h of [stripeTenantHook, mamoTenantHook]) {
+  for (const h of [stripeTenantHook]) {
     const r = await (h as unknown as () => Promise<Response> | Response)();
     assert.equal(r.status, 410); assert.match((await r.json()).message, /retired/i);
   }

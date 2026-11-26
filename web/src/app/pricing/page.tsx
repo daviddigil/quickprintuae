@@ -1,8 +1,12 @@
 import { pageMetadata } from "@/lib/seo/metadata";
-import { en } from "@/lib/i18n/en";
+import { getCopy } from "@/lib/i18n";
+import { primeTrialDays } from "@/server/platform-settings";
 import { PricingPage } from "@/components/platform/pages/PricingPage";
 
 export const dynamic = "force-dynamic";
-export const metadata = pageMetadata({ ...en.pricingPage.meta, path: "/pricing" });
+export async function generateMetadata() {
+  await primeTrialDays();
+  return pageMetadata({ ...getCopy("en").pricingPage.meta, path: "/pricing" });
+}
 
 export default function Pricing() { return <PricingPage locale="en" />; }

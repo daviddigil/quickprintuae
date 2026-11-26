@@ -7,7 +7,7 @@ export const DEFAULT_TENANT_SETTINGS: TenantSettings = {
   confidentialRetentionHours: 72,
   orderPrefix: "QP",
   aiDesignerEnabled: true,
-  payments: { stripe: { enabled: false }, mamo: { enabled: false, sandbox: true } },
+  payments: { stripe: { enabled: false } },
   delivery: {
     enabled: true,
     pickupEnabled: true,

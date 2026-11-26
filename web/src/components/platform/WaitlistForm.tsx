@@ -4,8 +4,8 @@ import { Alert, Button, Field, Input } from "@/components/ui";
 import { getCopy, type Locale } from "@/lib/i18n";
 
 /** Shown instead of signup in production while no live payment gateway is configured. */
-export function WaitlistForm({ locale = "en" }: { locale?: Locale }) {
-  const t = getCopy(locale).signup.waitlist;
+export function WaitlistForm({ locale = "en", trialDays }: { locale?: Locale; trialDays?: number }) {
+  const t = getCopy(locale, trialDays).signup.waitlist;
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
