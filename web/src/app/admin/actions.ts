@@ -1,6 +1,6 @@
 "use server";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { DIRECTORY_TAG } from "@/server/directory";
+import { revalidatePath } from "next/cache";
+import { invalidateDirectory } from "@/server/directory";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -230,7 +230,7 @@ export async function saveStoreSettings(fd: FormData) {
     },
   }).where(eq(schema.tenants.id, tenant.id));
   await audit("settings.store", { customDomain: domain, directoryListed: bool(fd, "directoryListed") }, tenant.id);
-  revalidateTag(DIRECTORY_TAG);
+  invalidateDirectory();
   revalidatePath("/admin", "layout");
   back("/admin/settings", "Store settings saved");
 }

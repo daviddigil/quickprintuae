@@ -1,11 +1,8 @@
 import "server-only";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { unstable_cache } from "next/cache";
 import { db, schema } from "@/db";
 import { isIndexableTenant, storefrontUrl } from "@/lib/seo/storefront";
 import { filterShops, type DirectoryShop } from "@/lib/directory";
-
-export const DIRECTORY_TAG = "directory";
 
 /** Only fields a shop already shows on its public storefront. Never email, TRN, billing or settings. */
 export async function loadDirectoryShops(now = new Date()): Promise<DirectoryShop[]> {
@@ -27,7 +24,18 @@ export async function loadDirectoryShops(now = new Date()): Promise<DirectorySho
   });
 }
 
-/** Cached for 5 minutes; settings changes revalidate the DIRECTORY_TAG. */
-export const getDirectoryShops = unstable_cache(async () => loadDirectoryShops(), ["directory-shops"], { revalidate: 300, tags: [DIRECTORY_TAG] });
+/**
+ * Small in-memory cache (60 s) shared through globalThis so server actions and pages see the same copy.
+ * Deliberately not next/cache: no filesystem cache dir is needed (works the same in the Docker standalone image).
+ */
+const g = globalThis as unknown as { __qpDirectory?: { at: number; shops: DirectoryShop[] } };
+export function invalidateDirectory() { g.__qpDirectory = undefined; }
+export async function getDirectoryShops(): Promise<DirectoryShop[]> {
+  const c = g.__qpDirectory;
+  if (c && Date.now() - c.at < 60_000) return c.shops;
+  const shops = await loadDirectoryShops();
+  g.__qpDirectory = { at: Date.now(), shops };
+  return shops;
+}
 
 export { filterShops };

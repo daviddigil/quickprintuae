@@ -1,8 +1,8 @@
 "use server";
-import { DIRECTORY_TAG } from "@/server/directory";
+import { invalidateDirectory } from "@/server/directory";
 import { USAGE_KINDS } from "@/lib/usage";
 import { saveUsageRate } from "@/server/usage";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -179,7 +179,7 @@ export async function setDirectoryListed(fd: FormData) {
   if (!t) redirect("/superadmin/tenants");
   await db.update(schema.tenants).set({ directoryListed: listed }).where(eq(schema.tenants.id, id));
   await audit(listed ? "directory.listed_by_admin" : "directory.hidden_by_admin", {}, id);
-  revalidateTag(DIRECTORY_TAG);
+  invalidateDirectory();
   revalidatePath(`/superadmin/tenants/${id}`);
   redirect(`/superadmin/tenants/${id}`);
 }
