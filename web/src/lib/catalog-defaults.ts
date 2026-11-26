@@ -219,6 +219,8 @@ export interface DefaultProduct {
   description: string;
   featured?: boolean;
   turnaroundHours: number;
+  /** storefront grouping, e.g. "Mugs", "Apparel", "Gifts" */
+  category?: string;
   config: ProductConfig;
 }
 
@@ -378,3 +380,103 @@ export const DEFAULT_PRODUCTS: DefaultProduct[] = [
     },
   },
 ];
+
+
+/* ---------- merchandise & gift templates ----------
+   STARTER PRICES ONLY (AED, excl. VAT): every owner must set their own prices. Used by "Add from template" and the product builder. */
+const ART = ".png,.jpg,.jpeg,.svg,.pdf";
+const choice = (value: string, label: string, extra: Partial<{ addPerUnit: number; multiplier: number; flat: number; hint: string }> = {}) => ({ value, label, ...extra });
+const COLOURS = (list: string[]): ProductConfig["optionGroups"][number] => ({ key: "colour", label: "Colour", type: "select", required: true, default: list[0].toLowerCase(), choices: list.map((c) => choice(c.toLowerCase(), c)) });
+const SIZES = (list: [string, number?][]): ProductConfig["optionGroups"][number] => ({ key: "size", label: "Size", type: "select", required: true, default: list[Math.min(2, list.length - 1)][0].toLowerCase(), choices: list.map(([l, add]) => choice(l.toLowerCase(), l, add ? { addPerUnit: add } : {})) });
+const PRINT_POSITION: ProductConfig["optionGroups"][number] = { key: "print_position", label: "Print position", type: "select", required: true, default: "front", choices: [choice("front", "Front"), choice("back", "Back", { addPerUnit: 8 }), choice("front_back", "Front + back", { addPerUnit: 14 })] };
+const PERSONAL_TEXT = (label: string, max = 24, flat?: number) => ({ fields: [{ key: "text", label, type: "text" as const, maxLength: max, placeholder: "Optional", ...(flat ? { flat } : {}) }], artwork: "optional" as const });
+const MOCK = (x: number, y: number, w: number, h: number) => ({ enabled: true, x, y, w, h });
+const merch = (slug: string, name: string, category: string, description: string, config: ProductConfig, turnaroundHours = 72, kind: ProductKind = "merchandise"): DefaultProduct =>
+  ({ kind, slug, name, category, description, turnaroundHours, config: { requiresUpload: false, acceptedFiles: ART, ...config } });
+
+export const MERCH_TEMPLATES: DefaultProduct[] = [
+  merch("printed-mug", "Printed Mug 11oz", "Mugs", "White ceramic 11oz mug with your photo, logo or text, printed wrap-around.", {
+    tiers: [{ min: 1, unitPrice: 29 }, { min: 12, unitPrice: 24 }, { min: 48, unitPrice: 19 }],
+    optionGroups: [{ key: "mug_type", label: "Mug type", type: "select", required: true, default: "white", choices: [choice("white", "White ceramic"), choice("colour_inside", "Coloured inside + handle", { addPerUnit: 4 }), choice("magic", "Magic (colour-changing)", { addPerUnit: 14 })] }],
+    personalisation: PERSONAL_TEXT("Name or short text on the mug", 24), mockup: MOCK(22, 28, 56, 44),
+  }, 48),
+  merch("t-shirt", "Custom T-shirt", "Apparel", "Cotton t-shirt printed with your design. Choose size, colour and print position.", {
+    tiers: [{ min: 1, unitPrice: 59 }, { min: 10, unitPrice: 49 }, { min: 50, unitPrice: 39 }],
+    optionGroups: [SIZES([["S"], ["M"], ["L"], ["XL"], ["2XL", 4], ["3XL", 6]]), COLOURS(["White", "Black", "Navy", "Red", "Grey"]), PRINT_POSITION],
+    personalisation: PERSONAL_TEXT("Text under the design (optional)", 30), mockup: MOCK(32, 24, 36, 38),
+  }),
+  merch("polo-shirt", "Polo Shirt with Logo", "Apparel", "Embroidered or printed polo shirts for staff uniforms and teams.", {
+    tiers: [{ min: 1, unitPrice: 79 }, { min: 10, unitPrice: 65 }, { min: 50, unitPrice: 55 }],
+    optionGroups: [SIZES([["S"], ["M"], ["L"], ["XL"], ["2XL", 4]]), COLOURS(["White", "Black", "Navy", "Red"]), { key: "method", label: "Logo method", type: "select", required: true, default: "print", choices: [choice("print", "Printed"), choice("embroidery", "Embroidered", { addPerUnit: 10 })] }],
+    mockup: MOCK(54, 30, 16, 14),
+  }),
+  merch("cap", "Custom Cap", "Apparel", "Baseball cap with your logo, embroidered or printed on the front.", {
+    tiers: [{ min: 1, unitPrice: 45 }, { min: 12, unitPrice: 38 }, { min: 50, unitPrice: 32 }],
+    optionGroups: [COLOURS(["Black", "White", "Navy", "Red", "Khaki"]), { key: "method", label: "Logo method", type: "select", required: true, default: "embroidery", choices: [choice("embroidery", "Embroidered"), choice("print", "Printed", { addPerUnit: -6 })] }],
+    mockup: MOCK(30, 30, 40, 22),
+  }),
+  merch("hoodie", "Custom Hoodie", "Apparel", "Fleece hoodie printed with your design.", {
+    tiers: [{ min: 1, unitPrice: 119 }, { min: 10, unitPrice: 99 }, { min: 50, unitPrice: 85 }],
+    optionGroups: [SIZES([["S"], ["M"], ["L"], ["XL"], ["2XL", 6]]), COLOURS(["Black", "Grey", "Navy"]), PRINT_POSITION], mockup: MOCK(32, 28, 36, 30),
+  }),
+  merch("tote-bag", "Printed Tote Bag", "Bags", "Cotton tote bag with a one-colour or full-colour print.", {
+    tiers: [{ min: 1, unitPrice: 25 }, { min: 25, unitPrice: 19 }, { min: 100, unitPrice: 14 }],
+    optionGroups: [COLOURS(["Natural", "Black", "Navy"]), { key: "print", label: "Print", type: "select", required: true, default: "full", choices: [choice("one", "One colour", { addPerUnit: -3 }), choice("full", "Full colour")] }],
+    mockup: MOCK(28, 38, 44, 40),
+  }),
+  merch("water-bottle", "Custom Water Bottle", "Drinkware", "Stainless steel bottle with your logo or name.", {
+    tiers: [{ min: 1, unitPrice: 49 }, { min: 12, unitPrice: 41 }, { min: 48, unitPrice: 35 }],
+    optionGroups: [COLOURS(["Silver", "Black", "White", "Blue"]), { key: "size", label: "Capacity", type: "select", required: true, default: "500", choices: [choice("500", "500 ml"), choice("750", "750 ml", { addPerUnit: 8 })] }],
+    personalisation: PERSONAL_TEXT("Name on the bottle", 20, 5), mockup: MOCK(36, 30, 28, 40),
+  }),
+  merch("keychain", "Custom Keychain", "Keychains", "Keychains printed or engraved with your design, in acrylic, PVC or metal.", {
+    minQuantity: 10, tiers: [{ min: 10, unitPrice: 12 }, { min: 50, unitPrice: 9 }, { min: 200, unitPrice: 6.5 }],
+    optionGroups: [{ key: "material", label: "Material", type: "select", required: true, default: "acrylic", choices: [choice("acrylic", "Acrylic"), choice("pvc", "Soft PVC", { addPerUnit: 2 }), choice("metal", "Metal", { addPerUnit: 5 })] }, { key: "shape", label: "Shape", type: "select", required: true, default: "round", choices: [choice("round", "Round"), choice("square", "Square"), choice("custom", "Custom cut", { addPerUnit: 3 })] }],
+    personalisation: { fields: [], artwork: "required" }, mockup: MOCK(25, 25, 50, 50),
+  }, 96),
+  merch("lanyard", "Printed Lanyard", "Corporate", "Lanyards with your logo for events, staff and visitors.", {
+    minQuantity: 25, tiers: [{ min: 25, unitPrice: 9 }, { min: 100, unitPrice: 6.5 }, { min: 500, unitPrice: 4.8 }],
+    optionGroups: [{ key: "width", label: "Width", type: "select", required: true, default: "20", choices: [choice("15", "15 mm", { addPerUnit: -1 }), choice("20", "20 mm"), choice("25", "25 mm", { addPerUnit: 1.5 })] }, { key: "clip", label: "Clip", type: "select", default: "swivel", choices: [choice("swivel", "Swivel hook"), choice("badge", "Badge holder", { addPerUnit: 2 })] }],
+    personalisation: { fields: [], artwork: "required" },
+  }, 120),
+  merch("branded-pen", "Branded Pen", "Corporate", "Promotional pens printed with your logo.", {
+    minQuantity: 50, tiers: [{ min: 50, unitPrice: 6 }, { min: 200, unitPrice: 4.2 }, { min: 1000, unitPrice: 3 }],
+    optionGroups: [{ key: "ink", label: "Ink colour", type: "select", required: true, default: "blue", choices: [choice("blue", "Blue"), choice("black", "Black")] }],
+    personalisation: { fields: [], artwork: "required" },
+  }, 120),
+  merch("mouse-pad", "Custom Mouse Pad", "Office", "Rubber-backed mouse pad printed edge to edge.", {
+    tiers: [{ min: 1, unitPrice: 29 }, { min: 10, unitPrice: 23 }, { min: 50, unitPrice: 18 }],
+    optionGroups: [{ key: "size", label: "Size", type: "select", required: true, default: "standard", choices: [choice("standard", "Standard 22 × 18 cm"), choice("large", "Large 30 × 25 cm", { addPerUnit: 8 })] }],
+    personalisation: { fields: [], artwork: "required" }, mockup: MOCK(8, 12, 84, 76),
+  }, 72),
+  merch("phone-case", "Custom Phone Case", "Accessories", "Phone case with your photo or design.", {
+    tiers: [{ min: 1, unitPrice: 49 }, { min: 10, unitPrice: 42 }],
+    optionGroups: [{ key: "model", label: "Phone model", type: "select", required: true, default: "iphone_15", choices: [choice("iphone_15", "iPhone 15"), choice("iphone_14", "iPhone 14"), choice("iphone_13", "iPhone 13"), choice("galaxy_s24", "Samsung Galaxy S24"), choice("galaxy_s23", "Samsung Galaxy S23"), choice("other", "Other (tell us in the notes)")] }, { key: "finish", label: "Finish", type: "select", default: "glossy", choices: [choice("glossy", "Glossy"), choice("matte", "Matte")] }],
+    personalisation: { fields: [{ key: "note", label: "Notes (exact phone model if 'Other')", type: "text", maxLength: 60 }], artwork: "required" }, mockup: MOCK(20, 8, 60, 84),
+  }, 72),
+  merch("photo-cushion", "Photo Cushion", "Home", "Soft cushion printed with your photo, includes the filling.", {
+    tiers: [{ min: 1, unitPrice: 69 }, { min: 6, unitPrice: 59 }],
+    optionGroups: [{ key: "size", label: "Size", type: "select", required: true, default: "40", choices: [choice("30", "30 × 30 cm", { addPerUnit: -10 }), choice("40", "40 × 40 cm"), choice("50", "50 × 50 cm", { addPerUnit: 15 })] }],
+    personalisation: { fields: [], artwork: "required" }, mockup: MOCK(12, 12, 76, 76),
+  }, 96),
+  merch("gift-box", "Gift Box", "Gifts", "Rigid gift box with your logo or message, ready to fill.", {
+    minQuantity: 10, tiers: [{ min: 10, unitPrice: 22 }, { min: 50, unitPrice: 17 }, { min: 200, unitPrice: 13 }],
+    optionGroups: [{ key: "size", label: "Box size", type: "select", required: true, default: "medium", choices: [choice("small", "Small 15 × 15 × 8 cm", { addPerUnit: -5 }), choice("medium", "Medium 22 × 22 × 10 cm"), choice("large", "Large 30 × 25 × 12 cm", { addPerUnit: 9 })] }, { key: "finish", label: "Finish", type: "select", default: "matte", choices: [choice("matte", "Matte"), choice("gloss", "Gloss", { addPerUnit: 2 }), choice("foil", "Gold foil logo", { addPerUnit: 6 })] }],
+    personalisation: { fields: [], artwork: "required" }, quote: { enabled: true, label: "Need a custom size? Request a quote" },
+  }, 168, "gift_pack"),
+  merch("custom-gift-pack", "Custom Gift Pack", "Gifts", "Build a gift pack: choose the box, what goes inside, the ribbon and a personal card. Corporate and wedding packs welcome.", {
+    minQuantity: 1, tiers: [{ min: 1, unitPrice: 59 }, { min: 10, unitPrice: 52 }, { min: 50, unitPrice: 46 }],
+    optionGroups: [
+      { key: "box", label: "Box", type: "select", required: true, default: "medium", choices: [choice("small", "Small box", { addPerUnit: -8 }), choice("medium", "Medium box"), choice("large", "Large box", { addPerUnit: 14 })] },
+      { key: "item1", label: "Item 1", type: "select", required: true, default: "mug", choices: [choice("mug", "Printed mug", { addPerUnit: 22 }), choice("bottle", "Water bottle", { addPerUnit: 32 }), choice("notebook", "Notebook", { addPerUnit: 18 }), choice("none", "None")] },
+      { key: "item2", label: "Item 2", type: "select", default: "none", choices: [choice("none", "None"), choice("chocolates", "Chocolates", { addPerUnit: 20 }), choice("dates", "Premium dates", { addPerUnit: 25 }), choice("pen", "Branded pen", { addPerUnit: 8 }), choice("keychain", "Keychain", { addPerUnit: 10 })] },
+      { key: "ribbon", label: "Ribbon", type: "select", default: "satin", choices: [choice("none", "No ribbon"), choice("satin", "Satin ribbon", { addPerUnit: 3 }), choice("branded", "Printed ribbon", { addPerUnit: 7 })] },
+      { key: "wrap", label: "Packing", type: "select", default: "standard", choices: [choice("standard", "Standard packing"), choice("premium", "Premium wrap + tissue", { addPerUnit: 8 })] },
+    ],
+    personalisation: { fields: [{ key: "card", label: "Message on the gift card", type: "textarea", maxLength: 160, flat: 0 }, { key: "recipient", label: "Recipient name", type: "text", maxLength: 40 }], artwork: "optional" },
+    quote: { enabled: true, label: "Need something special? Request a quote" },
+  }, 168, "gift_pack"),
+];
+
+/** Everything an owner can add from the "From template" list: the print catalogue plus merchandise and gifts. */
+export const ALL_TEMPLATES: DefaultProduct[] = [...DEFAULT_PRODUCTS, ...MERCH_TEMPLATES];

@@ -11,7 +11,7 @@ import { encrypt } from "@/lib/crypto";
 import { EMIRATES, ORDER_STATUSES, type DeliveryProviderCode, type OrderStatus, type TenantSettings } from "@/lib/types";
 import { NEXT_STATUSES, setOrderStatus } from "@/server/orders";
 import { bookDelivery } from "@/server/delivery";
-import { DEFAULT_PRODUCTS } from "@/lib/catalog-defaults";
+import { ALL_TEMPLATES } from "@/lib/catalog-defaults";
 
 /* helpers */
 const str = (fd: FormData, k: string) => (fd.get(k) ?? "").toString().trim();
@@ -87,7 +87,7 @@ export async function toggleProduct(fd: FormData) {
 
 export async function addProductFromTemplate(fd: FormData) {
   const { tenant } = await requireStaff();
-  const tpl = DEFAULT_PRODUCTS.find((p) => p.slug === str(fd, "template"));
+  const tpl = ALL_TEMPLATES.find((p) => p.slug === str(fd, "template"));
   if (!tpl) back("/admin/products", "Unknown template", true);
   const existing = await db.query.products.findMany({ where: eq(schema.products.tenantId, tenant.id), columns: { slug: true } });
   let slug = tpl!.slug; let i = 2;

@@ -11,7 +11,7 @@ export const userRole = pgEnum("user_role", ["superadmin", "owner", "staff", "cu
 export const tenantStatus = pgEnum("tenant_status", ["trial", "active", "past_due", "suspended", "cancelled"]);
 export const productKind = pgEnum("product_kind", [
   "document", "confidential_document", "photo", "passport_photo", "photo_frame",
-  "business_card", "flyer", "brochure", "notebook", "poster", "sticker", "other",
+  "business_card", "flyer", "brochure", "notebook", "poster", "sticker", "merchandise", "gift_pack", "other",
 ]);
 export const orderStatus = pgEnum("order_status", [
   "pending_payment", "paid", "in_production", "ready", "out_for_delivery",
@@ -129,6 +129,12 @@ export const products = pgTable("products", {
   featured: boolean("featured").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),
   turnaroundHours: integer("turnaround_hours").notNull().default(24),
+  /** shop-facing grouping on the storefront, e.g. "Mugs", "Apparel", "Gifts" (free text) */
+  category: text("category"),
+  /** extra gallery photos; imageUrl stays the cover */
+  images: jsonb("images").$type<string[]>().notNull().default([]),
+  /** owner-only data (cost price, notes). NEVER select this for storefront queries. */
+  internal: jsonb("internal").$type<{ costPrice?: number; note?: string }>().notNull().default({}),
   config: jsonb("config").$type<ProductConfig>().notNull(),
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("products_tenant_slug_idx").on(t.tenantId, t.slug)]);
@@ -292,6 +298,24 @@ export const orderItems = pgTable("order_items", {
   unitPrice: money("unit_price").notNull(),
   lineTotal: money("line_total").notNull(),
 });
+
+/** "Request a quote" submissions from the storefront (special orders, custom gift packing, bulk). */
+export const quoteRequests = pgTable("quote_requests", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+  productName: text("product_name"),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  message: text("message").notNull(),
+  quantity: integer("quantity"),
+  selections: jsonb("selections").$type<Record<string, string>>().notNull().default({}),
+  fileIds: jsonb("file_ids").$type<string[]>().notNull().default([]),
+  status: text("status").notNull().default("new"), // new | replied | won | lost
+  createdAt: createdAt(),
+}, (t) => [index("quote_requests_tenant_idx").on(t.tenantId, t.status, t.createdAt)]);
+export type QuoteRequest = typeof quoteRequests.$inferSelect;
 
 export const orderEvents = pgTable("order_events", {
   id: id(),

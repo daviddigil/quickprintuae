@@ -1,4 +1,4 @@
-import type { ProductConfig, Selections, PriceBreakdown } from "./types";
+import { PERSONALISATION_PREFIX, type ProductConfig, type Selections, type PriceBreakdown } from "./types";
 
 export const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -45,6 +45,16 @@ export function computeLinePrice(
     unit += choice.addPerUnit ?? 0;
     multiplier *= choice.multiplier ?? 1;
     setupFees += choice.flat ?? 0;
+  }
+
+  // personalisation text fields: required / max length are enforced here (server + storefront), a filled field can add a flat fee
+  for (const f of config.personalisation?.fields ?? []) {
+    const raw = selections[PERSONALISATION_PREFIX + f.key];
+    const value = typeof raw === "string" ? raw.trim() : "";
+    if (!value) { if (f.required) throw new PricingError(`Please fill in ${f.label}`); continue; }
+    if (value.length > f.maxLength) throw new PricingError(`${f.label} can be at most ${f.maxLength} characters`);
+    labels[PERSONALISATION_PREFIX + f.key] = value;
+    setupFees += f.flat ?? 0;
   }
 
   const unitPrice = round2(unit * multiplier);

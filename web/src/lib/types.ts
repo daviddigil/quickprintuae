@@ -8,7 +8,7 @@ export const EMIRATES: Emirate[] = [
 
 export type ProductKind =
   | "document" | "confidential_document" | "photo" | "passport_photo" | "photo_frame"
-  | "business_card" | "flyer" | "brochure" | "notebook" | "poster" | "sticker" | "other";
+  | "business_card" | "flyer" | "brochure" | "notebook" | "poster" | "sticker" | "merchandise" | "gift_pack" | "other";
 
 /**
  * A choice inside an option group. Price effects (all AED, all optional):
@@ -46,6 +46,26 @@ export interface QuantityTier {
   unitPrice: number;
 }
 
+/** A text input the customer fills in (name on a mug, text on a t-shirt). Stored in selections as `p_<key>`. */
+export interface PersonalisationField {
+  key: string;
+  label: string;
+  type: "text" | "textarea";
+  maxLength: number;
+  required?: boolean;
+  placeholder?: string;
+  /** one-off AED fee added to the line when the customer fills this field in (e.g. engraving) */
+  flat?: number;
+}
+export interface Personalisation {
+  fields: PersonalisationField[];
+  /** customer artwork upload: none / optional / required */
+  artwork: "none" | "optional" | "required";
+}
+/** Print area on the cover photo, as percentages (0-100) of the image width/height. Used for the live preview. */
+export interface MockupArea { enabled: boolean; x: number; y: number; w: number; h: number }
+export const PERSONALISATION_PREFIX = "p_";
+
 export interface ProductConfig {
   /** price is per page × copies (documents) instead of per piece */
   perPage?: boolean;
@@ -59,6 +79,10 @@ export interface ProductConfig {
   quantityPresets?: number[];
   tiers: QuantityTier[];
   optionGroups: OptionGroup[];
+  personalisation?: Personalisation;
+  mockup?: MockupArea;
+  /** show a "Request a quote" button on the product page */
+  quote?: { enabled: boolean; label?: string };
 }
 
 export type Selections = Record<string, string>;
