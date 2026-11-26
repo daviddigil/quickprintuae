@@ -89,7 +89,7 @@ export const tenants = pgTable("tenants", {
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   stripeCustomerId: text("stripe_customer_id"),
   /** how customer payments for orders reach this shop: 'own' = shop's own Stripe/Mamo keys, 'platform' = collected on the platform Mamo account and split to the shop's recipient */
-  payoutMode: text("payout_mode").notNull().default("own"),
+  payoutMode: text("payout_mode").notNull().default("platform"),
   /** Mamo recipient (REP-…) registered for this shop's bank account (UAE IBAN) */
   mamoRecipientId: text("mamo_recipient_id"),
   payoutAccountName: text("payout_account_name"),
@@ -244,7 +244,11 @@ export const whatsappActivationRequests = pgTable("whatsapp_activation_requests"
 export const orderSettlements = pgTable("order_settlements", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
-  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }).unique(),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  /** 'sale' = the paid order (one per order); 'refund' | 'chargeback' | 'chargeback_won' = append-only adjustments linked to it (net can be negative) */
+  kind: text("kind").notNull().default("sale"),
+  /** idempotency key for adjustments (refund id, dispute id, ...) */
+  externalRef: text("external_ref"),
   gateway: text("gateway").notNull().default("mamo"),
   gatewayPaymentId: text("gateway_payment_id"),
   recipientId: text("recipient_id"),
@@ -263,7 +267,20 @@ export const orderSettlements = pgTable("order_settlements", {
   refundedAmount: money("refunded_amount").notNull().default(0),
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("order_settlements_tenant_idx").on(t.tenantId, t.status)]);
+}, (t) => [
+  index("order_settlements_tenant_idx").on(t.tenantId, t.status),
+  uniqueIndex("order_settlements_sale_idx").on(t.orderId).where(sql`${t.kind} = 'sale'`),
+  uniqueIndex("order_settlements_ref_idx").on(t.externalRef).where(sql`${t.externalRef} is not null`),
+]);
+
+/** Gateway webhook events already processed (idempotency + replay protection). */
+export const paymentWebhookEvents = pgTable("payment_webhook_events", {
+  id: id(),
+  provider: text("provider").notNull(),
+  eventId: text("event_id").notNull(),
+  type: text("type"),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("payment_webhook_events_idx").on(t.provider, t.eventId)]);
 
 /** Seller verification: trade licence + business name, reviewed by the superadmin. */
 export const sellerVerifications = pgTable("seller_verifications", {
@@ -690,6 +707,25 @@ export const auditLogs = pgTable("audit_logs", {
   action: text("action").notNull(),
   meta: jsonb("meta"),
   ip: text("ip"),
+  createdAt: createdAt(),
+});
+
+/** Pre-launch waitlist: shown instead of signup in production while no live payment gateway is configured. */
+export const signupWaitlist = pgTable("signup_waitlist", {
+  id: id(),
+  email: text("email").notNull(),
+  emailCanonical: text("email_canonical").notNull(),
+  shopName: text("shop_name"),
+  phone: text("phone"),
+  locale: text("locale").notNull().default("en"),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex("signup_waitlist_email_idx").on(t.emailCanonical)]);
+
+/** Card-setup gateway events already processed (idempotency by gateway event id). */
+export const gatewaySetupEvents = pgTable("gateway_setup_events", {
+  eventId: text("event_id").primaryKey(),
+  type: text("type").notNull(),
+  tenantId: uuid("tenant_id"),
   createdAt: createdAt(),
 });
 
