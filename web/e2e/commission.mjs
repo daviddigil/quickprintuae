@@ -64,7 +64,7 @@ try {
   const [cm] = await sql`select c.* from order_commissions c join orders o on o.id=c.order_id where o.number=${orderNo}`;
   assert(cm, "commission recorded for " + orderNo);
   assert(cm.rule_source === "custom" && Number(cm.pct) === 3 && Number(cm.per_job_fee) === 0.5, "uses the shop's custom terms");
-  assert(Number(cm.fee) === 1 && cm.min_applied === true && cm.status === "accrued", `3 pages x AED 0.50 = AED 1.50 basis -> 3% + 0.50 = 0.545 -> minimum AED 1.00 applies (got fee=${cm.fee}, status=${cm.status})`);
+  assert(Number(cm.fee) === 1 && cm.min_applied === true && ["accrued", "settled"].includes(cm.status), `3 pages x AED 0.50 = AED 1.50 basis -> 3% + 0.50 = 0.545 -> minimum AED 1.00 applies (got fee=${cm.fee}, status=${cm.status})`);
   step(`order ${orderNo} paid: commission AED ${cm.fee} recorded with the rule snapshot (minimum applied)`);
 
   /* ---- the shop sees exactly that ---- */

@@ -85,7 +85,7 @@ export const en = {
     bento: {
       heading: "Everything a UAE print counter needs",
       lead: "Prices, payments, delivery, invoices and queues in one place, set up for the UAE from day one.",
-      pay: { title: "Paid before it reaches you", text: "Card, Apple Pay and Google Pay go to your own Stripe or Mamo Pay account. There is no cash on delivery." },
+      pay: { title: "Paid before it reaches you", text: "Customers pay by card, Apple Pay or Google Pay at checkout, and QuickPrint pays the money out to your bank account. There is no cash on delivery." },
       quote: { title: "Quotes follow your price list", text: "Set prices by size, paper, sides and quantity. Customers get the exact figure.", caption: "Example quantity tiers for business cards", head: "Business cards, 350 gsm", each: "Each", pcs: "pcs" },
       cards: { title: "Customers design their own cards", text: "They type name, title and phone and get three print-ready layouts in seconds.", name: "Aisha Al Mansoori", role: "Managing Director", size: "85 × 55 mm" },
       qr: { title: "A QR code for the busy counter", text: "Customers scan, upload documents, pay on their phone and take a ticket. Paid jobs print automatically, shortest first. Each walk-in is saved by phone number.", steps: ["Scan and upload", "Pay on the phone", "Prints in priority order"] },
@@ -123,7 +123,7 @@ export const en = {
     faqHeading: "Questions shop owners ask",
     faq: [
       { q: "Do I need a website to start?", a: "No. Your storefront is ready when you sign up, with common UAE products and prices already loaded. You can change every product, option and price later." },
-      { q: "How do customers pay me?", a: "You connect your own Stripe or Mamo Pay account. Customers pay at checkout and the money goes to you. QuickPrint bills you separately, either a monthly subscription or a percentage of paid orders, depending on the plan you choose." },
+      { q: "How do customers pay me?", a: "Customers pay at checkout through the QuickPrint payment gateway. We pay the money out to your bank account (IBAN) in regular payout batches, and every order appears in your payout statement. QuickPrint bills you separately, either a monthly subscription or a percentage of paid orders, depending on the plan you choose." },
       { q: "Why is there no cash on delivery?", a: "Cash on delivery leads to unpaid prints, failed deliveries and cash to count. Every order on QuickPrint is paid online first, so a job only reaches your printer once the money is in." },
       { q: "Which delivery options can I offer?", a: "You can offer pickup, delivery by your own drivers, or couriers such as Jeebly, Quiqup, Careem Box and Aramex. Courier connections need your own account with that courier. You set fees and lead times for each emirate." },
       { q: "What is the walk-in QR queue?", a: "It is a QR code for your counter. A customer scans it, uploads documents, pays on their phone and gets a ticket. Paid jobs go to your printer in priority order, and short jobs go first." },
@@ -183,13 +183,13 @@ export const en = {
       { q: "When does the order fee apply?", a: "Only on the Pay per order plan. It is a percentage of paid orders in the month, billed with your invoice. Refunded and unpaid orders do not count. Subscription plans never charge a fee on orders." },
       { q: "What is billed by usage?", a: "WhatsApp messages sent through the Meta API and AI features, such as chat replies and card designs. Some plans include a free allowance each month. Anything above it is billed at the rate on your billing page." },
       { q: "Can I change plans?", a: "Yes. During the trial a change applies at once. On a paid plan a change starts at the next billing month, and you can cancel a scheduled change before then." },
-      { q: "Do payment provider fees come out of this?", a: "No. Stripe and Mamo Pay charge their own fees. Customers pay into your own account." },
+      { q: "Do payment provider fees come out of this?", a: "Card processing fees are shown for each order in your payout statement, so you can see exactly what you receive." },
     ],
   },
   signup: {
     meta: { title: "Start your free trial", description: "Create your QuickPrint print shop store in about two minutes. 14 days free on every plan; add a card to start. Prices in AED, excluding 5% VAT." },
     headline: "Your print shop, open online 24/7.",
-    bullets: ["Storefront loaded with documents, photos, passport photos, cards, flyers and more", "Prepaid orders through your own Stripe or Mamo Pay", "Pickup and scheduled delivery across all 7 emirates", "14 days free, then your card is charged unless you cancel"],
+    bullets: ["Storefront loaded with documents, photos, passport photos, cards, flyers and more", "Prepaid orders, paid out to your bank account", "Pickup and scheduled delivery across all 7 emirates", "14 days free, then your card is charged unless you cancel"],
     haveAccount: "Already have an account? ", signIn: "Sign in",
     createH: "Create your print shop", sub: "Two steps: your details, then a card. About 2 minutes.",
     form: {
@@ -229,7 +229,7 @@ export const en = {
         panel: "store",
         benefits: [
           { title: "Exact prices from your price list", text: "Set prices by size, paper, sides and quantity. Customers see the exact figure, with 5% VAT added or included as you choose." },
-          { title: "Paid before it reaches you", text: "Card, Apple Pay and Google Pay go to your own Stripe or Mamo Pay account. There is no cash on delivery, so no unpaid prints." },
+          { title: "Paid before it reaches you", text: "Customers pay by card, Apple Pay or Google Pay at checkout, and QuickPrint pays the money out to your bank account. There is no cash on delivery, so no unpaid prints." },
           { title: "A UAE catalogue on day one", text: "Your storefront opens with common UAE products and prices already loaded: documents, photos, passport photos, business cards, flyers and more. Change anything later." },
           { title: "Pickup, your drivers or a courier", text: "Offer pickup, delivery by your own drivers, or couriers such as Jeebly, Quiqup, Careem Box and Aramex. Fees and lead times are set per emirate." },
           { title: "Tax invoices with your TRN", text: "Download a VAT tax invoice for any order, with your Tax Registration Number on it." },
@@ -237,7 +237,7 @@ export const en = {
         ],
         steps: [
           { title: "Sign up and check your prices", text: "Review the products and prices already in your storefront and edit what you need." },
-          { title: "Connect payments and delivery", text: "Add your Stripe or Mamo Pay account and set pickup and delivery for each emirate." },
+          { title: "Set up payouts and delivery", text: "Add your bank details for payouts and set pickup and delivery for each emirate." },
           { title: "Share your link", text: "Send it on WhatsApp, add it to Instagram, or print the QR code for your counter." },
         ],
         faq: [0, 1, 3, 2],
