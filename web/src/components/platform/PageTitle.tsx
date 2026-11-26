@@ -11,7 +11,7 @@ export function PageTitle({ title, subtitle, action }: { title: string; subtitle
 }
 
 export const TENANT_STATUS_TONE = {
-  trial: "blue", active: "green", past_due: "yellow", suspended: "red", cancelled: "gray",
+  trial: "blue", active: "green", past_due: "yellow", suspended: "red", cancelled: "gray", incomplete: "yellow",
 } as const;
 
 export const fmtDate = (d?: Date | null) =>

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles, MessageCircle, ScanLine, Inbox } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles, MessageCircle, ScanLine, Inbox, Landmark, ShieldCheck } from "lucide-react";
 import { cn } from "@/components/ui";
 
 const NAV = [
@@ -13,6 +13,8 @@ const NAV = [
   { href: "/admin/quotes", label: "Quotes", icon: Inbox, quotes: true },
   { href: "/admin/fulfillment", label: "Pickup & delivery", icon: Truck },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
+  { href: "/admin/payouts", label: "Payouts", icon: Landmark },
+  { href: "/admin/verification", label: "Verification", icon: ShieldCheck },
   { href: "/admin/banners", label: "Hero slider", icon: Sparkles },
   { href: "/admin/whatsapp", label: "WhatsApp AI", icon: MessageCircle },
   { href: "/admin/settings", label: "Store settings", icon: Settings },

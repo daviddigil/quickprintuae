@@ -8,7 +8,7 @@ import type { CommissionOverride } from "@/lib/commission";
 
 /* ---------- enums ---------- */
 export const userRole = pgEnum("user_role", ["superadmin", "owner", "staff", "customer"]);
-export const tenantStatus = pgEnum("tenant_status", ["trial", "active", "past_due", "suspended", "cancelled"]);
+export const tenantStatus = pgEnum("tenant_status", ["trial", "active", "past_due", "suspended", "cancelled", "incomplete"]);
 export const productKind = pgEnum("product_kind", [
   "document", "confidential_document", "photo", "passport_photo", "photo_frame",
   "business_card", "flyer", "brochure", "notebook", "poster", "sticker", "merchandise", "gift_pack", "other",
@@ -74,6 +74,14 @@ export const tenants = pgTable("tenants", {
   area: text("area"),
   /** owner (or superadmin) can hide the shop from the public directory */
   directoryListed: boolean("directory_listed").notNull().default(true),
+  /** seller verification: unverified | pending_review | verified | rejected | expired. Live payments, payouts and directory listing need 'verified'. */
+  verificationStatus: text("verification_status").notNull().default("unverified"),
+  /** card on file for the subscription: none | pending | on_file | failed */
+  cardStatus: text("card_status").notNull().default("none"),
+  /** sha256 of the gateway card fingerprint: one card cannot start two free trials */
+  cardFingerprintHash: text("card_fingerprint_hash"),
+  /** payouts are blocked until this time after the bank details were changed */
+  payoutHoldUntil: timestamp("payout_hold_until", { withTimezone: true }),
   status: tenantStatus("status").notNull().default("trial"),
   planId: uuid("plan_id").references(() => plans.id),
   billingCycle: text("billing_cycle").notNull().default("monthly"),
@@ -109,12 +117,33 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   phone: text("phone"),
+  /** canonical forms for the one-person-one-shop guard rail (see src/lib/trust/normalise.ts) */
+  emailCanonical: text("email_canonical"),
+  phoneCanonical: text("phone_canonical"),
+  /** TOTP two-factor (superadmin required, shop owners optional) */
+  totpSecretEnc: text("totp_secret_enc"),
+  totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+  recoveryCodesHash: jsonb("recovery_codes_hash").$type<string[]>().notNull().default([]),
+  failedLogins: integer("failed_logins").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
   active: boolean("active").notNull().default(true),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex("users_tenant_email_idx").on(sql`coalesce(${t.tenantId}::text, 'platform')`, sql`lower(${t.email})`),
+  // one person = one shop owner account, platform-wide
+  uniqueIndex("users_owner_email_canonical_idx").on(t.emailCanonical).where(sql`${t.role} = 'owner' and ${t.emailCanonical} is not null`),
+  uniqueIndex("users_owner_phone_canonical_idx").on(t.phoneCanonical).where(sql`${t.role} = 'owner' and ${t.phoneCanonical} is not null`),
 ]);
+
+export const passwordResets = pgTable("password_resets", {
+  id: id(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index("password_resets_user_idx").on(t.userId)]);
 
 /* ---------- catalog ---------- */
 export const products = pgTable("products", {
@@ -224,11 +253,106 @@ export const orderSettlements = pgTable("order_settlements", {
   /** amount credited to the shop's recipient balance */
   shopShare: money("shop_share").notNull(),
   recipientPaysFees: boolean("recipient_pays_fees").notNull().default(true),
-  status: text("status").notNull().default("pending"), // pending | credited | refunded | disputed
+  /** payout ledger: fee the gateway charged, platform commission, and what the shop is owed */
+  gatewayFee: money("gateway_fee").notNull().default(0),
+  commission: money("commission").notNull().default(0),
+  netAmount: money("net_amount").notNull().default(0),
+  availableAt: timestamp("available_at", { withTimezone: true }),
+  payoutItemId: uuid("payout_item_id"),
+  status: text("status").notNull().default("pending"), // pending | available | batched | paid | refunded | disputed (legacy: credited)
   refundedAmount: money("refunded_amount").notNull().default(0),
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("order_settlements_tenant_idx").on(t.tenantId, t.status)]);
+
+/** Seller verification: trade licence + business name, reviewed by the superadmin. */
+export const sellerVerifications = pgTable("seller_verifications", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }).unique(),
+  legalName: text("legal_name").notNull(),
+  legalNameNorm: text("legal_name_norm").notNull(),
+  licenceNumber: text("licence_number").notNull(),
+  licenceNumberNorm: text("licence_number_norm").notNull(),
+  /** licensing authority, e.g. "Dubai Economy & Tourism", "ADDED", free zone name */
+  authority: text("authority").notNull(),
+  licenceExpiry: timestamp("licence_expiry", { withTimezone: true }),
+  activity: text("activity"),
+  signatoryName: text("signatory_name"),
+  trn: text("trn"),
+  /** storage key of the uploaded licence document (private file store) */
+  documentKey: text("document_key"),
+  status: text("status").notNull().default("pending_review"), // pending_review | verified | rejected | needs_info | expired
+  reason: text("reason"),
+  /** automatic review flags, e.g. ["similar_name:<tenantId>", "disposable_email", "shared_ip"] */
+  flags: jsonb("flags").$type<string[]>().notNull().default([]),
+  reviewerId: uuid("reviewer_id"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+  history: jsonb("history").$type<{ at: string; by: string | null; status: string; note?: string }[]>().notNull().default([]),
+}, (t) => [
+  // the same licence / business name cannot back two live sellers
+  uniqueIndex("seller_verif_licence_idx").on(t.licenceNumberNorm).where(sql`${t.status} <> 'rejected'`),
+  uniqueIndex("seller_verif_name_idx").on(t.legalNameNorm).where(sql`${t.status} <> 'rejected'`),
+  index("seller_verif_status_idx").on(t.status, t.submittedAt),
+]);
+
+/** Shop bank account that payouts go to. IBAN and account number are encrypted at rest. */
+export const payoutAccounts = pgTable("payout_accounts", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }).unique(),
+  accountHolderName: text("account_holder_name").notNull(),
+  bankName: text("bank_name").notNull(),
+  ibanEnc: text("iban_enc").notNull(),
+  ibanLast4: text("iban_last4").notNull(),
+  /** sha256 of the cleaned IBAN: one bank account cannot serve two shops */
+  ibanHash: text("iban_hash").notNull(),
+  accountNumberEnc: text("account_number_enc"),
+  swift: text("swift"),
+  status: text("status").notNull().default("pending_review"), // pending_review | verified | rejected
+  reason: text("reason"),
+  verifiedBy: uuid("verified_by"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  history: jsonb("history").$type<{ at: string; by: string | null; action: string; note?: string }[]>().notNull().default([]),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("payout_accounts_iban_idx").on(t.ibanHash).where(sql`${t.status} <> 'rejected'`)]);
+
+export const payoutBatches = pgTable("payout_batches", {
+  id: id(),
+  number: text("number").notNull().unique(), // PB-202611-0001
+  status: text("status").notNull().default("draft"), // draft | approved | paid | cancelled
+  totalAmount: money("total_amount").notNull().default(0),
+  itemCount: integer("item_count").notNull().default(0),
+  bankReference: text("bank_reference"),
+  createdBy: uuid("created_by"),
+  approvedBy: uuid("approved_by"),
+  paidBy: uuid("paid_by"),
+  createdAt: createdAt(),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+});
+
+export const payoutItems = pgTable("payout_items", {
+  id: id(),
+  batchId: uuid("batch_id").notNull().references(() => payoutBatches.id, { onDelete: "cascade" }),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  amount: money("amount").notNull(),
+  carriedForward: money("carried_forward").notNull().default(0),
+  /** bank details as they were when the batch was created (never rewritten) */
+  bankSnapshot: jsonb("bank_snapshot").$type<{ accountHolderName: string; bankName: string; ibanLast4: string; ibanHash: string }>().notNull(),
+  settlementIds: jsonb("settlement_ids").$type<string[]>().notNull().default([]),
+  status: text("status").notNull().default("pending"), // pending | paid | failed
+  createdAt: createdAt(),
+}, (t) => [index("payout_items_batch_idx").on(t.batchId), index("payout_items_tenant_idx").on(t.tenantId)]);
+
+/** Terminated or banned sellers: a match on any value refuses signup / verification. Values are stored in canonical form. */
+export const blocklist = pgTable("blocklist", {
+  id: id(),
+  kind: text("kind").notNull(), // licence | email | phone | iban_hash | card_hash | name
+  value: text("value").notNull(),
+  reason: text("reason").notNull(),
+  createdBy: uuid("created_by"),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex("blocklist_kind_value_idx").on(t.kind, t.value)]);
 
 /** One-time / repeat walk-in customers, identified by phone number per shop. */
 export const walkInCustomers = pgTable("walk_in_customers", {
@@ -570,6 +694,9 @@ export const auditLogs = pgTable("audit_logs", {
 });
 
 export type Tenant = typeof tenants.$inferSelect;
+export type SellerVerification = typeof sellerVerifications.$inferSelect;
+export type PayoutAccount = typeof payoutAccounts.$inferSelect;
+export type PayoutBatch = typeof payoutBatches.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Order = typeof orders.$inferSelect;
