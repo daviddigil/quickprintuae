@@ -172,3 +172,13 @@ Security: file type is checked from the file bytes (SVG refused), links must be 
 
 Shops connect their existing WhatsApp Business number (**coexistence**: the owner keeps using the phone app) from `/admin/whatsapp` — via Facebook (Embedded Signup) or "Manual connect" with their own Meta app. Customers chat, the AI (Claude, or a built-in rule-based assistant without `ANTHROPIC_API_KEY`) quotes with the real pricing engine, builds a **conversational cart** and sends ONE itemised message with prefilled checkout links; files, slot and payment stay on the storefront. When the owner replies from the phone the AI pauses. **Try the AI without any WhatsApp number** with the "Try the AI (test chat)" box on that page.
 Real numbers need a Meta app + review (checklist in `docs/WHATSAPP.md`). Verified against local mock Meta + Anthropic servers: `node e2e/mock-meta.mjs`, `node e2e/mock-anthropic.mjs`, then `node e2e/whatsapp-live.mjs` (see docs for the three app instances).
+
+
+## Security, go-live and operations docs
+
+- `docs/SECURITY.md` threat model, controls, CSRF review, known gaps
+- `docs/GO_LIVE.md` phased go-live checklist (legal, infrastructure, observability, pilot, go/no-go)
+- `docs/RUNBOOKS.md` failed payout, chargeback, fraud seller, gateway outage, webhooks, key rotation, DB restore
+- `docs/LEGAL_CHECKLIST.md` documents to prepare (not legal advice)
+- New env vars (see `web/.env.example`): `EMAIL_PROVIDER`, `EMAIL_FROM`, `RESEND_API_KEY`, `REDIS_URL` / `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`, `STORAGE_DRIVER` + `S3_*`, `REQUIRE_SUPERADMIN_2FA`, `CSP_ENFORCE` (build time), `APP_VERSION`.
+- Rotate `ENCRYPTION_KEY` with `web/scripts/reencrypt.ts` (RUNBOOKS section 9). Load test: `web/loadtest/storefront.js` (k6).

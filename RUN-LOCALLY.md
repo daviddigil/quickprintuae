@@ -76,3 +76,16 @@ Requires Node 22+. Use the zip/clone from the SAME version of the code as the da
 - Shop admin:   http://localhost:5050/login        (owner@demo.ae / owner12345)
 - Superadmin:   http://localhost:5050/login        (admin@quickprint.ae / change-me-now)
 - Platform site http://localhost:5050/
+
+
+## Security and email settings (new)
+
+All optional locally; see `web/.env.example` and `docs/SECURITY.md`.
+
+- **2FA**: superadmin must enrol at `/superadmin/security` when `NODE_ENV=production`. When you run a production build locally (for tests) set `REQUIRE_SUPERADMIN_2FA=0`. Shop owners can opt in under Store settings.
+- **Password reset**: `/forgot-password`. Locally `EMAIL_PROVIDER=console` prints the reset link in the terminal running the server. Set `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` and `EMAIL_FROM` for real email.
+- **Lockout**: 5 wrong passwords lock an account for 15 minutes (clear with `update users set failed_logins=0, locked_until=null where email='...'`).
+- **Rate limits** are in memory; set `REDIS_URL` or `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` when running more than one instance.
+- **File storage**: `STORAGE_DRIVER=s3` plus `S3_*` to use a bucket instead of the `UPLOAD_DIR` folder.
+- **Health**: `GET /api/health` shows DB latency, migrations, gateway readiness (booleans only).
+- Security e2e: start a server with `PAYMENTS_FAKE=1 EMAIL_PROVIDER=console EMAIL_TEST_OUTBOX=1 REQUIRE_SUPERADMIN_2FA=0`, then `cd web && BASE=http://localhost:PORT node --import tsx e2e/security.mjs`.
