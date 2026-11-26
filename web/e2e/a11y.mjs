@@ -4,7 +4,7 @@ import { chromium } from "playwright";
 import postgres from "postgres";
 import { readFileSync } from "fs";
 import { createRequire } from "module";
-import { signup } from "./helpers.mjs";
+import { loginSuperadmin, signup } from "./helpers.mjs";
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const SA = process.env.SA_PASSWORD ?? "change-me-now";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
@@ -26,8 +26,7 @@ try {
     await signup(o, { base: BASE, slug: slug + name[0], name: "A11y Shop " + name });
     for (const u of ["/admin", "/admin/orders", "/admin/products", "/admin/billing", "/admin/verification", "/admin/settings", "/admin/whatsapp", "/admin/walk-in"]) await scan(o, u, name + ":admin");
     const s = await (await br.newContext({ viewport: vp })).newPage();
-    await s.goto(BASE + "/login"); await s.fill('input[name="email"]', "admin@quickprint.ae"); await s.fill('input[name="password"]', SA);
-    await s.getByRole("button", { name: "Sign in" }).click(); await s.waitForURL(/superadmin/, { timeout: 60000 });
+    await loginSuperadmin(s, BASE);
     for (const u of ["/superadmin", "/superadmin/plans", "/superadmin/usage", "/superadmin/commissions", "/superadmin/tenants", "/superadmin/verifications"]) await scan(s, u, name + ":super");
   }
 } finally { await sql`delete from tenants where slug like ${slug + "%"}`; await sql.end(); await br.close(); }

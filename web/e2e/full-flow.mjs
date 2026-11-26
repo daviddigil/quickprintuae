@@ -3,6 +3,7 @@
 import { chromium } from "playwright";
 import { PDFDocument } from "pdf-lib";
 import { writeFileSync } from "fs";
+import { loginSuperadmin } from "./helpers.mjs";
 
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const OUT = process.env.OUT ?? ".";
@@ -82,10 +83,7 @@ step(`tax invoice renders (${inv.status()})`);
 // ---------- superadmin ----------
 const ctx3 = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const sa = await ctx3.newPage(); sa.on("pageerror", (e) => errors.push(e.message));
-await sa.goto(`${BASE}/login`);
-await sa.fill('input[name="email"]', "admin@quickprint.ae"); await sa.fill('input[name="password"]', process.env.SA_PASSWORD ?? "change-me-now");
-await sa.getByRole("button", { name: "Sign in" }).click();
-await sa.waitForURL(/\/superadmin/);
+await loginSuperadmin(sa, BASE);
 await sa.screenshot({ path: `${OUT}/superadmin.png`, fullPage: true });
 step("superadmin login + dashboard");
 await sa.goto(`${BASE}/superadmin/tenants`);

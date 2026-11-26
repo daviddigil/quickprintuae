@@ -60,6 +60,7 @@ export async function login(page, email, password, base = BASE) {
  * Superadmin sign-in. Superadmins must use two-factor: set SA_TOTP_SECRET (base32) and the code step is filled automatically.
  * If 2FA is not enrolled yet, set SA_ENROL_2FA=1 and the secret is printed once ("SA_TOTP_SECRET=...") after enrolling.
  */
+let lastTotp = null;
 export async function loginSuperadmin(page, base = BASE) {
   const { totpAt } = await import("../src/server/security/totp.ts");
   await login(page, process.env.SA_EMAIL ?? "admin@quickprint.ae", SA_PASSWORD, base);
@@ -68,7 +69,11 @@ export async function loginSuperadmin(page, base = BASE) {
   await Promise.race([code.waitFor({ timeout: 30000 }).catch(() => {}), page.waitForURL(/superadmin/, { timeout: 30000 }).catch(() => {})]);
   if (await code.isVisible().catch(() => false)) {
     if (!process.env.SA_TOTP_SECRET) throw new Error("this superadmin has 2FA on: set SA_TOTP_SECRET");
-    await code.fill(totpAt(process.env.SA_TOTP_SECRET, Date.now())); await page.getByRole("button", { name: "Verify and sign in" }).click();
+    // a code can be used once (replay protection): if the last sign-in used this window's code, wait for the next one
+    let c = totpAt(process.env.SA_TOTP_SECRET, Date.now());
+    if (c === lastTotp) { await new Promise((r) => setTimeout(r, 30000 - (Date.now() % 30000) + 500)); c = totpAt(process.env.SA_TOTP_SECRET, Date.now()); }
+    lastTotp = c;
+    await code.fill(c); await page.getByRole("button", { name: "Verify and sign in" }).click();
   }
   await page.waitForURL(/superadmin/, { timeout: 60000 });
   if (enrol && !process.env.SA_TOTP_SECRET) {

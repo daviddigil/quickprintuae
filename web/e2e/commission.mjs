@@ -6,6 +6,7 @@ import { PDFDocument } from "pdf-lib";
 import { mkdtempSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
+import { loginSuperadmin } from "./helpers.mjs";
 
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const SA = process.env.SA_PASSWORD ?? "change-me-now";
@@ -25,8 +26,7 @@ const ctx = async (viewport = { width: 1280, height: 900 }) => { const c = await
 try {
   /* ---- superadmin sets custom terms ---- */
   const sa = await ctx();
-  await sa.goto(`${BASE}/login`); await sa.fill('input[name="email"]', "admin@quickprint.ae"); await sa.fill('input[name="password"]', SA);
-  await sa.getByRole("button", { name: "Sign in" }).click(); await sa.waitForURL(/superadmin/, { timeout: 60000 });
+  await loginSuperadmin(sa, BASE);
   await sa.goto(`${BASE}/superadmin/plans`, { waitUntil: "networkidle" });
   assert((await sa.locator('input[name="perJobFee"]').count()) >= 1 && (await sa.locator('input[name="minOrderFee"]').count()) >= 1 && (await sa.locator('input[name="maxOrderFee"]').count()) >= 1, "plan form has per-job fee, min and max");
   step("plan form has commission %, per-print-job fee, min and max per order");

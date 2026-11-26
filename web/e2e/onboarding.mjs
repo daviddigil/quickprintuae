@@ -165,7 +165,7 @@ try {
   assert(!(await cust.getByText("This store is not yet open for orders.").count()), "verified shop takes orders");
   const stores2 = await (await cust.request.get(`${BASE}/stores`)).text();
   assert(stores2.includes(`Onboard ${stamp} Print`), "verified store is listed in /stores");
-  assert(!/noindex/.test(await (await cust.request.get(`${BASE}/s/${slugA}`)).text()) || true, "indexable once verified");
+  assert(!/content="noindex/.test(await (await cust.request.get(`${BASE}/s/${slugA}`)).text()), "indexable once verified");
   await a.goto(`${BASE}/admin/verification`, { waitUntil: "networkidle" });
   await a.getByText(/Your business is verified/).waitFor();
   assert(!(await a.getByTestId("verification-banner").count()), "banner gone once verified");

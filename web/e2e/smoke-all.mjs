@@ -24,6 +24,13 @@ async function ctxWith(login) {
   if (login) {
     const r = await ctx.request.post(BASE + "/api/v1/auth/login", { data: login });
     if (!r.ok()) throw new Error(`login failed ${JSON.stringify({ ...login, password: "***" })}: ${r.status()}`);
+    // superadmins sign in with two-factor: SA_TOTP_SECRET supplies the code
+    if ((await r.json().catch(() => ({}))).twoFactor) {
+      if (!process.env.SA_TOTP_SECRET) throw new Error("superadmin has 2FA on: set SA_TOTP_SECRET");
+      const { totpAt } = await import("../src/server/security/totp.ts");
+      const r2 = await ctx.request.post(BASE + "/api/v1/auth/2fa", { data: { code: totpAt(process.env.SA_TOTP_SECRET, Date.now()) } });
+      if (!r2.ok()) throw new Error(`2fa failed: ${r2.status()}`);
+    }
   }
   return ctx;
 }

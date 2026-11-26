@@ -2,7 +2,7 @@
 // Usage: BASE=http://localhost:3200 SA_PASSWORD=... node e2e/billing-model.mjs
 import { chromium } from "playwright";
 import postgres from "postgres";
-import { signup } from "./helpers.mjs";
+import { loginSuperadmin, signup } from "./helpers.mjs";
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const SA = process.env.SA_PASSWORD ?? "change-me-now";
 const sql = postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
@@ -44,8 +44,7 @@ try {
   step("owner sees pay-as-you-go usage this month");
 
   const sa = await page();
-  await sa.goto(`${BASE}/login`); await sa.fill('input[name="email"]', "admin@quickprint.ae"); await sa.fill('input[name="password"]', SA);
-  await sa.getByRole("button", { name: "Sign in" }).click(); await sa.waitForURL(/superadmin/, { timeout: 60000 });
+  await loginSuperadmin(sa, BASE);
   await sa.goto(`${BASE}/superadmin/usage`, { waitUntil: "networkidle" });
   assert(await sa.getByTestId("usage-rates").isVisible(), "rate card");
   await sa.fill('input[name="rate_ai_chat_turn"]', "0.25");

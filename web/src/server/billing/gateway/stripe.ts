@@ -39,7 +39,7 @@ async function startSetup(tenant: Tenant, urls: { returnUrl: string; cancelUrl: 
   const customer = await ensureCustomer(stripe, tenant);
   // Stripe-hosted page in "setup" mode: a SetupIntent (3-D Secure included) with usage=off_session, so we never see card data.
   const session = await stripe.checkout.sessions.create({
-    mode: "setup", customer, client_reference_id: tenant.id,
+    mode: "setup", currency: "aed", customer, client_reference_id: tenant.id,
     metadata: { tenantId: tenant.id, purpose: "card_setup" },
     setup_intent_data: { metadata: { tenantId: tenant.id, purpose: "card_setup" }, description: `QuickPrint subscription card for ${tenant.slug}` },
     success_url: `${urls.returnUrl}${urls.returnUrl.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`,
