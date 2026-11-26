@@ -70,6 +70,10 @@ export const tenants = pgTable("tenants", {
   whatsapp: text("whatsapp"),
   address: text("address"),
   emirate: text("emirate").notNull().default("Dubai"),
+  /** neighbourhood for the public Live stores directory, e.g. "Al Barsha" */
+  area: text("area"),
+  /** owner (or superadmin) can hide the shop from the public directory */
+  directoryListed: boolean("directory_listed").notNull().default(true),
   status: tenantStatus("status").notNull().default("trial"),
   planId: uuid("plan_id").references(() => plans.id),
   billingCycle: text("billing_cycle").notNull().default("monthly"),

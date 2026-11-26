@@ -10,7 +10,7 @@ import { agentOnline } from "@/server/walk-in/agents";
 import { CommissionTerms } from "@/components/superadmin/CommissionTerms";
 import { describeRule, resolveRule } from "@/lib/commission";
 import { walkInSettings } from "@/server/walk-in/settings";
-import { deleteTenant, disableWalkIn, extendTrial, setTenantStatus, updateTenantDomain, updateTenantPlan } from "../../actions";
+import { deleteTenant, disableWalkIn, extendTrial, setDirectoryListed, setTenantStatus, updateTenantDomain, updateTenantPlan } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -154,6 +154,16 @@ export default async function TenantDetail({ params, searchParams }: { params: P
           </ul>
         </Card>
       </div>
+
+      <Card className="mt-6" data-testid="directory-section">
+        <CardHeader title="Public Live stores directory" subtitle={`${t.area ? `${t.area}, ` : ""}${t.emirate}. The shop owner can also switch this off in Store settings.`} action={
+          <form action={setDirectoryListed} className="flex items-center gap-3">
+            <input type="hidden" name="tenantId" value={t.id} /><input type="hidden" name="listed" value={t.directoryListed ? "0" : "1"} />
+            <Badge tone={t.directoryListed ? "green" : "gray"}>{t.directoryListed ? "listed" : "hidden"}</Badge>
+            <Button variant="secondary">{t.directoryListed ? "Hide from directory" : "List in directory"}</Button>
+          </form>
+        } />
+      </Card>
 
       <Card className="mt-6" data-testid="walkin-section">
         <CardHeader title="Walk-in queue" subtitle="QR print queue for in-shop customers"

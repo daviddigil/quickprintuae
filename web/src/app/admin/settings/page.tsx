@@ -1,6 +1,7 @@
 import { requireStaff } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { EMIRATES } from "@/lib/types";
+import { AREAS } from "@/lib/areas";
 import { Alert, Button, Card, CardHeader, Field, Input, Select, Textarea } from "@/components/ui";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Flash } from "@/components/admin/Flash";
@@ -39,6 +40,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <Field label="Phone"><Input name="phone" defaultValue={tenant.phone ?? ""} placeholder="+971 4 …" /></Field>
               <Field label="WhatsApp number"><Input name="whatsapp" defaultValue={tenant.whatsapp ?? ""} placeholder="+971 50 …" /></Field>
               <Field label="Emirate"><Select name="emirate" defaultValue={tenant.emirate}>{EMIRATES.map((e) => <option key={e}>{e}</option>)}</Select></Field>
+              <Field label="Area / neighbourhood" hint="(shown in the Live stores directory)">
+                <Input name="area" list="area-options" defaultValue={tenant.area ?? ""} placeholder="e.g. Al Barsha" maxLength={60} />
+                <datalist id="area-options">{[...new Set(Object.values(AREAS).flat())].sort().map((a) => <option key={a} value={a} />)}</datalist>
+              </Field>
+              <label className="flex items-center gap-2 self-end pb-2 text-sm" data-testid="directory-toggle"><input type="checkbox" name="directoryListed" defaultChecked={tenant.directoryListed} />List my shop in the public Live stores directory</label>
               <div className="md:col-span-2"><Field label="Address"><Input name="address" defaultValue={tenant.address ?? ""} /></Field></div>
             </div>
           </Card>

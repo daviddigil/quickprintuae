@@ -17,6 +17,7 @@ export const MARKETING_PATHS: MarketingPath[] = [
   { path: "/solutions/print-shops", priority: 0.8, changeFrequency: "monthly", translated: true },
   { path: "/solutions/walk-in-queue", priority: 0.8, changeFrequency: "monthly", translated: true },
   { path: "/solutions/whatsapp-ordering", priority: 0.8, changeFrequency: "monthly", translated: true },
+  { path: "/stores", priority: 0.8, changeFrequency: "daily", translated: true },
   { path: "/signup", priority: 0.7, changeFrequency: "monthly", translated: true },
 ];
 

@@ -14,7 +14,7 @@ export const en = {
     freeNote: "14 days free. No card needed.",
   },
   nav: {
-    features: "Features", solutions: "Solutions", pricing: "Pricing", faq: "FAQ", demo: "Live demo",
+    features: "Features", solutions: "Solutions", pricing: "Pricing", faq: "FAQ", demo: "Live demo", liveStores: "Live stores",
     signIn: "Sign in", startFree: "Start free", openMenu: "Open menu", closeMenu: "Close menu", mainAria: "Main", mobileAria: "Mobile",
     printShops: "Online ordering for print shops", walkIn: "Walk-in QR print queue", whatsapp: "WhatsApp AI ordering",
   },
@@ -153,6 +153,19 @@ export const en = {
   compare: {
     caption: "Compare QuickPrint plans", plan: "Plan", included: "Included", notIncluded: "Not included", none: "None", unlimited: "Unlimited",
     monthly: "Monthly price", yearly: "Yearly price", fee: "Fee on paid orders", orders: "Orders per month", team: "Team members",
+  },
+  storesPage: {
+    meta: {
+      title: "Live print shops in the UAE: find a shop near you",
+      description: "Browse live print shops on QuickPrint UAE by emirate and area, then order documents, photos and business cards online for pickup or delivery.",
+    },
+    label: "Live stores · UAE", h1: "Find a print shop near you",
+    lead: "Every shop here is open for online orders. Pick your emirate and area, open the store and order in minutes.",
+    emirateLabel: "Emirate", areaLabel: "Area", allEmirates: "All emirates", allAreas: "All areas", searchLabel: "Search shops", searchPlaceholder: "Shop name or street", apply: "Show shops", clear: "Clear filters",
+    countOne: "{n} shop", countMany: "{n} shops", openStore: "Open store", whatsapp: "WhatsApp", call: "Call", hours: "Hours",
+    emptyH: "No shops here yet", emptyLead: "Try another area, or tell your local print shop they can take online orders with QuickPrint.",
+    ownerH: "Own a print shop?", ownerLead: "List your shop here for free with your 14-day trial, and let nearby customers find you.", ownerCta: "Start free",
+    emirates: { "Abu Dhabi": "Abu Dhabi", Dubai: "Dubai", Sharjah: "Sharjah", Ajman: "Ajman", "Umm Al Quwain": "Umm Al Quwain", "Ras Al Khaimah": "Ras Al Khaimah", Fujairah: "Fujairah" } as Record<string, string>,
   },
   pricingPage: {
     meta: {

@@ -1,7 +1,8 @@
 "use server";
+import { DIRECTORY_TAG } from "@/server/directory";
 import { USAGE_KINDS } from "@/lib/usage";
 import { saveUsageRate } from "@/server/usage";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -170,6 +171,19 @@ export async function runInvoiceGeneration(fd: FormData) {
 }
 
 /** Abuse control: switch the walk-in queue off for one shop (their owner can re-enable it unless the plan flag is also removed). */
+/** Show or hide a shop in the public Live stores directory (superadmin override of the owner's switch). */
+export async function setDirectoryListed(fd: FormData) {
+  await requireSuperadmin();
+  const id = str(fd, "tenantId"), listed = str(fd, "listed") === "1";
+  const t = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, id) });
+  if (!t) redirect("/superadmin/tenants");
+  await db.update(schema.tenants).set({ directoryListed: listed }).where(eq(schema.tenants.id, id));
+  await audit(listed ? "directory.listed_by_admin" : "directory.hidden_by_admin", {}, id);
+  revalidateTag(DIRECTORY_TAG);
+  revalidatePath(`/superadmin/tenants/${id}`);
+  redirect(`/superadmin/tenants/${id}`);
+}
+
 export async function disableWalkIn(fd: FormData) {
   await requireSuperadmin();
   const id = str(fd, "tenantId");

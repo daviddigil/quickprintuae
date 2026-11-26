@@ -12,6 +12,7 @@ export function navLinks(locale: Locale = "en"): NavLink[] {
   return [
     { label: c.nav.features, href: h("/#features") },
     { label: c.nav.solutions, href: h("/#solutions"), children: SOLUTION_SLUGS.map((s) => ({ label: solutionLabel(c, s), href: h(`/solutions/${s}`) })) },
+    { label: c.nav.liveStores, href: h("/stores") },
     { label: c.nav.pricing, href: h("/pricing") },
     { label: c.nav.faq, href: h("/#faq") },
     { label: c.nav.demo, href: "/s/demo" },
@@ -21,7 +22,7 @@ export function navLinks(locale: Locale = "en"): NavLink[] {
 export function footerColumns(locale: Locale = "en"): { title: string; links: NavLink[] }[] {
   const c = getCopy(locale), h = (p: string) => hrefFor(locale, p);
   return [
-    { title: c.footer.product, links: [{ label: c.nav.features, href: h("/#features") }, { label: c.nav.pricing, href: h("/pricing") }, { label: c.footer.liveDemo, href: "/s/demo" }] },
+    { title: c.footer.product, links: [{ label: c.nav.features, href: h("/#features") }, { label: c.nav.liveStores, href: h("/stores") }, { label: c.nav.pricing, href: h("/pricing") }, { label: c.footer.liveDemo, href: "/s/demo" }] },
     { title: c.footer.solutions, links: SOLUTION_SLUGS.map((s) => ({ label: solutionLabel(c, s), href: h(`/solutions/${s}`) })) },
     { title: c.footer.start, links: [{ label: c.footer.startTrial, href: h("/signup") }, { label: c.nav.signIn, href: "/login" }, { label: c.nav.faq, href: h("/#faq") }] },
   ];

@@ -16,7 +16,7 @@ export const ar: Copy = {
     freeNote: "14 يومًا مجانًا. دون بطاقة.",
   },
   nav: {
-    features: "المزايا", solutions: "الحلول", pricing: "الأسعار", faq: "الأسئلة الشائعة", demo: "متجر تجريبي",
+    features: "المزايا", solutions: "الحلول", pricing: "الأسعار", faq: "الأسئلة الشائعة", demo: "متجر تجريبي", liveStores: "المتاجر النشطة",
     signIn: "تسجيل الدخول", startFree: "ابدأ مجانًا", openMenu: "فتح القائمة", closeMenu: "إغلاق القائمة", mainAria: "القائمة الرئيسية", mobileAria: "قائمة الجوال",
     printShops: "الطلب الإلكتروني للمطابع", walkIn: "طابور الطباعة بالرمز QR", whatsapp: "الطلب عبر WhatsApp بالذكاء الاصطناعي",
   },
@@ -177,6 +177,19 @@ export const ar: Copy = {
   compare: {
     caption: "مقارنة باقات QuickPrint", plan: "الباقة", included: "متوفر", notIncluded: "غير متوفر", none: "لا يوجد", unlimited: "بلا حدود",
     monthly: "السعر الشهري", yearly: "السعر السنوي", fee: "الرسوم على الطلبات المدفوعة", orders: "الطلبات شهريًا", team: "أعضاء الفريق",
+  },
+  storesPage: {
+    meta: {
+      title: "مطابع نشطة في الإمارات: اعثر على مطبعة قريبة منك",
+      description: "تصفح المطابع النشطة على QuickPrint UAE حسب الإمارة والمنطقة، ثم اطلب المستندات والصور وبطاقات الأعمال عبر الإنترنت للاستلام أو التوصيل.",
+    },
+    label: "المتاجر النشطة · الإمارات", h1: "اعثر على مطبعة قريبة منك",
+    lead: "كل مطبعة هنا تستقبل الطلبات عبر الإنترنت. اختر الإمارة والمنطقة، وافتح المتجر واطلب خلال دقائق.",
+    emirateLabel: "الإمارة", areaLabel: "المنطقة", allEmirates: "كل الإمارات", allAreas: "كل المناطق", searchLabel: "ابحث عن مطبعة", searchPlaceholder: "اسم المطبعة أو الشارع", apply: "عرض المطابع", clear: "مسح التصفية",
+    countOne: "{n} مطبعة", countMany: "{n} مطابع", openStore: "افتح المتجر", whatsapp: "واتساب", call: "اتصال", hours: "ساعات العمل",
+    emptyH: "لا توجد مطابع هنا بعد", emptyLead: "جرّب منطقة أخرى، أو أخبر مطبعتك المحلية أنها تستطيع استقبال الطلبات عبر الإنترنت مع QuickPrint.",
+    ownerH: "هل تملك مطبعة؟", ownerLead: "أدرج مطبعتك هنا مجانًا مع تجربتك المجانية لمدة 14 يومًا ليجدك العملاء القريبون منك.",  ownerCta: "ابدأ مجانًا",
+    emirates: { "Abu Dhabi": "أبوظبي", Dubai: "دبي", Sharjah: "الشارقة", Ajman: "عجمان", "Umm Al Quwain": "أم القيوين", "Ras Al Khaimah": "رأس الخيمة", Fujairah: "الفجيرة" } as Record<string, string>,
   },
   pricingPage: {
     meta: {

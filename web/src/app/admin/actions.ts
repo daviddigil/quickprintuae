@@ -1,5 +1,6 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { DIRECTORY_TAG } from "@/server/directory";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -220,7 +221,7 @@ export async function saveStoreSettings(fd: FormData) {
   }
   await db.update(schema.tenants).set({
     name: v.name, legalName: v.legalName || null, trn: v.trn || null, logoUrl: v.logoUrl || null, primaryColor: v.primaryColor,
-    email: v.email || null, phone: v.phone || null, whatsapp: v.whatsapp || null, address: v.address || null, emirate: v.emirate, customDomain: domain,
+    email: v.email || null, phone: v.phone || null, whatsapp: v.whatsapp || null, address: v.address || null, emirate: v.emirate, area: str(fd, "area").slice(0, 60) || null, directoryListed: bool(fd, "directoryListed"), customDomain: domain,
     settings: { ...tenant.settings,
       heroTitle: str(fd, "heroTitle") || undefined, heroSubtitle: str(fd, "heroSubtitle") || undefined, announcement: str(fd, "announcement") || undefined,
       pricesIncludeVat: bool(fd, "pricesIncludeVat"), aiDesignerEnabled: bool(fd, "aiDesignerEnabled"),
@@ -228,7 +229,8 @@ export async function saveStoreSettings(fd: FormData) {
       orderPrefix: (str(fd, "orderPrefix") || tenant.settings.orderPrefix).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || "QP",
     },
   }).where(eq(schema.tenants.id, tenant.id));
-  await audit("settings.store", { customDomain: domain }, tenant.id);
+  await audit("settings.store", { customDomain: domain, directoryListed: bool(fd, "directoryListed") }, tenant.id);
+  revalidateTag(DIRECTORY_TAG);
   revalidatePath("/admin", "layout");
   back("/admin/settings", "Store settings saved");
 }

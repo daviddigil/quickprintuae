@@ -78,6 +78,13 @@
       "when": 1795604862499,
       "tag": "0010_faithful_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795693407339,
+      "tag": "0011_black_victor_mancha",
+      "breakpoints": true
     }
   ]
 }

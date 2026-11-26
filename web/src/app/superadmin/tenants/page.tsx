@@ -37,7 +37,7 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
           <Table head={["Shop", "Plan", "Status", "Emirate", "Contact", "Created", ""]}>
             {rows.map(({ t, plan }) => (
               <tr key={t.id} className="hover:bg-surface-low">
-                <td className="px-4 py-3"><Link href={`/superadmin/tenants/${t.id}`} className="font-medium hover:underline">{t.name}</Link>{t.settings?.walkIn?.enabled && <span className="ml-2"><Badge tone="purple">walk-in</Badge></span>}<div className="text-xs text-on-surface-variant">/{t.slug}{t.customDomain ? ` · ${t.customDomain}` : ""}</div></td>
+                <td className="px-4 py-3"><Link href={`/superadmin/tenants/${t.id}`} className="font-medium hover:underline">{t.name}</Link>{t.settings?.walkIn?.enabled && <span className="ml-2"><Badge tone="purple">walk-in</Badge></span>}{!t.directoryListed && <span className="ml-2"><Badge tone="gray">hidden</Badge></span>}<div className="text-xs text-on-surface-variant">/{t.slug}{t.customDomain ? ` · ${t.customDomain}` : ""}</div></td>
                 <td className="px-4 py-3">{plan ?? "—"} <span className="text-xs text-outline">{t.billingCycle}</span></td>
                 <td className="px-4 py-3"><Badge tone={TENANT_STATUS_TONE[t.status]}>{t.status.replace("_", " ")}</Badge></td>
                 <td className="px-4 py-3">{t.emirate}</td>
