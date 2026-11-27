@@ -5,50 +5,14 @@
 import type { CardDesign, CardElement, CardSide } from "@/lib/types";
 import { PT_MM } from "./fonts";
 
-export interface CardDetails {
-  name: string;
-  title?: string;
-  company?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  address?: string;
-  industry?: string;
-  style?: string;
-  colors?: string[];
-  logo?: string; // data URL
-}
+import { bleedify, fitFont, paletteFor, type CardDetails, type Palette } from "./kit";
+import { CARD_TEMPLATES, buildDesign, recommend } from "./catalog";
 
-export interface Palette { primary: string; secondary: string; ink: string; muted: string; light: string }
-
-const INDUSTRY_PALETTES: [RegExp, Palette][] = [
-  [/(law|legal|finance|bank|account|consult|insur)/i, { primary: "#0f2a4a", secondary: "#c9a227", ink: "#111827", muted: "#4b5563", light: "#f8fafc" }],
-  [/(health|clinic|medical|dental|pharma|care)/i, { primary: "#0e7490", secondary: "#22c55e", ink: "#0f172a", muted: "#475569", light: "#f0fdfa" }],
-  [/(tech|software|it |digital|ai|startup|app)/i, { primary: "#4f46e5", secondary: "#06b6d4", ink: "#0f172a", muted: "#64748b", light: "#f5f3ff" }],
-  [/(real estate|property|construct|architect|interior)/i, { primary: "#1f2937", secondary: "#b45309", ink: "#111827", muted: "#6b7280", light: "#fafaf9" }],
-  [/(food|restaurant|cafe|coffee|bakery|catering)/i, { primary: "#9a3412", secondary: "#f59e0b", ink: "#1c1917", muted: "#57534e", light: "#fffbeb" }],
-  [/(beauty|salon|spa|fashion|boutique|wedding|event)/i, { primary: "#9d174d", secondary: "#f9a8d4", ink: "#1f2937", muted: "#6b7280", light: "#fdf2f8" }],
-  [/(auto|car|garage|logistic|transport|cargo)/i, { primary: "#b91c1c", secondary: "#111827", ink: "#111827", muted: "#4b5563", light: "#f9fafb" }],
-];
-const DEFAULT_PALETTE: Palette = { primary: "#e11d48", secondary: "#0f172a", ink: "#0f172a", muted: "#64748b", light: "#fff1f2" };
-
-const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-export function paletteFor(d: CardDetails): Palette {
-  const base = INDUSTRY_PALETTES.find(([re]) => re.test(`${d.industry ?? ""} ${d.company ?? ""} ${d.title ?? ""}`))?.[1] ?? DEFAULT_PALETTE;
-  const [p, s] = (d.colors ?? []).filter((c) => HEX.test(c));
-  return { ...base, primary: p ?? base.primary, secondary: s ?? base.secondary };
-}
+export { fitFont, paletteFor, bleedify };
+export type { CardDetails, Palette };
 
 let seq = 0;
 const uid = () => `el${(++seq).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-
-/** Shrink font size so an estimated text width fits inside w (mm). */
-export function fitFont(text: string, fontSize: number, w: number, min = 5) {
-  const est = (fs: number) => text.length * fs * PT_MM * 0.56;
-  let fs = fontSize;
-  while (fs > min && est(fs) > w) fs -= 0.5;
-  return fs;
-}
 
 type TextOpts = Partial<Extract<CardElement, { type: "text" }>>;
 const T = (text: string, x: number, y: number, w: number, fontSize: number, o: TextOpts = {}): CardElement => ({
@@ -195,41 +159,16 @@ export const TEMPLATES: Record<string, TemplateFn> = {
   },
 };
 
-/** Shapes touching the trim edge are extended into the 2 mm bleed so no white slivers appear after cutting. */
-function bleedify(side: CardSide, W: number, H: number, b = 2): CardSide {
-  return {
-    ...side,
-    elements: side.elements.map((e) => {
-      if (e.type !== "rect") return e;
-      let { x, y, w, h } = e;
-      if (x <= 0.01) { w += b + x; x = -b; }
-      if (y <= 0.01) { h += b + y; y = -b; }
-      if (x + w >= W - 0.01) w = W + b - x;
-      if (y + h >= H - 0.01) h = H + b - y;
-      return { ...e, x, y, w, h };
-    }),
-  };
-}
-
-/** Choose templates suited to the requested style, always returning `count` distinct designs. */
+/**
+ * The best `count` ready-made designs for these details (by industry and style), built from the catalogue
+ * (see catalog.ts). Used as the AI designer's offline fallback and by the template gallery.
+ */
 export function templateDesigns(d: CardDetails, opts: { widthMm?: number; heightMm?: number; count?: number; doubleSided?: boolean } = {}): CardDesign[] {
   const W = opts.widthMm ?? 85, H = opts.heightMm ?? 55;
-  const p = paletteFor(d);
-  const style = `${d.style ?? ""}`.toLowerCase();
-  let order = ["minimal", "band", "corporate", "geometry", "classic", "luxe", "split"];
-  if (/(lux|elegant|premium|gold)/.test(style)) order = ["luxe", "classic", "minimal", ...order];
-  else if (/(bold|creative|modern|playful)/.test(style)) order = ["geometry", "band", "split", ...order];
-  else if (/(corporate|professional|formal)/.test(style)) order = ["corporate", "classic", "minimal", ...order];
-  const names = [...new Set(order)].slice(0, opts.count ?? 3);
-  return names.map((n) => {
-    const t = TEMPLATES[n](d, p, W, H);
-    return {
-      widthMm: W, heightMm: H, orientation: W >= H ? "landscape" : "portrait", name: t.name,
-      front: bleedify({ ...t.front, elements: t.front.elements.filter((e) => e.type !== "text" || e.text.trim() !== "") }, W, H),
-      back: opts.doubleSided === false ? undefined : bleedify({ ...t.back, elements: t.back.elements.filter((e) => e.type !== "text" || e.text.trim() !== "") }, W, H),
-    };
-  });
+  return recommend(d, W, H, opts.count ?? 3).map((t) => buildDesign(t, d, W, H, opts.doubleSided !== false));
 }
+
+export { CARD_TEMPLATES };
 
 export function blankDesign(W = 85, H = 55): CardDesign {
   return { widthMm: W, heightMm: H, orientation: W >= H ? "landscape" : "portrait", front: { background: "#ffffff", elements: [] }, back: { background: "#ffffff", elements: [] } };
