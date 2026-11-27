@@ -46,6 +46,8 @@ export async function markOrderPaid(orderId: string, provider: "stripe", provide
   await (await import("@/server/commission")).recordOrderCommission(orderId).catch((e) => console.error("commission record failed", e));
   // the payout ledger: gross, gateway fee, commission (netted) and what the shop is owed (cron backfills if this fails)
   await (await import("@/server/payouts/ledger")).recordSettlementForOrder(orderId, { provider, providerRef, gatewayFee: opts.gatewayFee }).catch((e) => console.error("settlement record failed", e));
+  // confirmation email with the verified seller identity and the shop's consumer terms (best effort)
+  if (order.source !== "walk_in") await (await import("@/server/email/order-confirmation")).sendOrderConfirmation(orderId);
   // walk-in QR orders: payment is what releases their files into the print queue
   if (order.source === "walk_in") await (await import("@/server/walk-in/queue")).enqueueOrderJobs(orderId);
   return true;

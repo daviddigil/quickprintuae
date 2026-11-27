@@ -5,6 +5,8 @@ import { Alert, Badge, Button, Card, EmptyState, Input, Select, Table } from "@/
 import { PageTitle, fmtDate } from "@/components/platform/PageTitle";
 import { formatAED } from "@/lib/pricing";
 import { invoiceAction, runInvoiceGeneration } from "../actions";
+import { issueSaasCreditNoteAction } from "./actions";
+import { recentPlatformCreditNotes } from "@/server/credit-notes";
 
 export const dynamic = "force-dynamic";
 type S = "draft" | "open" | "paid" | "void";
@@ -18,6 +20,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     .orderBy(desc(schema.saasInvoices.createdAt)).limit(300);
   const outstanding = rows.filter((r) => r.i.status === "open").reduce((a, r) => a + r.i.total, 0);
   const lastMonth = new Date(); lastMonth.setUTCMonth(lastMonth.getUTCMonth() - 1);
+  const creditNotes = await recentPlatformCreditNotes(50);
+  const noteByInvoice = new Map(creditNotes.filter((c) => c.saasInvoiceId).map((c) => [c.saasInvoiceId!, c]));
+  const today = new Date().toISOString().slice(0, 10), monthStart = today.slice(0, 8) + "01";
 
   return (
     <>
@@ -41,7 +46,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           <Table head={["Invoice", "Shop", "Period", "Subscription", "Discount", "Order fees", "VAT", "Total", "Status", ""]}>
             {rows.map(({ i, tenant }) => (
               <tr key={i.id}>
-                <td className="px-4 py-3 font-mono text-xs">{i.number}</td>
+                <td className="px-4 py-3 font-mono text-xs"><Link className="hover:underline" href={`/superadmin/invoices/${i.id}`}>{i.number}</Link></td>
                 <td className="px-4 py-3"><Link className="hover:underline" href={`/superadmin/tenants/${i.tenantId}`}>{tenant}</Link></td>
                 <td className="px-4 py-3 text-xs">{fmtDate(i.periodStart)}</td>
                 <td className="px-4 py-3">{formatAED(i.subscriptionAmount)}</td>
@@ -51,6 +56,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 <td className="px-4 py-3 font-semibold">{formatAED(i.total)}</td>
                 <td className="px-4 py-3"><Badge tone={i.status === "paid" ? "green" : i.status === "open" ? "yellow" : "gray"}>{i.status}</Badge></td>
                 <td className="px-4 py-3">
+                  {(i.status === "void" || i.status === "paid") && (
+                    noteByInvoice.has(i.id)
+                      ? <Link className="text-xs font-semibold text-primary" href={`/superadmin/invoices/credit-note/${noteByInvoice.get(i.id)!.id}`}>{noteByInvoice.get(i.id)!.number}</Link>
+                      : <form action={issueSaasCreditNoteAction} className="flex gap-1"><input type="hidden" name="invoiceId" value={i.id} /><Input name="reason" placeholder="Reason" className="h-8 w-28 text-xs" /><button className="text-xs font-semibold text-critical">Credit note</button></form>
+                  )}
                   {i.status === "open" && (
                     <div className="flex gap-2 text-xs font-semibold">
                       {(["collect", "paid", "void"] as const).map((op) => (
@@ -61,6 +71,25 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                   )}
                 </td>
               </tr>
+            ))}
+          </Table>
+        )}
+      </Card>
+      <Card className="mt-6" data-testid="tax-export">
+        <CardHeader title="Accountant export" subtitle="SaaS invoices and credit notes issued in a date range, as CSV (credit notes are negative)." />
+        <form action="/api/v1/superadmin/tax-records/export" method="get" className="flex flex-wrap items-end gap-2 p-5">
+          <label className="text-sm">From<Input type="date" name="from" defaultValue={monthStart} className="w-44" /></label>
+          <label className="text-sm">To<Input type="date" name="to" defaultValue={today} className="w-44" /></label>
+          <Button variant="secondary">Download CSV</Button>
+        </form>
+      </Card>
+      <Card className="mt-6" data-testid="credit-notes">
+        <CardHeader title="Credit notes (platform)" subtitle="Numbered sequentially without gaps." />
+        {creditNotes.length === 0 ? <EmptyState title="No credit notes yet" /> : (
+          <Table head={["Credit note", "Refers to", "Excl. VAT", "VAT", "Total", "Issued"]}>
+            {creditNotes.map((c) => (
+              <tr key={c.id}><td className="px-4 py-3 font-mono text-xs"><Link className="hover:underline" href={`/superadmin/invoices/credit-note/${c.id}`}>{c.number}</Link></td><td className="px-4 py-3 text-xs">{c.refersTo}</td>
+                <td className="px-4 py-3">{formatAED(c.subtotal)}</td><td className="px-4 py-3">{formatAED(c.vat)}</td><td className="px-4 py-3 font-semibold">{formatAED(c.total)}</td><td className="px-4 py-3 text-xs">{fmtDate(c.issuedAt)}</td></tr>
             ))}
           </Table>
         )}

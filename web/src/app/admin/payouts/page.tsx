@@ -7,6 +7,8 @@ import { fmtDate } from "@/components/platform/PageTitle";
 import { formatAED } from "@/lib/pricing";
 import { shopStatement } from "@/server/payouts/statement";
 import { PayoutAccountPanel } from "./PayoutAccountPanel";
+import { getPlatformIdentity } from "@/server/platform-identity";
+import { PlatformIdentityBlock } from "@/components/platform-identity-block";
 
 export const metadata = { title: "Payouts" };
 export const dynamic = "force-dynamic";
@@ -20,6 +22,7 @@ export default async function PayoutsPage({ searchParams }: { searchParams: Prom
   const owner = user.role === "owner";
   if (!owner) return <div className="space-y-6"><PageHeader title="Payouts" /><Alert tone="yellow">Only the store owner can see balances and payouts.</Alert></div>;
   const s = await shopStatement(tenant.id);
+  const platform = await getPlatformIdentity();
   const verified = tenant.verificationStatus === "verified";
   return (
     <div className="space-y-6">
@@ -37,6 +40,7 @@ export default async function PayoutsPage({ searchParams }: { searchParams: Prom
       <PayoutAccountPanel tenant={tenant} account={s.account} owner={owner} returnTo="/admin/payouts" />
       <Card>
         <CardHeader title="Per-order breakdown" subtitle="Gross is what the customer paid. The gateway fee and QuickPrint commission are deducted to give your net." />
+        <div className="border-b border-outline-variant px-5 py-3 text-sm" data-testid="statement-issuer"><p className="mb-1 text-xs font-semibold uppercase text-on-surface-variant">Statement issued by</p><PlatformIdentityBlock identity={platform} /></div>
         {s.lines.length === 0 ? <EmptyState title="No paid orders yet">Paid orders appear here with their fees and your net amount.</EmptyState> : (
           <Table head={["Order", "Type", "Gross", "Gateway fee", "Commission", "Net to you", "Status", "Available from"]}>
             {s.lines.map((l) => (

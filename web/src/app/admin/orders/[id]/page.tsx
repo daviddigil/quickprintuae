@@ -17,6 +17,7 @@ import { MerchProof, ProofDownload } from "@/components/admin/ProofDownload";
 import { WalkInOrderJobs } from "@/components/admin/WalkInOrderJobs";
 import { dubai, slotLabel, waLink } from "@/components/admin/format";
 import { bookCourier, changeOrderStatus, saveInternalNotes, setManualTracking } from "../../actions";
+import { declineOrder } from "./actions";
 
 const fmtSize = (b: number) => (b > 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.ceil(b / 1e3)} KB`);
 
@@ -176,6 +177,18 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
               {order.status === "pending_payment" && <p className="text-xs text-on-surface-variant">Orders move to Paid automatically when Stripe confirms the payment.</p>}
             </div>
           </Card>
+
+          {next.includes("cancelled") && (
+            <Card data-testid="decline-order">
+              <CardHeader title="Decline this job" subtitle="Use when the content breaks the law or the Acceptable Use Policy. The order is cancelled and your reason is recorded." />
+              <form action={declineOrder} className="space-y-3 px-5 pb-5">
+                <input type="hidden" name="orderId" value={order.id} />
+                <Textarea name="reason" required minLength={5} maxLength={1000} rows={2} aria-label="Reason for declining" placeholder="Reason (required)" />
+                <Button variant="danger" className="text-xs">Decline and cancel order</Button>
+              </form>
+            </Card>
+          )}
+          {order.declinedReason && <Alert tone="yellow">Declined under the Acceptable Use Policy: {order.declinedReason}</Alert>}
 
           <Card>
             <CardHeader title="Customer" />

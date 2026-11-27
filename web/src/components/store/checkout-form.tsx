@@ -6,6 +6,10 @@ import { clearCart, useCart } from "@/lib/cart";
 import { computeOrderTotals, formatAED } from "@/lib/pricing";
 import { generateSlots } from "@/lib/slots";
 import { EMIRATES, type DeliverySettings } from "@/lib/types";
+import { RIGHTS_DECLARATION } from "@/lib/compliance";
+import { requiresRightsDeclaration } from "@/lib/rights-declaration";
+import type { SellerIdentity } from "@/lib/seller-identity";
+import { SellerIdentityBlock } from "./seller-identity-block";
 
 export interface CheckoutData {
   store: string;
@@ -18,6 +22,10 @@ export interface CheckoutData {
   zones: { emirate: string; fee: number; freeAbove: number | null; minLeadHours: number }[];
   prefill?: { name: string; email: string; phone: string };
   defaultEmirate: string;
+  /** verified seller identity (null while the shop is unverified) */
+  seller: SellerIdentity | null;
+  /** shop returns / cancellation / delivery terms: the shop's own text or the marked template */
+  policy: { en: string[]; ar: string[] | null; isTemplate: boolean };
 }
 
 const PAY_BY_CARD = { t: "Pay by card", s: "Card, Apple Pay or Google Pay. Secured by Stripe." };
@@ -34,6 +42,7 @@ export function CheckoutForm(d: CheckoutData) {
   const [day, setDay] = useState<string>("");
   const provider = d.providers[0];
   const [notes, setNotes] = useState("");
+  const [declared, setDeclared] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ msg: string; orderUrl?: string } | null>(null);
 
@@ -45,17 +54,19 @@ export function CheckoutForm(d: CheckoutData) {
   const deliveryFee = mode === "delivery" && zone ? (zone.freeAbove != null && estimate >= zone.freeAbove ? 0 : zone.fee) : 0;
   const totals = computeOrderTotals(lines.map((l) => l.estimate), deliveryFee, d.vatRate, d.pricesIncludeVat);
   const slotValid = !!activeDay?.slots.some((s) => s.start === slot);
+  const needsDeclaration = requiresRightsDeclaration(lines);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!slotValid) return setError({ msg: `Please choose a ${mode} time slot.` });
     if (!provider) return setError({ msg: "Online payment is not available for this shop yet." });
+    if (needsDeclaration && !declared) return setError({ msg: "Please confirm that you own this content or have the right to print it." });
     setBusy(true);
     const res = await fetch(`/api/v1/store/${d.store}/checkout`, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        contact, fulfillment: mode, provider, slotStart: slot, notes: notes || undefined,
+        contact, fulfillment: mode, provider, slotStart: slot, notes: notes || undefined, rightsDeclared: needsDeclaration ? declared : undefined,
         pickupLocationId: mode === "pickup" ? pickupId : undefined,
         address: mode === "delivery" ? { ...addr, line2: addr.line2 || undefined, notes: addr.notes || undefined } : undefined,
         lines: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, pages: l.pages, selections: l.selections, fileIds: l.fileIds, design: l.design })),
@@ -69,7 +80,7 @@ export function CheckoutForm(d: CheckoutData) {
     }
     setBusy(false);
     if (data.orderId) clearCart(d.store); // order exists; payment can be retried from the order page
-    setError({ msg: data.error ?? "Something went wrong. Please try again.", orderUrl: data.orderUrl });
+    setError({ msg: data.message ?? data.error ?? "Something went wrong. Please try again.", orderUrl: data.orderUrl });
   }
 
   if (!lines.length && !error) {
@@ -147,6 +158,27 @@ export function CheckoutForm(d: CheckoutData) {
           )}
         </section>
 
+        <section data-testid="consumer-terms">
+          <h2 className="mb-3 text-lg font-semibold">Cancellation, returns and delivery</h2>
+          <div className="space-y-2 rounded-lg border border-outline-variant bg-surface-low p-4 text-sm text-on-surface-variant">
+            {d.policy.en.map((t, i) => <p key={i}>{t}</p>)}
+            {d.policy.ar && <div dir="rtl" lang="ar" className="space-y-2 border-t border-outline-variant pt-2">{d.policy.ar.map((t, i) => <p key={i}>{t}</p>)}</div>}
+          </div>
+          <SellerIdentityBlock identity={d.seller} className="mt-3 text-xs text-on-surface-variant" testid="checkout-seller-identity" />
+        </section>
+
+        {needsDeclaration && (
+          <section data-testid="rights-declaration">
+            <label className="flex cursor-pointer gap-3 rounded-lg border border-outline-variant p-3 text-sm">
+              <input type="checkbox" name="rightsDeclared" checked={declared} onChange={(e) => setDeclared(e.target.checked)} className="mt-1" data-testid="rights-checkbox" required />
+              <span>
+                <span className="block">{RIGHTS_DECLARATION.en}</span>
+                <span dir="rtl" lang="ar" className="mt-1 block text-on-surface-variant">{RIGHTS_DECLARATION.ar}</span>
+              </span>
+            </label>
+          </section>
+        )}
+
         <section>
           <h2 className="mb-3 text-lg font-semibold">Payment</h2>
           {d.providers.length === 0 ? (
@@ -177,11 +209,13 @@ export function CheckoutForm(d: CheckoutData) {
           ))}
         </ul>
         <dl className="mt-4 space-y-1 border-t border-outline-variant pt-3 text-sm">
-          <Row k="Subtotal" v={formatAED(totals.subtotal)} />
+          <Row k={`Subtotal${d.pricesIncludeVat ? " (incl. VAT)" : " (excl. VAT)"}`} v={formatAED(totals.subtotal)} />
           <Row k={mode === "delivery" ? "Delivery" : "Pickup"} v={totals.deliveryFee ? formatAED(totals.deliveryFee) : "Free"} />
-          <Row k={`VAT ${d.vatRate}%${d.pricesIncludeVat ? " (incl.)" : ""}`} v={formatAED(totals.vat)} />
-          <div className="flex justify-between pt-2 text-base font-bold"><dt>Total</dt><dd data-testid="total">{formatAED(totals.total)}</dd></div>
+          <Row k="Total excl. VAT" v={formatAED(Math.round((totals.total - totals.vat) * 100) / 100)} />
+          <Row k={`VAT ${d.vatRate}%`} v={formatAED(totals.vat)} />
+          <div className="flex justify-between pt-2 text-base font-bold"><dt>Total incl. VAT</dt><dd data-testid="total">{formatAED(totals.total)}</dd></div>
         </dl>
+        <p className="mt-2 text-xs text-on-surface-variant" data-testid="vat-note">All prices in AED. {d.pricesIncludeVat ? `Shop prices include ${d.vatRate}% VAT.` : `${d.vatRate}% VAT is added to shop prices.`}</p>
         {error && <div className="mt-4"><Alert>{error.msg}{error.orderUrl && <> <a className="font-semibold underline" href={error.orderUrl}>View order</a></>}</Alert></div>}
         <Button variant="store" className="mt-5 w-full py-3" disabled={busy || !d.providers.length || !lines.length} data-testid="place-order">
           {busy ? <><Loader2 className="h-4 w-4 animate-spin" />Processing…</> : `Pay ${formatAED(totals.total)}`}

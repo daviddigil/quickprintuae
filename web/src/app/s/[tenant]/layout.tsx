@@ -8,6 +8,8 @@ import { requireStorefrontTenant } from "@/lib/tenant";
 import { CartBadge } from "@/components/store/cart-badge";
 import { PoweredBy } from "@/components/PoweredBy";
 import { orderingState } from "@/server/trust/gating";
+import { getSellerIdentity } from "@/server/seller-identity";
+import { SellerIdentityBlock } from "@/components/store/seller-identity-block";
 import { absoluteAsset, isIndexableTenant, storefrontHostOrigin, storefrontUrl, trim } from "@/lib/seo/storefront";
 
 type P = { params: Promise<{ tenant: string }> };
@@ -40,6 +42,7 @@ export default async function StoreLayout({ children, params }: P & { children: 
   ]);
   const base = `/s/${tenant.slug}`;
   const ordering = await orderingState(tenant);
+  const seller = await getSellerIdentity(tenant); // verified identity only; null for an unverified shop (no legal claims shown)
   const wa = tenant.whatsapp?.replace(/[^\d]/g, "");
   return (
     <div style={{ ["--store" as string]: tenant.primaryColor }} className="flex min-h-screen flex-col bg-white">
@@ -77,15 +80,16 @@ export default async function StoreLayout({ children, params }: P & { children: 
       <main className="flex-1">{children}</main>
       <footer className="mt-16 border-t border-outline-variant bg-surface-low">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm text-on-surface-variant sm:grid-cols-3">
-          <div>
-            <p className="font-semibold text-on-surface">{tenant.legalName || tenant.name}</p>
-            {tenant.address && <p className="mt-1">{tenant.address}{tenant.emirate ? `, ${tenant.emirate}` : ""}</p>}
-            {tenant.trn && <p className="mt-1">TRN: {tenant.trn}</p>}
-          </div>
+          {seller ? <SellerIdentityBlock identity={seller} testid="footer-seller-identity" /> : (
+            <div>
+              <p className="font-semibold text-on-surface">{tenant.name}</p>
+              {tenant.address && <p className="mt-1">{tenant.address}{tenant.emirate ? `, ${tenant.emirate}` : ""}</p>}
+            </div>
+          )}
           <div className="space-y-2">
             {tenant.phone && <a href={`tel:${tenant.phone}`} className="flex items-center gap-2 hover:text-on-surface"><Phone className="h-4 w-4" />{tenant.phone}</a>}
             {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-on-surface"><MessageCircle className="h-4 w-4" />WhatsApp us</a>}
-            {tenant.email && <a href={`mailto:${tenant.email}`} className="block hover:text-on-surface">{tenant.email}</a>}
+            {tenant.email && !seller && <a href={`mailto:${tenant.email}`} className="block hover:text-on-surface">{tenant.email}</a>}
           </div>
           <div>
             <p>Secure online payment by card, Apple Pay & Google Pay. Prices in AED, VAT {tenant.settings?.vatRate ?? 5}% {tenant.settings?.pricesIncludeVat ? "included" : "added at checkout"}.</p>

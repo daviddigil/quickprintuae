@@ -16,15 +16,8 @@ export const ERASED_NAME = "Deleted customer";
 export const erasedEmail = (userId: string) => `deleted+${userId}@invalid`;
 
 /* ---------- request workflow ---------- */
-export const DSR_TRANSITIONS: Record<string, string[]> = {
-  requested: ["in_progress", "completed", "rejected"],
-  in_progress: ["completed", "rejected"],
-  completed: [],
-  rejected: [],
-};
-export const canMoveDsr = (from: string, to: string) => (DSR_TRANSITIONS[from] ?? []).includes(to);
-export const isDsrOverdue = (r: { status: string; dueAt: Date }, now = new Date()) =>
-  (r.status === "requested" || r.status === "in_progress") && r.dueAt.getTime() < now.getTime();
+export { DSR_TRANSITIONS, canMoveDsr, isDsrOverdue } from "@/lib/dsr";
+import { canMoveDsr } from "@/lib/dsr";
 
 /** Files a request. An identical open request (same tenant, requester, kind) is returned instead of duplicated. */
 export async function createDataSubjectRequest(input: { tenantId: string | null; userId?: string | null; email: string; kind: DsrKind; note?: string | null }) {

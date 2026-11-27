@@ -13,6 +13,9 @@ import { CardPreview } from "@/components/card-designer/CardDesigner";
 import { enabledProviders, verifyPayment } from "@/server/payments";
 import { verifyOrderToken } from "@/server/checkout";
 import { PayAgain } from "@/components/store/pay-again";
+import { getSellerIdentity } from "@/server/seller-identity";
+import { SellerIdentityBlock } from "@/components/store/seller-identity-block";
+import { resolveReturnsPolicyBoth } from "@/lib/consumer-terms";
 
 export const metadata = { title: "Order", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -46,6 +49,8 @@ export default async function OrderPage({ params, searchParams }: P) {
   const steps: OrderStatus[] = order.fulfillment === "pickup" ? [...FLOW, finalStep] : [...FLOW, "out_for_delivery", finalStep];
   const reached = steps.indexOf(order.status as OrderStatus);
   const closed = order.status === "cancelled" || order.status === "refunded";
+  const seller = await getSellerIdentity(tenant);
+  const pol = resolveReturnsPolicyBoth(tenant.returnsPolicy);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -120,6 +125,14 @@ export default async function OrderPage({ params, searchParams }: P) {
               </>
             )}
             {order.slotStart && <p className="mt-3 text-on-surface-variant"><span className="font-medium text-on-surface">Slot:</span> {formatUaeDateTime(order.slotStart)}{order.slotEnd ? ` – ${formatUaeTime(order.slotEnd)}` : ""}</p>}
+          </Card>
+          <SellerIdentityBlock identity={seller} className="rounded-xl border border-outline-variant p-4 text-sm text-on-surface-variant" testid="order-seller-identity" />
+          <Card className="p-4 text-sm" data-testid="order-consumer-terms">
+            <p className="font-semibold">Cancellation, returns and delivery</p>
+            <div className="mt-2 space-y-2 text-on-surface-variant">
+              {pol.en.text.map((t, i) => <p key={i}>{t}</p>)}
+              {pol.ar && <div dir="rtl" lang="ar" className="space-y-2 border-t border-outline-variant pt-2">{pol.ar.text.map((t, i) => <p key={i}>{t}</p>)}</div>}
+            </div>
           </Card>
           <Card className="p-4 text-sm">
             <p className="font-semibold">Timeline</p>

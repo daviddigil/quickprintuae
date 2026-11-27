@@ -15,6 +15,8 @@ import { effectiveRuleForTenant, ensureCommissionsForPeriod } from "@/server/com
 import { setupMode } from "@/server/billing/gateway";
 import { OffersCard } from "./offers-card";
 import { CardSection } from "./card-section";
+import { getPlatformIdentity } from "@/server/platform-identity";
+import { PlatformIdentityBlock } from "@/components/platform-identity-block";
 
 export const metadata = { title: "Plan & billing" };
 const INV_TONE = { draft: "gray", open: "yellow", paid: "green", void: "gray" } as const;
@@ -45,6 +47,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const price = tenant.billingCycle === "yearly" ? plan?.priceYearly : plan?.priceMonthly;
   const cardMode = await setupMode();
   const ref = tenant.billingRef ?? {};
+  const platformIdentity = await getPlatformIdentity();
 
   return (
     <div className="space-y-6">
@@ -111,6 +114,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       </Card>
       <Card data-testid="commission-statement">
         <CardHeader title="Commission on your orders" subtitle="Charged on the value of each paid order excluding VAT and delivery, and added to your monthly invoice. No commission during your free trial." />
+        <div className="px-5 pt-4 text-sm" data-testid="commission-issuer"><p className="mb-1 text-xs font-semibold uppercase text-on-surface-variant">Statement issued by</p><PlatformIdentityBlock identity={platformIdentity} /></div>
         <p className="px-5 pt-4 text-sm"><span className="font-medium">Your terms:</span> <span data-testid="my-terms">{describeRule(rule)}</span>{rule.source === "custom" && <> <Badge tone="purple">custom terms</Badge></>}</p>
         {ledger.length === 0 ? <EmptyState title="No paid orders this month yet" /> : (
           <Table head={["Order", "Paid", "Order value", "Commission", "Status"]}>
@@ -143,7 +147,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           <Table head={["Invoice", "Period", "Subscription", "Discount", "Order fees", "Usage", "VAT", "Total", "Status"]}>
             {invoices.map((i) => (
               <tr key={i.id}>
-                <td className="px-4 py-3 font-medium">{i.number}</td>
+                <td className="px-4 py-3 font-medium"><a className="underline" href={`/admin/billing/invoice/${i.id}`}>{i.number}</a></td>
                 <td className="px-4 py-3 text-xs">{dubai(i.periodStart, "d MMM")} – {dubai(i.periodEnd, "d MMM yyyy")}</td>
                 <td className="px-4 py-3">{formatAED(i.subscriptionAmount)}</td>
                 <td className="px-4 py-3" data-testid="invoice-discount">{i.discountAmount > 0 ? <span className="text-success">−{formatAED(i.discountAmount)}<span className="block text-xs text-on-surface-variant">{i.discountDetail.map((d) => d.name).join(", ")}</span></span> : "—"}</td>

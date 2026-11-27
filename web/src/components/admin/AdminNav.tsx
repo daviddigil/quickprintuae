@@ -20,6 +20,8 @@ const NAV = [
   { href: "/admin/whatsapp", label: "WhatsApp AI", icon: MessageCircle },
   { href: "/admin/settings", label: "Store settings", icon: Settings },
   { href: "/admin/customers", label: "Customers", icon: UserRound },
+  { href: "/admin/privacy-requests", label: "Privacy requests", icon: ShieldCheck, ownerOnly: true },
+  { href: "/admin/privacy", label: "Privacy", icon: ShieldCheck, ownerOnly: true },
   { href: "/admin/staff", label: "Staff", icon: Users, ownerOnly: true },
   { href: "/admin/billing", label: "Plan & billing", icon: Receipt },
 ];
@@ -42,7 +44,7 @@ export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walk
         </div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
           {items.map((n) => {
-            const active = n.exact ? path === n.href : path.startsWith(n.href);
+            const active = n.exact ? path === n.href : (path === n.href || path.startsWith(n.href + "/"));
             const Icon = n.icon;
             return (
               <Link key={n.href} href={n.href} onClick={() => setOpen(false)}

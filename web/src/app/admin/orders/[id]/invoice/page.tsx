@@ -6,6 +6,8 @@ import { formatAED, round2 } from "@/lib/pricing";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { dubai, slotLabel } from "@/components/admin/format";
 import { PoweredBy } from "@/components/PoweredBy";
+import { getSellerIdentity } from "@/server/seller-identity";
+import { creditNotesForOrder } from "@/server/credit-notes";
 
 export const metadata = { title: "Invoice" };
 
@@ -21,6 +23,10 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
   const vatRate = tenant.settings.vatRate ?? 5;
   const incl = tenant.settings.pricesIncludeVat;
   const taxable = round2(order.total - order.vat);
+  const seller = await getSellerIdentity(tenant);
+  const credits = await creditNotesForOrder(tenant.id, order.id);
+  // the verified TRN wins; the owner-entered TRN is only a fallback so existing VAT invoices keep working
+  const trn = seller?.trn ?? tenant.trn;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -33,14 +39,16 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {tenant.logoUrl && <img src={tenant.logoUrl} alt="" className="mb-2 h-12" />}
-            <p className="text-lg font-bold">{tenant.legalName || tenant.name}</p>
+            <p className="text-lg font-bold" data-testid="invoice-shop-name">{seller?.tradeName || tenant.legalName || tenant.name}</p>
+            {seller && <p className="text-xs text-on-surface-variant" data-testid="invoice-sold-by">Sold by {seller.tradeName} · Shop: {tenant.name}</p>}
+            {seller && <p className="text-on-surface-variant" data-testid="invoice-licence">Trade licence no. {seller.licenceNumber} ({seller.authority})</p>}
             <p className="text-on-surface-variant">{tenant.address}{tenant.address ? ", " : ""}{tenant.emirate}, United Arab Emirates</p>
             {tenant.phone && <p className="text-on-surface-variant">{tenant.phone}</p>}
             {tenant.email && <p className="text-on-surface-variant">{tenant.email}</p>}
-            {tenant.trn && <p className="mt-1 font-semibold">TRN: {tenant.trn}</p>}
+            {trn && <p className="mt-1 font-semibold">TRN: {trn}</p>}
           </div>
           <div className="text-right">
-            <p className="text-2xl font-extrabold uppercase tracking-wide">{ticket ? "Job Ticket" : tenant.trn ? "Tax Invoice" : "Invoice"}</p>
+            <p className="text-2xl font-extrabold uppercase tracking-wide">{ticket ? "Job Ticket" : trn ? "Tax Invoice" : "Invoice"}</p>
             <p className="mt-2"><span className="text-on-surface-variant">{ticket ? "Order" : "Invoice"} no.</span> <b>{order.number}</b></p>
             <p><span className="text-on-surface-variant">Date:</span> {dubai(order.paidAt ?? order.createdAt, "d MMM yyyy")}</p>
             <p><span className="text-on-surface-variant">Status:</span> {order.paidAt ? "Paid" : "Unpaid"}</p>
@@ -98,6 +106,11 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
               {["Printed by", "Checked by", "Handed over"].map((l) => <div key={l} className="border-t pt-1">{l}</div>)}
             </div>
           </div>
+        )}
+        {!ticket && credits.length > 0 && (
+          <p className="mt-6 text-sm print:hidden" data-testid="order-credit-notes">
+            Credit note{credits.length > 1 ? "s" : ""}: {credits.map((c) => c.number).join(", ")} · <a className="underline" href={`/admin/orders/${order.id}/invoice/credit-note`}>View / print</a>
+          </p>
         )}
         {!ticket && <p className="mt-10 text-center text-xs text-outline">Thank you for your business. This is a computer-generated document.</p>}
         <PoweredBy className="mt-2 text-center" />
