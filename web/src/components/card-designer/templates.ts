@@ -3,8 +3,6 @@
  * (no ANTHROPIC_API_KEY) and as "start from template" in the editor. Pure — safe on client & server.
  */
 import type { CardDesign, CardElement, CardSide } from "@/lib/types";
-import { PT_MM } from "./fonts";
-
 import { bleedify, fitFont, paletteFor, type CardDetails, type Palette } from "./kit";
 import { CARD_TEMPLATES, buildDesign, recommend } from "./catalog";
 

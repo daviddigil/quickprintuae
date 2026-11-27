@@ -80,7 +80,7 @@ export function Configurator({
   const [pages, setPages] = useState<number>(initial?.pages ?? 1);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [design, setDesign] = useState<CardDesign | undefined>();
-  const [cardTab, setCardTab] = useState<"ai" | "design" | "upload">(aiEnabled ? "ai" : "design");
+  const [cardTab, setCardTab] = useState<"design" | "upload">("design");
   const [err, setErr] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
 
@@ -129,7 +129,7 @@ export function Configurator({
     setErr(null);
     const usingDesign = config.designer && cardTab !== "upload";
     if (config.designer) {
-      if (usingDesign && !design) return setErr("Create your design first (use the AI designer or the editor).");
+      if (usingDesign && !design) return setErr("Create your design first (pick a template, use the AI designer or the editor).");
       if (!usingDesign && !files.length) return setErr("Please upload your artwork.");
     } else if (config.requiresUpload && !files.length) {
       return setErr("Please upload your file first.");
@@ -188,14 +188,15 @@ export function Configurator({
         {config.designer ? (
           <section>
             <h2 className="mb-3 font-semibold">Your design</h2>
+            <p className="mb-3 text-sm text-on-surface-variant">{aiEnabled ? "Pick a ready-made template or create with AI, then edit every detail." : "Pick a ready-made template, then edit every detail."}</p>
             <div className="mb-4 inline-flex rounded-lg bg-surface-container p-1 text-sm">
-              {([aiEnabled ? ["ai", "AI design"] : null, ["design", "Design yourself"], ["upload", "Upload artwork"]].filter(Boolean) as [typeof cardTab, string][]).map(([k, l]) => (
-                <button key={k} type="button" onClick={() => setCardTab(k)} className={cn("rounded-md px-3 py-1.5 font-medium", cardTab === k ? "bg-white shadow-sm" : "text-on-surface-variant")}>{l}</button>
+              {([["design", "Design online"], ["upload", "Upload artwork"]] as [typeof cardTab, string][]).map(([k, l]) => (
+                <button key={k} type="button" onClick={() => setCardTab(k)} className={cn("min-h-11 rounded-md px-3 font-medium", cardTab === k ? "bg-white shadow-sm" : "text-on-surface-variant")}>{l}</button>
               ))}
             </div>
             {cardTab === "upload" ? uploader : (
               <CardDesigner key={cardTab} store={store} initial={design} widthMm={cardSize.w} heightMm={cardSize.h}
-                doubleSided={sel.sides === "double"} aiEnabled={cardTab === "ai"} onChange={setDesign} />
+                doubleSided={sel.sides === "double"} aiEnabled={aiEnabled} onChange={setDesign} />
             )}
           </section>
         ) : config.requiresUpload ? (

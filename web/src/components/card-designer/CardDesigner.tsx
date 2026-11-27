@@ -3,13 +3,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CardDesign, CardElement, CardSide } from "@/lib/types";
 import { CARD_FONTS, GOOGLE_FONTS_URL } from "./fonts";
 import { BLEED_MM, SAFE_MM, CardPreview, ElementSvg, bbox, getSide } from "./render";
-import { blankDesign, templateDesigns, type CardDetails } from "./templates";
+import { blankDesign, templateDesigns } from "./templates";
+import { DetailsForm, INITIAL_DETAILS, cleanDetails, fileToDataUrl, type DetailsState } from "./details";
+import { TemplateGallery, type PickInfo, type QuotaInfo } from "./TemplateGallery";
 
 export { CardPreview } from "./render";
 
 /**
- * Full business-card editor (front/back, text/shapes/logo/QR, drag to move) with an
- * "AI design" panel that POSTs to /api/v1/ai/business-card { store, details } -> { designs: CardDesign[] }.
+ * Full business-card editor (front/back, text/shapes/logo/QR, drag to move). Tabs: "Templates" (free ready-made gallery, first),
+ * "AI design" (POSTs to /api/v1/ai/business-card { store, details } -> { designs: CardDesign[] }, when the shop has AI on) and "Edit".
  * Calls onChange on every edit. Storefront embeds it on the business card product page.
  */
 export interface CardDesignerProps {
@@ -51,17 +53,6 @@ function resize(d: CardDesign, W: number, H: number): CardDesign {
   return { ...d, widthMm: W, heightMm: H, orientation: W >= H ? "landscape" : "portrait", front: side(d.front)!, back: side(d.back) };
 }
 
-async function fileToDataUrl(file: File, maxPx = 800): Promise<string> {
-  const raw = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(file); });
-  if (file.type === "image/svg+xml") return raw;
-  const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = raw; });
-  const k = Math.min(1, maxPx / Math.max(img.width, img.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-  return c.toDataURL("image/png");
-}
-
 export function CardDesigner(p: CardDesignerProps) {
   useGoogleFonts();
   const W = p.widthMm ?? p.initial?.widthMm ?? 85;
@@ -69,7 +60,13 @@ export function CardDesigner(p: CardDesignerProps) {
   const [design, setDesign] = useState<CardDesign>(() => resize(p.initial ?? blankDesign(W, H), W, H));
   const [side, setSide] = useState<SideKey>("front");
   const [selected, setSelected] = useState<string | null>(null);
-  const [tab, setTab] = useState<"ai" | "edit">(p.initial ? "edit" : "ai");
+  const [tab, setTab] = useState<"templates" | "ai" | "edit">(p.initial ? "edit" : "templates");
+  const [details, setDetails] = useState<DetailsState>(INITIAL_DETAILS); // shared by the template gallery and the AI panel
+  const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [sampleNote, setSampleNote] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const editTabRef = useRef<HTMLButtonElement>(null);
+  const [focusEdit, setFocusEdit] = useState(false);
   const [past, setPast] = useState<CardDesign[]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
@@ -77,7 +74,16 @@ export function CardDesigner(p: CardDesignerProps) {
   // notify parent (ref avoids loops with inline callbacks)
   const onChangeRef = useRef(p.onChange);
   onChangeRef.current = p.onChange;
-  useEffect(() => { onChangeRef.current(design); }, [design]);
+  // a single-sided order never carries a back (the template's back is kept in the editor in case the customer switches to double-sided)
+  useEffect(() => { onChangeRef.current(p.doubleSided === false && design.back ? { ...design, back: undefined } : design); }, [design, p.doubleSided]);
+
+  useEffect(() => {
+    if (!p.aiEnabled) return;
+    let alive = true;
+    fetch(`/api/v1/ai/business-card?store=${encodeURIComponent(p.store)}`).then((r) => r.json()).then((d) => { if (alive && d.quota) setQuota(d.quota); }).catch(() => {});
+    return () => { alive = false; };
+  }, [p.aiEnabled, p.store]);
+  useEffect(() => { if (focusEdit && tab === "edit") { editTabRef.current?.focus(); setFocusEdit(false); } }, [focusEdit, tab]);
 
   // follow size / sides from the product options
   useEffect(() => { setDesign((d) => resize(d, W, H)); }, [W, H]);
@@ -148,14 +154,49 @@ export function CardDesigner(p: CardDesignerProps) {
     return () => window.removeEventListener("keydown", k);
   }, [selected, sel, remove, updateEl, undo]);
 
+  /** Load a ready-made or AI design into the editor (same path for both). */
+  const load = (d: CardDesign, info?: PickInfo) => {
+    commit(() => resize(d, W, H)); setSide("front"); setSelected(null); setTab("edit"); setFocusEdit(true);
+    setSampleNote(!!info?.sample);
+    if (info?.qr && !info.sample) setQrValue(info.qr);
+    rootRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
   const logoInput = useRef<HTMLInputElement>(null);
   const [qrValue, setQrValue] = useState("");
 
   const box = sel ? bbox(sel) : null;
   const bgId = `ed-clip-${side}`;
 
+  const tabs: [typeof tab, React.ReactNode][] = [
+    ["templates", "Templates"],
+    ...(p.aiEnabled ? [["ai", <span key="ai" className="inline-flex items-center gap-1.5">✨ AI design{quota && <span data-testid="ai-badge" className={`rounded-full px-1.5 py-0.5 text-[11px] leading-none ${quota.remaining === 0 ? "bg-critical-container text-critical" : "bg-surface-container text-on-surface-variant"}`}>{quota.remaining} left</span>}</span>] as [typeof tab, React.ReactNode]] : []),
+    ["edit", "Edit"],
+  ];
+  const tabBar = (
+    <div role="tablist" aria-label="Card design" className="flex w-full gap-1 overflow-x-auto rounded-lg border border-outline-variant bg-white p-0.5 text-sm sm:inline-flex sm:w-auto">
+      {tabs.map(([k, label]) => (
+        <button key={k} ref={k === "edit" ? editTabRef : undefined} type="button" role="tab" id={`cd-tab-${k}`} aria-selected={tab === k} aria-controls="cd-panel" data-testid={`card-tab-${k}`} onClick={() => setTab(k)}
+          className={`min-h-11 flex-1 whitespace-nowrap rounded-md px-4 font-medium sm:flex-none ${tab === k ? "bg-inverse-surface text-white" : "text-on-surface-variant hover:bg-surface-low"}`}>{label}</button>
+      ))}
+    </div>
+  );
+
+  if (tab === "templates") {
+    return (
+      <div ref={rootRef} className="space-y-4">
+        {tabBar}
+        <div role="tabpanel" id="cd-panel" aria-labelledby="cd-tab-templates">
+          <TemplateGallery details={details} onDetails={setDetails} W={W} H={H} doubleSided={p.doubleSided !== false} aiEnabled={p.aiEnabled} quota={quota}
+            onPick={(d, info) => load(d, info)} onBlank={() => load(blankDesign(W, H))} onAi={() => setTab("ai")} />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div ref={rootRef} className="space-y-4">
+    {tabBar}
+    <div role="tabpanel" id="cd-panel" aria-labelledby={`cd-tab-${tab}`} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
       {/* ---------- canvas ---------- */}
       <div className="min-w-0 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -216,19 +257,17 @@ export function CardDesigner(p: CardDesignerProps) {
 
       {/* ---------- side panel ---------- */}
       <div className="space-y-3">
-        <div className="inline-flex w-full rounded-lg border border-outline-variant bg-white p-0.5 text-sm">
-          <button type="button" onClick={() => setTab("ai")} className={`flex-1 rounded-md px-3 py-1.5 font-medium ${tab === "ai" ? "bg-inverse-surface text-white" : "text-on-surface-variant"}`}>
-            {p.aiEnabled ? "✨ AI design" : "Templates"}
-          </button>
-          <button type="button" onClick={() => setTab("edit")} className={`flex-1 rounded-md px-3 py-1.5 font-medium ${tab === "edit" ? "bg-inverse-surface text-white" : "text-on-surface-variant"}`}>Edit</button>
-        </div>
-
-        {tab === "ai" ? (
-          <AiPanel store={p.store} aiEnabled={p.aiEnabled} W={W} H={H} doubleSided={p.doubleSided !== false}
-            onQr={setQrValue}
-            onPick={(d) => { commit(() => resize(d, W, H)); setSide("front"); setSelected(null); setTab("edit"); }} />
+        {tab === "ai" && p.aiEnabled ? (
+          <AiPanel store={p.store} W={W} H={H} doubleSided={p.doubleSided !== false} details={details} onDetails={setDetails} quota={quota} onQuota={setQuota}
+            onQr={setQrValue} onPick={(d) => load(d)} onTemplates={() => setTab("templates")} />
         ) : (
           <div className="space-y-3 rounded-xl border border-outline-variant bg-white p-4 text-sm">
+            {sampleNote && (
+              <div data-testid="sample-note" className="flex items-start justify-between gap-2 rounded-lg bg-warning-container p-2 text-xs text-on-warning-container">
+                <span>This template shows sample text and a sample QR link. Select each layer to replace it with your own details.</span>
+                <button type="button" onClick={() => setSampleNote(false)} className="shrink-0 rounded border border-current px-2 py-1">Got it</button>
+              </div>
+            )}
             <Row label={`${side === "front" ? "Front" : "Back"} background`}>
               <ColorInput value={current.background} onChange={(v) => updateSide((s) => ({ ...s, background: v }))} />
             </Row>
@@ -264,46 +303,28 @@ export function CardDesigner(p: CardDesignerProps) {
         )}
       </div>
     </div>
+    </div>
   );
 }
 
-/* ---------- AI / template panel ---------- */
-function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
-  store: string; aiEnabled: boolean; W: number; H: number; doubleSided: boolean; onPick: (d: CardDesign) => void; onQr: (v: string) => void;
+/* ---------- AI panel ---------- */
+function AiPanel({ store, W, H, doubleSided, details, onDetails, quota, onQuota, onPick, onQr, onTemplates }: {
+  store: string; W: number; H: number; doubleSided: boolean; details: DetailsState; onDetails: (d: DetailsState) => void;
+  quota: QuotaInfo | null; onQuota: (q: QuotaInfo) => void; onPick: (d: CardDesign) => void; onQr: (v: string) => void; onTemplates: () => void;
 }) {
-  const [details, setDetails] = useState<CardDetails>({ name: "", title: "", company: "", phone: "", email: "", website: "", address: "", industry: "", style: "modern" });
-  const [colors, setColors] = useState<[string, string]>(["#e11d48", "#0f172a"]);
-  const [useColors, setUseColors] = useState(false);
   const [designs, setDesigns] = useState<CardDesign[]>([]);
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const logoRef = useRef<HTMLInputElement>(null);
-
-  const set = (k: keyof CardDetails) => (ev: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setDetails((d) => ({ ...d, [k]: ev.target.value }));
-  const clean = useMemo(() => {
-    const out: CardDetails = { name: details.name.trim() };
-    for (const k of ["title", "company", "phone", "email", "website", "address", "industry", "style", "logo"] as const) {
-      const v = details[k]?.trim(); if (v) out[k] = v;
-    }
-    if (useColors) out.colors = colors;
-    return out;
-  }, [details, colors, useColors]);
-
-  const [quota, setQuota] = useState<{ used: number; limit: number; remaining: number } | null>(null);
-  useEffect(() => {
-    if (!aiEnabled) return;
-    let alive = true;
-    fetch(`/api/v1/ai/business-card?store=${encodeURIComponent(store)}`).then((r) => r.json()).then((d) => { if (alive && d.quota) setQuota(d.quota); }).catch(() => {});
-    return () => { alive = false; };
-  }, [aiEnabled, store]);
+  const clean = useMemo(() => cleanDetails(details), [details]);
 
   async function generate(ev: React.FormEvent) {
     ev.preventDefault();
     if (!clean.name) return setError("Enter at least your name");
     setError(null); setNote(null);
     if (clean.website) onQr(clean.website.startsWith("http") ? clean.website : `https://${clean.website}`);
-    if (!aiEnabled || quota?.remaining === 0) { setDesigns(templateDesigns(clean, { widthMm: W, heightMm: H, count: 6, doubleSided })); if (quota?.remaining === 0) setNote(`You have used all ${quota.limit} AI designs for this month. Pick a template or edit a design yourself.`); return; }
+    // out of AI designs: show the best ready-made templates instead (free)
+    if (quota?.remaining === 0) { setDesigns(templateDesigns(clean, { widthMm: W, heightMm: H, count: 6, doubleSided })); setNote(`You have used all ${quota.limit} AI designs for this month. Pick a template or edit a design yourself.`); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/v1/ai/business-card", {
@@ -311,7 +332,7 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
         body: JSON.stringify({ store, details: clean, widthMm: W, heightMm: H, doubleSided }),
       });
       const data = await res.json();
-      if (data.quota) setQuota(data.quota);
+      if (data.quota) onQuota(data.quota);
       if (!res.ok) throw new Error(data.error ?? "Could not generate designs");
       setDesigns(data.designs ?? []);
       if (data.note) setNote(data.note);
@@ -323,42 +344,15 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
     }
   }
 
-  const inp = "w-full rounded-lg border border-outline-variant px-3 py-1.5 text-sm outline-none focus:border-outline";
   return (
     <div className="space-y-3 rounded-xl border border-outline-variant bg-white p-4 text-sm">
-      <form onSubmit={generate} className="space-y-2">
-        <p className="text-on-surface-variant">{aiEnabled ? "Tell us about you — AI creates 3 print-ready designs you can edit." : "Fill in your details and pick a template."}</p>
-        {aiEnabled && quota && <p data-testid="ai-quota" className={`text-xs font-medium ${quota.remaining === 0 ? "text-critical" : "text-on-surface-variant"}`}>{quota.remaining === 0 ? `You have used all ${quota.limit} AI designs this month. Templates and the editor are still free.` : `${quota.remaining} of ${quota.limit} AI designs left this month`}</p>}
-        <input className={inp} placeholder="Full name *" value={details.name} onChange={set("name")} required />
-        <div className="grid grid-cols-2 gap-2">
-          <input className={inp} placeholder="Job title" value={details.title} onChange={set("title")} />
-          <input className={inp} placeholder="Company" value={details.company} onChange={set("company")} />
-          <input className={inp} placeholder="Phone" value={details.phone} onChange={set("phone")} />
-          <input className={inp} placeholder="Email" type="email" value={details.email} onChange={set("email")} />
-          <input className={inp} placeholder="Website" value={details.website} onChange={set("website")} />
-          <input className={inp} placeholder="Industry" value={details.industry} onChange={set("industry")} />
-        </div>
-        <input className={inp} placeholder="Address (optional)" value={details.address} onChange={set("address")} />
-        <div className="grid grid-cols-2 gap-2">
-          <select aria-label="Design style" className={inp} value={details.style} onChange={set("style")}>
-            {["modern", "minimal", "bold", "elegant", "corporate", "creative", "luxury"].map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
-          </select>
-          <button type="button" onClick={() => logoRef.current?.click()} className="truncate rounded-lg border border-dashed border-outline-variant px-2 py-1.5 text-on-surface-variant hover:bg-surface-low">
-            {details.logo ? "✓ Logo added" : "Upload logo"}
-          </button>
-          <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden"
-            onChange={async (ev) => { const f = ev.target.files?.[0]; if (!f) return; const src = await fileToDataUrl(f, 600); if (src.length < 400_000) setDetails((d) => ({ ...d, logo: src })); }} />
-        </div>
-        <label className="flex items-center gap-2 text-on-surface-variant">
-          <input type="checkbox" checked={useColors} onChange={(e) => setUseColors(e.target.checked)} /> Use my brand colours
-          {useColors && <>
-            <input type="color" value={colors[0]} onChange={(e) => setColors([e.target.value, colors[1]])} className="h-6 w-8 cursor-pointer" />
-            <input type="color" value={colors[1]} onChange={(e) => setColors([colors[0], e.target.value])} className="h-6 w-8 cursor-pointer" />
-          </>}
-        </label>
+      <form onSubmit={generate} className="space-y-3">
+        <p className="text-on-surface-variant">Tell us about you: AI creates 3 print-ready designs you can edit. Your details are shared with the Templates tab.</p>
+        {quota && <p data-testid="ai-quota" className={`text-xs font-medium ${quota.remaining === 0 ? "text-critical" : "text-on-surface-variant"}`}>{quota.remaining === 0 ? `You have used all ${quota.limit} AI designs this month. Templates and the editor are still free.` : `${quota.remaining} of ${quota.limit} AI designs left this month`}</p>}
+        <DetailsForm value={details} onChange={onDetails} showStyle compact idPrefix="ai" />
         {error && <p className="rounded bg-critical-container px-2 py-1 text-critical">{error}</p>}
-        <button disabled={loading} className="btn-store w-full rounded-lg px-4 py-2 font-semibold disabled:opacity-60">
-          {loading ? "Designing… (10–30 s)" : aiEnabled && quota?.remaining !== 0 ? "✨ Generate designs" : aiEnabled ? "Show templates" : "Show templates"}
+        <button disabled={loading} data-testid="ai-generate" className="btn-store min-h-11 w-full rounded-lg px-4 py-2 font-semibold disabled:opacity-60">
+          {loading ? "Designing… (10–30 s)" : quota?.remaining !== 0 ? "✨ Generate designs" : "Show templates"}
         </button>
       </form>
 
@@ -378,7 +372,10 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
           ))}
         </div>
       )}
-      <button type="button" className="w-full text-xs text-on-surface-variant underline" onClick={() => onPick(blankDesign(W, H))}>Start from a blank card</button>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+        <button type="button" className="min-h-11 text-on-surface-variant underline" onClick={onTemplates}>Browse ready-made templates (free)</button>
+        <button type="button" className="min-h-11 text-on-surface-variant underline" onClick={() => onPick(blankDesign(W, H))}>Start from a blank card</button>
+      </div>
     </div>
   );
 }

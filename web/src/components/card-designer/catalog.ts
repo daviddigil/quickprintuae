@@ -216,7 +216,8 @@ const LAYOUTS: Record<string, Layout> = {
     const col = p.primary, dark = deep(p.secondary, 0.09), acc = tint(col, 0.55);
     const f = new Sb(col, c.k), b = new Sb(dark, c.k);
     const cell = 9;
-    let x = m, y = m + 3, tw: number, bottom = H - m;
+    const x = m, bottom = H - m;
+    let y = m + 3, tw: number;
     if (!pt) {
       const cols = 3, rows = Math.floor((H + 3) / cell);
       pattern(f, W - cols * cell, (H - rows * cell) / 2, cols, rows, cell, col, acc);
@@ -422,7 +423,7 @@ const LAYOUTS: Record<string, Layout> = {
 
   /* dark luxury: black + gold */
   luxeDark(c) {
-    const { d, p, W, H, pt, m } = c, w = W - 2 * m;
+    const { d, p, W, H, m } = c, w = W - 2 * m;
     const bg = deep(p.secondary, 0.03), gold = lift(p.primary, bg, 4.5);
     const f = new Sb(bg, c.k), b = new Sb(bg, c.k);
     f.rect(m, m, 16, 0.5, gold);
@@ -470,7 +471,8 @@ const LAYOUTS: Record<string, Layout> = {
     const { d, p, W, H, pt, m } = c;
     const col = p.primary, dark = deep(p.secondary, 0.08);
     const f = new Sb("#ffffff", c.k), b = new Sb(dark, c.k);
-    let x = m, y: number, tw: number, bottom = H - m;
+    let x = m, y: number, tw: number;
+    const bottom = H - m;
     if (!pt) {
       f.rect(0, 0, 24, H, col); f.rect(24, 0, 1.4, H, dark);
       f.brand(d, 12, H / 2, 14, "#ffffff", col, { tile: "#ffffff" });
@@ -494,13 +496,14 @@ const LAYOUTS: Record<string, Layout> = {
     const { d, p, W, H, pt, m } = c;
     const c1 = p.primary, c2 = p.secondary, c3 = tint(c1, 0.55);
     const f = new Sb("#ffffff", c.k), b = new Sb(shade(c1, 0.15), c.k);
-    let x = m, y: number, tw: number, bottom = H - m;
+    const x = m, bottom = H - m;
+    let y: number, tw: number;
     if (!pt) {
       f.circle(W - 6, 6, 18, c1, 0.92); f.circle(W + 2, 24, 10, c2, 0.88); f.circle(W - 25, -2, 8, c3, 0.9); f.circle(W + 1, H - 4, 8, tint(c2, 0.5), 0.9);
       tw = W - 2 * m - 30; y = m + 6;
     } else {
       f.circle(W - 8, 6, 18, c1, 0.92); f.circle(8, -1, 11, c2, 0.88); f.circle(W / 2 + 4, 4, 7, c3, 0.9);
-      tw = W - 2 * m; y = 30; x = m;
+      tw = W - 2 * m; y = 30;
     }
     y += f.text(d.name, x, y, tw, 13.5, { weight: 800, color: p.ink, maxLines: 3 }) + 1.2;
     y += f.text(d.title, x, y, tw, 7.5, { weight: 600, color: shade(c1, 0.25) }) + 1;
