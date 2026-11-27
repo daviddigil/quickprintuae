@@ -1,7 +1,8 @@
+import { fakeFlag as runtimeFake } from "@/lib/runtime";
 /** WhatsApp ordering is LIVE by default. Set WHATSAPP_ENABLED=0 (or false/off/no) to switch the whole feature off. */
 export const whatsappEnabled = () => !["0", "false", "off", "no"].includes((process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase());
 /** Testing aid: record outbound messages in the DB only and never call Meta. Never enable in production. */
-export const whatsappFake = () => ["1", "true"].includes(process.env.WHATSAPP_FAKE ?? "");
+export const whatsappFake = () => runtimeFake("WHATSAPP_FAKE");
 
 /** Read at call time (not import time) so tests / mocks can point the Graph API elsewhere. */
 export function metaConfig() {

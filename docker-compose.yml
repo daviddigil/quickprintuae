@@ -31,8 +31,11 @@ services:
       # Demo switches: simulate payment / courier so the whole flow can be tried without real keys. NEVER enable in production.
       PAYMENTS_FAKE: ${PAYMENTS_FAKE:-}
       DELIVERY_FAKE: ${DELIVERY_FAKE:-}
+      # Fake switches are IGNORED on a real domain (APP_URL not localhost) unless this is 1: staging demos only, never real customers
+      ALLOW_FAKE_IN_PRODUCTION: ${ALLOW_FAKE_IN_PRODUCTION:-}
       SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-admin@quickprint.ae}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-change-me-now}
+      # Demo shop with published passwords: created on localhost only (never when APP_URL is a real domain)
       SEED_DEMO: ${SEED_DEMO:-true}
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (openssl rand -hex 32)}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY (openssl rand -hex 32)}
@@ -58,10 +61,10 @@ services:
     environment:
       CRON_SECRET: ${CRON_SECRET}
     command: >
-      sh -c 'echo "15 2 * * * wget -q -O /dev/null \"http://web:3000/api/v1/superadmin/cron/billing?secret=$$CRON_SECRET\"" > /etc/crontabs/root &&
-      echo "30 3 * * * wget -q -O /dev/null \"http://web:3000/api/cron/purge?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
-      echo "5 * * * * wget -q -O /dev/null \"http://web:3000/api/cron/walk-in?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
-      echo "10 * * * * wget -q -O /dev/null \"http://web:3000/api/cron/payouts?secret=$$CRON_SECRET\"" >> /etc/crontabs/root &&
+      sh -c 'echo "15 2 * * * wget -q -O /dev/null --header=\"Authorization: Bearer $$CRON_SECRET\" \"http://web:3000/api/v1/superadmin/cron/billing\"" > /etc/crontabs/root &&
+      echo "30 3 * * * wget -q -O /dev/null --header=\"Authorization: Bearer $$CRON_SECRET\" \"http://web:3000/api/cron/purge\"" >> /etc/crontabs/root &&
+      echo "5 * * * * wget -q -O /dev/null --header=\"Authorization: Bearer $$CRON_SECRET\" \"http://web:3000/api/cron/walk-in\"" >> /etc/crontabs/root &&
+      echo "10 * * * * wget -q -O /dev/null --header=\"Authorization: Bearer $$CRON_SECRET\" \"http://web:3000/api/cron/payouts\"" >> /etc/crontabs/root &&
       crond -f -l 8'
 
 volumes:

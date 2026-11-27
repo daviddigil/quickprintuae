@@ -1,3 +1,4 @@
+import { fakeFlag as runtimeFake } from "@/lib/runtime";
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -16,7 +17,7 @@ export type ProviderCode = "stripe";
 export interface CheckoutResult { url: string; providerRef: string }
 
 /** Demo mode: PAYMENTS_FAKE=1 simulates the gateways so the full flow can be tested without keys. */
-const fakeFlag = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
+const fakeFlag = () => runtimeFake("PAYMENTS_FAKE");
 
 /** Whichever platform gateways are live (enabled + keyed). Falls back to simulated providers in fake mode / local development. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so every platform gateway can later be filtered per shop

@@ -1,8 +1,9 @@
+import { fakeFlag as runtimeFake } from "@/lib/runtime";
 import "server-only";
 import type { Tenant } from "@/db/schema";
 
 /** Simulated payments are on (tests, local demo). Same switch as src/server/payments/index.ts. */
-export const paymentsFake = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
+export const paymentsFake = () => runtimeFake("PAYMENTS_FAKE");
 
 export const NOT_OPEN_MESSAGE = "This store is not yet open for orders.";
 

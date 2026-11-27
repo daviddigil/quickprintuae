@@ -50,5 +50,5 @@ Commands are built as argument arrays and run with `execFile` — never through 
 ## Tested vs. not tested
 Verified in CI/sandbox: command building for macOS/Linux/Windows (unit tests), the full agent HTTP API, and the real CLI end-to-end with `--fake-printer`. **Not verified:** actual output on a physical printer, SumatraPDF on Windows, and LibreOffice conversion — test with one real printer before go-live.
 
-## Server cron (`GET /api/cron/walk-in?secret=$CRON_SECRET`, hourly)
+## Server cron (`GET /api/cron/walk-in` with header `Authorization: Bearer $CRON_SECRET`, hourly)
 Recovers stale claims, deletes uploads never attached to an order (> 6 h), and enforces file retention. The bundled `docker-compose.yml` schedules it, plus the daily `/api/cron/purge`.

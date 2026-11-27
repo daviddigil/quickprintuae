@@ -1,3 +1,4 @@
+import { fakeFlag } from "@/lib/runtime";
 import "server-only";
 import { requireStepUp } from "@/server/security/stepup";
 
@@ -8,6 +9,6 @@ import { requireStepUp } from "@/server/security/stepup";
  */
 export async function stepUpForMoney(_action: "gateway_keys" | "iban_reveal" | "payout_approve" | "payout_export", next?: string): Promise<void> {
   if (process.env.NODE_ENV !== "production" && process.env.REQUIRE_STEP_UP === "0") return;
-  if (process.env.NODE_ENV === "production" && process.env.REQUIRE_STEP_UP === "0" && process.env.PAYMENTS_FAKE === "1") return; // production-build e2e only (fake gateways): never set with real gateways
+  if (process.env.NODE_ENV === "production" && process.env.REQUIRE_STEP_UP === "0" && fakeFlag("PAYMENTS_FAKE")) return; // production-build e2e only (fake gateways): never set with real gateways
   await requireStepUp({ next });
 }

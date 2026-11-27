@@ -1,3 +1,4 @@
+import { isRealProduction } from "./runtime";
 import "server-only";
 
 function req(name: string, fallback?: string) {
@@ -28,5 +29,5 @@ export const env = {
   /** platform Stripe account used for SaaS billing of print shops */
   platformStripeKey: process.env.PLATFORM_STRIPE_SECRET_KEY,
   platformStripeWebhookSecret: process.env.PLATFORM_STRIPE_WEBHOOK_SECRET,
-  cronSecret: process.env.CRON_SECRET || "dev-cron",
+  cronSecret: process.env.CRON_SECRET || (isRealProduction() ? undefined : "dev-cron"),
 };

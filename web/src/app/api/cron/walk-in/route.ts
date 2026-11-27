@@ -1,7 +1,7 @@
+import { cronAuthorized } from "@/lib/cron-auth";
 import { NextResponse } from "next/server";
 import { and, inArray, isNull, lt } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { env } from "@/lib/env";
 import { purgeExpiredFiles } from "@/server/orders";
 import { deleteFile } from "@/server/storage";
 import { sweepStale } from "@/server/walk-in/queue";
@@ -13,9 +13,7 @@ const ORPHAN_HOURS = 6;
 
 /** Hourly: recover stale print claims, drop abandoned uploads (never attached to an order), enforce retention timers. */
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const secret = url.searchParams.get("secret") ?? req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (secret !== env.cronSecret) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!cronAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const tenants = await db.select({ id: schema.tenants.id }).from(schema.tenants);
   for (const t of tenants) await sweepStale(t.id);

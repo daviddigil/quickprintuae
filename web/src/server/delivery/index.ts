@@ -1,3 +1,4 @@
+import { fakeFlag } from "@/lib/runtime";
 import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 import { and, eq } from "drizzle-orm";
@@ -40,7 +41,7 @@ export function providerConfig(tenant: Tenant, provider: DeliveryProviderCode): 
   const needsKey = DELIVERY_PROVIDERS.find((d) => d.code === provider)?.needsApiKey ?? false;
   return {
     apiKey, accountId: p?.accountId, sandbox: p?.sandbox,
-    fake: ["1", "true"].includes(process.env.DELIVERY_FAKE ?? "") || (needsKey && !apiKey && (p?.sandbox ?? true)),
+    fake: fakeFlag("DELIVERY_FAKE") || (needsKey && !apiKey && (p?.sandbox ?? true)),
   };
 }
 

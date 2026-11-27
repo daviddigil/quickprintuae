@@ -9,6 +9,8 @@ import { rateLimitBackend } from "@/server/billing/rate-limit";
 
 export const dynamic = "force-dynamic";
 
+import { fakeFlag, fakeActiveInRealProduction, productionWarnings } from "@/lib/runtime";
+
 const VERSION = process.env.APP_VERSION || process.env.GIT_SHA || process.env.npm_package_version || "dev";
 
 /** Number of migrations shipped with this build (drizzle/meta/_journal.json), if readable. */
@@ -42,11 +44,12 @@ export async function GET() {
       out.migrationsApplied = applied;
       if (shipped !== null && applied !== null) { out.migrationsShipped = shipped; out.migrationsUpToDate = applied >= shipped; }
     }
-    try { out.gateways = { liveReady: (await activeGateways()).length > 0, fakeMode: process.env.PAYMENTS_FAKE === "1" || process.env.PAYMENTS_FAKE === "true" }; } catch { out.gateways = { liveReady: false, error: true }; }
+    try { out.gateways = { liveReady: (await activeGateways()).length > 0, fakeMode: fakeFlag("PAYMENTS_FAKE") }; } catch { out.gateways = { liveReady: false, error: true }; }
   } catch {
     out.database = "unreachable";
     out.hint = "Cannot connect to PostgreSQL. Check it is running and DATABASE_URL in .env is correct.";
   }
+  out.security = { fakeModeInProduction: fakeActiveInRealProduction(), warnings: productionWarnings().length };
   out.email = { provider: emailProvider() || "none", configured: emailProvider() === "resend" ? !!process.env.RESEND_API_KEY : emailProvider() === "console" };
   out.storage = { driver: process.env.STORAGE_DRIVER === "s3" ? "s3" : "local" };
   out.rateLimit = { backend: rateLimitBackend() };

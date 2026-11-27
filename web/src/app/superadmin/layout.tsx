@@ -1,3 +1,4 @@
+import { productionWarnings } from "@/lib/runtime";
 import { LogoImage } from "@/components/platform/Logo";
 import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth";
@@ -23,6 +24,7 @@ const NAV = [
 
 export default async function SuperadminLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireSuperadmin();
+  const warnings = productionWarnings();
   return (
     <div className="min-h-screen lg:flex">
       <aside className="bg-inverse-surface text-inverse-on-surface/75 lg:min-h-screen lg:w-60 lg:shrink-0">
@@ -40,7 +42,7 @@ export default async function SuperadminLayout({ children }: { children: React.R
           <a href="/logout?next=/login" className="mt-2 inline-block text-inverse-on-surface/60 hover:text-white">Sign out</a>
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col"><main className="flex-1 p-4 sm:p-8">{children}</main><PoweredBy className="pb-4 text-center" /></div>
+      <div className="flex min-w-0 flex-1 flex-col"><main className="flex-1 p-4 sm:p-8">{warnings.length > 0 && <div role="alert" data-testid="prod-warnings" className="mb-6 rounded-xl border border-critical/40 bg-critical-container px-4 py-3 text-sm text-on-critical-container"><p className="font-semibold">Production safety warnings</p><ul className="mt-1 list-disc ps-5">{warnings.map((w) => <li key={w}>{w}</li>)}</ul></div>}{children}</main><PoweredBy className="pb-4 text-center" /></div>
     </div>
   );
 }

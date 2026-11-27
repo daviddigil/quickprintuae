@@ -1,3 +1,4 @@
+import { fakeFlag as runtimeFake } from "@/lib/runtime";
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -36,7 +37,7 @@ export async function gatewayView(provider: PlatformProvider) {
     secretMask: last4(g.secretKey), webhookMask: last4(g.webhookSecret), publishableKey: g.publishableKey,
     lastTestAt: row?.lastTestAt ?? null, lastTestOk: row?.lastTestOk ?? null,
     webhookUrl: `${env.appUrl}/api/webhooks/stripe`, checks, ready: checks.every((c) => c.ok),
-    fake: ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? ""),
+    fake: runtimeFake("PAYMENTS_FAKE"),
   };
 }
 

@@ -1,3 +1,4 @@
+import { fakeFlag as runtimeFake } from "@/lib/runtime";
 import "server-only";
 import { activeGateways, type PlatformProvider } from "@/server/payments/platform";
 import { fakeSubscriptionGateway } from "./fake";
@@ -9,7 +10,7 @@ export * from "./types";
 const REAL: Record<PlatformProvider, SubscriptionGateway> = { stripe: stripeSubscriptionGateway };
 
 /** PAYMENTS_FAKE=1, or local development with no live gateway: the card step offers a "Use test card" button. */
-export const fakeFlag = () => ["1", "true"].includes(process.env.PAYMENTS_FAKE ?? "");
+export const fakeFlag = () => runtimeFake("PAYMENTS_FAKE");
 
 /** The gateway that can take a real card now: first enabled+keyed platform gateway whose implementation is ready. Null if none. */
 export async function liveGateway(): Promise<SubscriptionGateway | null> {

@@ -123,8 +123,8 @@ Traefik works too: use a wildcard certificate via DNS challenge, plus an HTTP-ch
 
 | Schedule | Request | Purpose |
 |---|---|---|
-| Daily 02:15 Asia/Dubai | `GET /api/v1/superadmin/cron/billing?secret=$CRON_SECRET` | Bill last month (idempotent), collect open invoices, end trials, dunning |
-| Hourly | `GET /api/cron/purge?secret=$CRON_SECRET` | Delete confidential uploads past retention |
+| Daily 02:15 Asia/Dubai | `GET /api/v1/superadmin/cron/billing` with header `Authorization: Bearer $CRON_SECRET` | Bill last month (idempotent), collect open invoices, end trials, dunning |
+| Hourly | `GET /api/cron/purge` with header `Authorization: Bearer $CRON_SECRET` | Delete confidential uploads past retention |
 
 The `cron` service in `docker-compose.yml` runs the billing job. In the cloud, use EventBridge Scheduler, a Kubernetes CronJob, or a simple systemd timer.
 
@@ -151,7 +151,7 @@ For a busy counter: the shop shows a QR (`/admin/walk-in` → poster). Customers
 - Shop: `/admin/walk-in` (live queue, QR + poster, settings, print agents, walk-in customers under Customers)
 - Superadmin: per-plan feature flag (Plans), walk-in tiles on the dashboard, per-shop section with disable / open-as-shop
 - Print agent: see `docs/PRINT_AGENT.md` (`print-agent/agent.mjs`, no dependencies)
-- Schedule `GET /api/cron/walk-in?secret=$CRON_SECRET` hourly (docker-compose does this) — recovers stale claims, deletes orphan uploads, enforces file retention
+- Schedule `GET /api/cron/walk-in` with header `Authorization: Bearer $CRON_SECRET` hourly (docker-compose does this) — recovers stale claims, deletes orphan uploads, enforces file retention
 - Tests: `npm test` (queue, phone, flags), `node e2e/walk-in.mjs` (full chain against a running server started with `PAYMENTS_FAKE=1`)
 
 ## Testing
