@@ -166,7 +166,8 @@ export const en: LegalCopy = {
           "Anthropic and, where used, image or other AI providers for AI features;",
           "cloud hosting and file storage providers [hosting provider and region to be confirmed];",
           "professional advisers, authorities and courts where the law requires, and a buyer or successor if the business is transferred.",
-        ], after: ["Some of these providers are outside the UAE. Where we transfer personal data abroad we do so as the law allows and we require appropriate protection. [Lawyer to confirm cross-border transfer wording and list of sub-processors.]"] },
+        ], after: ["Some of these providers are outside the UAE. Where we transfer personal data abroad we do so as the law allows and we require appropriate protection. [Lawyer to confirm cross-border transfer wording and list of sub-processors.]",
+          "Transfer statement: by using the service you understand that personal data may be processed outside the UAE by the sub-processors listed on our public Sub-processors page (/subprocessors), for example payments, email, AI processing, messaging, hosting and file storage. Where required by the UAE Personal Data Protection Law we rely on an approved transfer mechanism such as an adequacy decision, contractual safeguards or the data subject's consent, and we require each sub-processor to protect the data to a comparable standard. [Lawyer to confirm the transfer mechanism for each sub-processor and the exact locations.]"] },
         { h: "6. How long we keep data", ul: [
           "Files marked confidential: encrypted, and deleted automatically after the retention period in the shop's settings. The default is 72 hours after the order is completed.",
           "Walk-in print files: deleted 24 hours after printing by default (the shop can change this).",
@@ -258,7 +259,7 @@ export const en: LegalCopy = {
           "government or official emblems, identity documents, certificates or other documents that could be used to deceive;",
           "anything misleading, unsafe or in breach of consumer-protection rules.",
         ], after: ["We may remove listings, reject orders and suspend the shop for breaches, and we handle intellectual property complaints through a takedown process [process to be defined]."] },
-        { h: "9. Data protection roles", p: ["For customer personal data the Seller is the controller and QuickPrint is the processor, as described in the Privacy Policy. The Seller must have a lawful basis for collecting customer data, show its own privacy information to customers, and use the data only to serve their orders. QuickPrint processes the data on the Seller's instructions, keeps it secure, uses the sub-processors listed in the Privacy Policy and helps the Seller respond to customer requests. [Detailed data processing terms to be added by the lawyer.]"] },
+        { h: "9. Data protection roles", p: ["For customer personal data the Seller is the controller and QuickPrint is the processor, as described in the Privacy Policy. The Seller must have a lawful basis for collecting customer data, show its own privacy information to customers, and use the data only to serve their orders. QuickPrint processes the data on the Seller's instructions, keeps it secure, uses the sub-processors listed in the Privacy Policy and helps the Seller respond to customer requests. The detailed data processing terms are in Annex A (Data Processing Addendum) at the end of this agreement."] },
         { h: "10. Suspension and termination", p: [
           "We may suspend payouts, orders or the whole account, immediately where there is a risk of fraud, illegality or harm, a chargeback or complaint pattern, a failed or expired verification or a legal request, and otherwise with reasonable notice. Either side may end the agreement by notice. On termination the Seller stays responsible for open orders, refunds and chargebacks, and we pay out the balance due after deducting anything owed, once the hold period for refunds and chargebacks has passed.",
         ] },
@@ -267,6 +268,19 @@ export const en: LegalCopy = {
         ] },
         { h: "12. General", p: [
           "We may update this agreement by notice (see the version and date above). This agreement is governed by [governing law] and the courts of [venue / courts] have jurisdiction. Contact: [support email]. Registered address: [registered address].",
+        ] },
+        { h: "Annex A. Data Processing Addendum (DPA)", p: [
+          "Template for review: must be checked by a UAE lawyer. This Annex applies to personal data of the Seller's customers that QuickPrint processes for the Seller. It forms part of the Seller agreement and is read with the UAE Personal Data Protection Law (Federal Decree-Law No. 45 of 2021).",
+        ], ul: [
+          "Roles: the Seller is the controller of its customers' personal data (names, contact details, delivery addresses, order history, uploaded files, WhatsApp messages). QuickPrint UAE is the processor and acts for the Seller.",
+          "Instructions: QuickPrint processes this data only to provide the service as described in the Terms of Service and the Seller's settings, and on the Seller's documented instructions (the Seller's use of the features is an instruction). QuickPrint will tell the Seller if it believes an instruction breaks the law.",
+          "Confidentiality and security: QuickPrint keeps the data confidential, limits access to staff who need it, and applies the security measures described in the Privacy Policy (encrypted connections, hashed passwords, encryption of confidential files, access controls, audit logs). Details of the measures are available on request [security annex to be confirmed].",
+          "Sub-processors: the Seller gives general authorisation for the sub-processors on the public Sub-processors page (/subprocessors). QuickPrint will bind each to written terms that protect the data, will update the page when it adds or replaces one, and will give the Seller notice of material changes [notice period to be confirmed] so that the Seller can object.",
+          "Assistance: QuickPrint helps the Seller respond to requests from data subjects (access, correction, deletion, objection) and to meet its own data protection duties, using the tools in the dashboard where available. The Seller remains responsible for answering the data subject within the legal deadline.",
+          "Personal data breach: QuickPrint will notify the Seller without undue delay [number of hours to be confirmed] after becoming aware of a personal data breach affecting the Seller's data, with the information it has so that the Seller can meet any duty to notify the authority and the people affected.",
+          "Deletion and return: when the agreement ends, or on the Seller's request, QuickPrint deletes or returns the personal data after a reasonable period [period to be confirmed], except records that must be kept by law (for example tax and accounting records, kept for the period in the retention schedule) or while a legal hold is in force.",
+          "Audits: QuickPrint will give the Seller the information needed to show compliance with this Annex and will allow reasonable audits or inspections [conditions, notice and cost to be confirmed], no more than once a year unless a breach has occurred.",
+          "Cross-border transfers: the Seller authorises the transfer of the data to the sub-processors and locations listed on the Sub-processors page, under the transfer mechanisms described there and in the Privacy Policy [lawyer to confirm the mechanism for each transfer].",
         ] },
       ],
     },
@@ -386,7 +400,8 @@ export const ar: LegalCopy = {
           "أنثروبيك، وعند الاستخدام مزوّدو الصور أو الذكاء الاصطناعي الآخرون، لميزات الذكاء الاصطناعي؛",
           "مزوّدو الاستضافة السحابية وتخزين الملفات [مزوّد الاستضافة والمنطقة قيد التأكيد]؛",
           "المستشارون المهنيون والجهات الرسمية والمحاكم حيث يوجب القانون ذلك، والمشتري أو الخلف عند نقل النشاط.",
-        ], after: ["يقع بعض هؤلاء المزوّدين خارج الإمارات. وعند نقل البيانات الشخصية إلى الخارج نفعل ذلك وفق ما يجيزه القانون ونشترط حماية مناسبة. [على المحامي تأكيد صياغة النقل عبر الحدود وقائمة المعالِجين الفرعيين.]"] },
+        ], after: ["يقع بعض هؤلاء المزوّدين خارج الإمارات. وعند نقل البيانات الشخصية إلى الخارج نفعل ذلك وفق ما يجيزه القانون ونشترط حماية مناسبة. [على المحامي تأكيد صياغة النقل عبر الحدود وقائمة المعالِجين الفرعيين.]",
+          "بيان النقل: باستخدامك الخدمة تدرك أنه قد تُعالَج البيانات الشخصية خارج الإمارات لدى المعالِجين الفرعيين المدرجين في صفحة المعالجين الفرعيين العامة (/subprocessors)، مثل المدفوعات والبريد الإلكتروني ومعالجة الذكاء الاصطناعي والمراسلة والاستضافة وتخزين الملفات. وحيث يشترط قانون حماية البيانات الشخصية الإماراتي نعتمد آلية نقل مقبولة كقرار الكفاية أو الضمانات التعاقدية أو موافقة صاحب البيانات، ونُلزم كل معالِج فرعي بحماية البيانات بمستوى مماثل. [على المحامي تأكيد آلية النقل لكل معالِج فرعي والمواقع الدقيقة.]"] },
         { h: "6. مدة الاحتفاظ بالبيانات", ul: [
           "الملفات السرّية: تُشفَّر وتُحذف تلقائيًا بعد مدة الاحتفاظ المحددة في إعدادات المتجر. والمدة الافتراضية 72 ساعة بعد اكتمال الطلب.",
           "ملفات الطباعة الفورية: تُحذف بعد 24 ساعة من الطباعة افتراضيًا (ويمكن للمتجر تغيير ذلك).",
@@ -476,7 +491,7 @@ export const ar: LegalCopy = {
           "الشعارات الحكومية أو الرسمية ووثائق الهوية والشهادات أو غيرها من المستندات التي قد تُستخدم للتضليل؛",
           "كل ما هو مضلِّل أو غير آمن أو مخالف لقواعد حماية المستهلك.",
         ], after: ["يجوز لنا إزالة المنتجات المعروضة ورفض الطلبات وإيقاف المتجر عند المخالفة، ونعالج شكاوى الملكية الفكرية عبر إجراء لإزالة المحتوى [الإجراء قيد التحديد]."] },
-        { h: "9. أدوار حماية البيانات", p: ["بالنسبة لبيانات العملاء الشخصية، البائع هو المتحكّم بالبيانات وكويك برنت هي المعالِج، كما هو موضح في سياسة الخصوصية. وعلى البائع أن يكون لديه أساس مشروع لجمع بيانات العملاء، وأن يعرض على عملائه معلومات الخصوصية الخاصة به، وألا يستخدم البيانات إلا لخدمة طلباتهم. وتعالج كويك برنت البيانات بحسب تعليمات البائع، وتحافظ على أمنها، وتستخدم المعالِجين الفرعيين المذكورين في سياسة الخصوصية، وتساعد البائع في الاستجابة لطلبات العملاء. [على المحامي إضافة شروط تفصيلية لمعالجة البيانات.]"] },
+        { h: "9. أدوار حماية البيانات", p: ["بالنسبة لبيانات العملاء الشخصية، البائع هو المتحكّم بالبيانات وكويك برنت هي المعالِج، كما هو موضح في سياسة الخصوصية. وعلى البائع أن يكون لديه أساس مشروع لجمع بيانات العملاء، وأن يعرض على عملائه معلومات الخصوصية الخاصة به، وألا يستخدم البيانات إلا لخدمة طلباتهم. وتعالج كويك برنت البيانات بحسب تعليمات البائع، وتحافظ على أمنها، وتستخدم المعالِجين الفرعيين المذكورين في سياسة الخصوصية، وتساعد البائع في الاستجابة لطلبات العملاء. ترد شروط معالجة البيانات التفصيلية في الملحق (أ) (ملحق معالجة البيانات) في نهاية هذه الاتفاقية."] },
         { h: "10. الإيقاف والإنهاء", p: [
           "يجوز لنا إيقاف التحويلات أو الطلبات أو الحساب كاملًا فورًا عند وجود خطر احتيال أو مخالفة للقانون أو ضرر، أو نمط من المطالبات المرتدّة أو الشكاوى، أو فشل التوثيق أو انتهائه، أو طلب قانوني، وفيما عدا ذلك بإشعار معقول. ويجوز لأي من الطرفين إنهاء الاتفاقية بإشعار. وعند الإنهاء يظل البائع مسؤولًا عن الطلبات المفتوحة والاستردادات والمطالبات المرتدّة، وندفع له الرصيد المستحق بعد خصم ما عليه، وذلك بعد انقضاء فترة احتجاز الاستردادات والمطالبات المرتدّة.",
         ] },
@@ -485,6 +500,19 @@ export const ar: LegalCopy = {
         ] },
         { h: "12. أحكام عامة", p: [
           "يجوز لنا تحديث هذه الاتفاقية بإشعار (انظر الإصدار والتاريخ أعلاه). وتخضع هذه الاتفاقية لـ [القانون الواجب التطبيق] وتختص بها محاكم [جهة الاختصاص / المحاكم]. للتواصل: [البريد الإلكتروني للدعم]. العنوان المسجّل: [العنوان المسجّل].",
+        ] },
+        { h: "الملحق (أ). ملحق معالجة البيانات", p: [
+          "نموذج للمراجعة: يجب فحصه من محامٍ في الإمارات. يسري هذا الملحق على البيانات الشخصية لعملاء البائع التي تعالجها كويك برنت لصالح البائع. وهو جزء من اتفاقية البائع ويُقرأ مع قانون حماية البيانات الشخصية الإماراتي (المرسوم بقانون اتحادي رقم 45 لسنة 2021).",
+        ], ul: [
+          "الأدوار: البائع هو المتحكّم بالبيانات الشخصية لعملائه (الأسماء وبيانات التواصل وعناوين التسليم وسجل الطلبات والملفات المرفوعة ورسائل واتساب). وكويك برنت الإمارات هي المعالِج وتعمل لصالح البائع.",
+          "التعليمات: لا تعالج كويك برنت هذه البيانات إلا لتقديم الخدمة كما في شروط الخدمة وإعدادات البائع، وبحسب تعليمات البائع الموثّقة (ويُعدّ استخدام البائع للميزات تعليمات). وتبلغ كويك برنت البائع إذا رأت أن تعليمات تخالف القانون.",
+          "السرية والأمن: تحافظ كويك برنت على سرية البيانات وتحصر الوصول بالموظفين المحتاجين إليها، وتطبق إجراءات الأمن الموضحة في سياسة الخصوصية (اتصالات مشفّرة وكلمات مرور مجزّأة وتشفير الملفات السرية وضوابط الوصول وسجلات التدقيق). وتتوفر تفاصيل الإجراءات عند الطلب [ملحق الأمن يُؤكَّد لاحقاً].",
+          "المعالجون الفرعيون: يمنح البائع تفويضاً عاماً للمعالجين الفرعيين المدرجين في صفحة المعالجين الفرعيين العامة (/subprocessors). وتلزم كويك برنت كلاً منهم بشروط مكتوبة تحمي البيانات، وتحدّث الصفحة عند إضافة معالج أو استبداله، وتخطر البائع بالتغييرات الجوهرية [مدة الإشعار تُؤكَّد لاحقاً] ليتمكن من الاعتراض.",
+          "المساعدة: تساعد كويك برنت البائع في الاستجابة لطلبات أصحاب البيانات (الاطلاع والتصحيح والحذف والاعتراض) وفي الوفاء بالتزاماته في حماية البيانات، باستخدام الأدوات المتاحة في لوحة التحكم. ويظل البائع مسؤولاً عن الرد على صاحب البيانات ضمن المهلة القانونية.",
+          "خرق البيانات الشخصية: تبلغ كويك برنت البائع دون تأخير غير مبرر [عدد الساعات يُؤكَّد لاحقاً] بعد علمها بخرق يمس بيانات البائع، مع المعلومات المتوفرة لديها ليتمكن البائع من الوفاء بأي التزام بإخطار الجهة المختصة والأشخاص المتأثرين.",
+          "الحذف والإعادة: عند انتهاء الاتفاقية أو بطلب من البائع، تحذف كويك برنت البيانات الشخصية أو تعيدها بعد مدة معقولة [المدة تُؤكَّد لاحقاً]، باستثناء السجلات التي يوجب القانون الاحتفاظ بها (مثل السجلات الضريبية والمحاسبية، وتُحفظ للمدة المحددة في جدول الاحتفاظ) أو أثناء سريان حجز قانوني.",
+          "التدقيق: تقدم كويك برنت للبائع المعلومات اللازمة لإثبات الالتزام بهذا الملحق، وتسمح بعمليات تدقيق أو تفتيش معقولة [الشروط والإشعار والتكلفة تُؤكَّد لاحقاً] بما لا يزيد عن مرة سنوياً ما لم يقع خرق.",
+          "النقل عبر الحدود: يفوّض البائع نقل البيانات إلى المعالجين الفرعيين والمواقع المدرجة في صفحة المعالجين الفرعيين، وفق آليات النقل الموضحة فيها وفي سياسة الخصوصية [على المحامي تأكيد الآلية لكل نقل].",
         ] },
       ],
     },

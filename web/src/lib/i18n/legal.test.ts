@@ -6,6 +6,7 @@ import { en, ar, getLegalCopy, formatLegalDate, LEGAL_COPY } from "./legal";
 import { LEGAL_KEYS, LEGAL_PATHS, LEGAL_UPDATED, LEGAL_VERSION, SIGNUP_ACCEPT_KEYS, needsReaccept } from "@/lib/legal";
 import { MARKETING_PATHS } from "@/lib/seo/paths";
 import { footerColumns } from "@/components/platform/nav-links";
+import { SUBPROCESSORS } from "./subprocessors";
 
 test("LEGAL_VERSION is a date string and matches the last-updated date", () => {
   assert.match(LEGAL_VERSION, /^\d{4}-\d{2}-\d{2}$/);
@@ -56,10 +57,36 @@ test("needsReaccept: never accepted, old version, missing document", () => {
   assert.equal(needsReaccept({ version: LEGAL_VERSION, documents: ["terms"] }), true);
 });
 
-test("footer has a legal column with all four pages in both languages", () => {
+test("footer has a legal column with the four legal pages and sub-processors in both languages", () => {
   for (const loc of ["en", "ar"] as const) {
     const col = footerColumns(loc).find((c) => c.links.some((l) => l.href.endsWith("/terms")))!;
-    assert.equal(col.links.length, 4);
-    assert.deepEqual(col.links.map((l) => l.href), LEGAL_KEYS.map((k) => (loc === "ar" ? "/ar" : "") + LEGAL_PATHS[k]));
+    const pre = loc === "ar" ? "/ar" : "";
+    assert.deepEqual(col.links.slice(0, 4).map((l) => l.href), LEGAL_KEYS.map((k) => pre + LEGAL_PATHS[k]));
+    assert.ok(col.links.some((l) => l.href === `${pre}/subprocessors`), "sub-processors link");
   }
+});
+
+test("sub-processors page exists in en and ar, is in the sitemap registry and lists every processor", () => {
+  assert.ok(existsSync(join(process.cwd(), "src/app/subprocessors/page.tsx")));
+  assert.ok(existsSync(join(process.cwd(), "src/app/ar/subprocessors/page.tsx")));
+  const m = MARKETING_PATHS.find((x) => x.path === "/subprocessors");
+  assert.ok(m && m.translated);
+  for (const loc of ["en", "ar"] as const) {
+    const c = SUBPROCESSORS[loc];
+    assert.equal(c.rows.length, 7);
+    for (const n of ["Stripe", "Anthropic", "Resend", "WhatsApp", "Turnstile"]) assert.ok(c.rows.some((r) => r.name.includes(n)), `${loc} ${n}`);
+    assert.ok(c.rows.every((r) => /\[/.test(r.location)), `${loc}: every location is a bracketed placeholder`);
+  }
+  assert.match(SUBPROCESSORS.en.notice, /^Template for review/);
+});
+
+test("seller agreement has the DPA annex in both languages with matching list sizes; privacy has a transfer statement", () => {
+  for (const L of [en, ar]) {
+    const secs = L.docs["seller-agreement"].sections;
+    const last = secs[secs.length - 1];
+    assert.match(last.h, /DPA|Data Processing|معالجة البيانات/);
+    assert.equal(last.ul?.length, 9);
+    assert.equal(L.docs.privacy.sections[4].after?.length, 2);
+  }
+  assert.equal(LEGAL_VERSION, "2026-11-27");
 });

@@ -1,4 +1,6 @@
-import type { CreditNote, SaasInvoice, Tenant } from "@/db/schema";
+import type { CreditNote, Tenant } from "@/db/schema";
+import type { saasInvoices } from "@/db/schema";
+type SaasInvoice = typeof saasInvoices.$inferSelect;
 import type { PlatformIdentity } from "@/lib/platform-identity";
 import { platformDocTitle } from "@/lib/platform-identity";
 import { PlatformIdentityBlock } from "@/components/platform-identity-block";

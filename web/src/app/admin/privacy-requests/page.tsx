@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { requireStaff } from "@/lib/auth";
 import { Alert } from "@/components/ui";

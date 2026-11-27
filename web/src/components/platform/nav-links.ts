@@ -1,5 +1,6 @@
 import type { Copy } from "@/lib/i18n/en";
 import { getLegalCopy } from "@/lib/i18n/legal";
+import { SUBPROCESSORS } from "@/lib/i18n/subprocessors";
 import { LEGAL_KEYS, LEGAL_PATHS } from "@/lib/legal";
 import { DEFAULT_TRIAL_DAYS, getCopy, hrefFor, SOLUTION_SLUGS, type Locale } from "@/lib/i18n";
 
@@ -27,7 +28,7 @@ export function footerColumns(locale: Locale = "en"): { title: string; links: Na
     { title: c.footer.product, links: [{ label: c.nav.features, href: h("/#features") }, { label: c.nav.liveStores, href: h("/stores") }, { label: c.nav.pricing, href: h("/pricing") }, { label: c.footer.liveDemo, href: "/s/demo" }] },
     { title: c.footer.solutions, links: SOLUTION_SLUGS.map((s) => ({ label: solutionLabel(c, s), href: h(`/solutions/${s}`) })) },
     { title: c.footer.start, links: [{ label: c.footer.startTrial, href: h("/signup") }, { label: c.nav.signIn, href: "/login" }, { label: c.nav.faq, href: h("/#faq") }, { label: locale === "ar" ? "سياسة الاستخدام المقبول" : "Acceptable Use", href: h("/acceptable-use") }, { label: locale === "ar" ? "الإبلاغ عن محتوى" : "Report content", href: h("/report") }] },
-    { title: legal.footerTitle, links: [...LEGAL_KEYS.map((k) => ({ label: legal.nav[k], href: h(LEGAL_PATHS[k]) })), { label: locale === "ar" ? "سياسة الاستخدام المقبول" : "Acceptable Use", href: h("/acceptable-use") }, { label: locale === "ar" ? "الإبلاغ عن محتوى" : "Report content", href: h("/report") }] },
+    { title: legal.footerTitle, links: LEGAL_KEYS.map((k) => ({ label: legal.nav[k], href: h(LEGAL_PATHS[k]) })) },
   ];
 }
 

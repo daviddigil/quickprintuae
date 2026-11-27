@@ -47,7 +47,7 @@ export async function updateDataSubjectRequest(id: string, scope: { tenantId: st
   const done = patch.status === "completed" || patch.status === "rejected";
   const [row] = await db.update(schema.dataSubjectRequests).set({
     status: patch.status, resolution: patch.resolution?.trim().slice(0, 2000) || r.resolution, handledBy,
-    completedAt: done ? new Date() : null, updatedAt: new Date(),
+    completedAt: done ? new Date() : null,
   }).where(eq(schema.dataSubjectRequests.id, id)).returning();
   return { ok: true as const, request: row, before: r };
 }

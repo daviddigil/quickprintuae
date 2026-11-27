@@ -24,6 +24,7 @@ export const MARKETING_PATHS: MarketingPath[] = [
   { path: "/privacy", priority: 0.3, changeFrequency: "yearly", translated: true },
   { path: "/refunds", priority: 0.3, changeFrequency: "yearly", translated: true },
   { path: "/seller-agreement", priority: 0.3, changeFrequency: "yearly", translated: true },
+  { path: "/subprocessors", priority: 0.3, changeFrequency: "yearly", translated: true },
 ];
 
 const norm = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p) || "/";
