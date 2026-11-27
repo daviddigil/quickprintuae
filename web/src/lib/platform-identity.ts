@@ -8,7 +8,7 @@ const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice
 export function normalizePlatformIdentity(raw: unknown): PlatformIdentity {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return {
-    legalName: str(r.legalName, 200), trn: str(r.trn, 15).replace(/\s+/g, ""), address: str(r.address, 400), email: str(r.email, 200),
+    legalName: str(r.legalName, 200), trn: str(r.trn, 40).replace(/\s+/g, "").slice(0, 15), address: str(r.address, 400), email: str(r.email, 200),
     vatRegistered: r.vatRegistered === true || r.vatRegistered === "on" || r.vatRegistered === "true",
   };
 }

@@ -41,7 +41,7 @@ const slotButtons = page.locator('[data-testid="slots"] button');
 await slotButtons.nth((await slotButtons.count()) - 1).click();
 console.log("  total:", await page.getByTestId("total").innerText());
 await page.screenshot({ path: `${OUT}/checkout.png`, fullPage: true });
-await page.getByTestId("place-order").click();
+{ const rc = page.getByTestId("rights-checkbox"); if (await rc.count()) await rc.check(); } await page.getByTestId("place-order").click();
 await page.waitForURL(/\/orders\//, { timeout: 20000 });
 await page.waitForTimeout(1500);
 await page.reload({ waitUntil: "networkidle" });

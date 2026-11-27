@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -28,7 +29,7 @@ export default async function SuperadminCreditNotePage({ params }: { params: Pro
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex justify-between print:hidden">
-        <a href="/superadmin/invoices" className="text-sm text-on-surface-variant hover:underline">← All invoices</a>
+        <Link href="/superadmin/invoices" className="text-sm text-on-surface-variant hover:underline">← All invoices</Link>
         <PrintButton />
       </div>
       <CreditNoteDoc note={note} issuer={issuer} billTo={billTo} />

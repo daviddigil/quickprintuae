@@ -21,8 +21,8 @@ test("VAT maths: UAE 5%, AED, 2 dp, proportional for partial credits", () => {
   assert.equal(vatOfGross(105), 5);
   assert.equal(vatOfGross(10.99), 0.52);
   const x = creditNoteAmounts(99.99, 199.98, 9.52);
-  assert.equal(x.subtotal + x.vat, x.total);
-  assert.equal(String(x.vat).split(".")[1]?.length ?? 0 <= 2, true);
+  assert.equal(Math.round((x.subtotal + x.vat) * 100) / 100, x.total);
+  assert.ok((String(x.vat).split(".")[1]?.length ?? 0) <= 2);
   assert.throws(() => creditNoteAmounts(0, 10, 0));
   assert.throws(() => creditNoteAmounts(-5, 10, 0));
   assert.equal(formatCreditNoteNumber("QP", 7), "QP-CN-00007");

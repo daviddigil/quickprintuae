@@ -58,7 +58,7 @@ try {
   await c.fill('input[name="name"]', "Comm Test"); await c.fill('input[name="email"]', "comm@example.com"); await c.fill('input[name="phone"]', "+971501110000");
   await c.getByTestId("mode-pickup").click();
   await c.locator('[data-testid="slots"] button').last().click().catch(() => {});
-  await c.getByTestId("place-order").click(); await c.waitForURL(/\/orders\//, { timeout: 30000 });
+  { const rc = c.getByTestId("rights-checkbox"); if (await rc.count()) await rc.check(); } await c.getByTestId("place-order").click(); await c.waitForURL(/\/orders\//, { timeout: 30000 });
   await c.reload({ waitUntil: "networkidle" }); await c.getByText(/Paid|Printing/i).first().waitFor({ timeout: 20000 });
   const orderNo = (await c.locator("body").innerText()).match(/[A-Z]{2,4}-\d{4,}/)?.[0];
   const [cm] = await sql`select c.* from order_commissions c join orders o on o.id=c.order_id where o.number=${orderNo}`;

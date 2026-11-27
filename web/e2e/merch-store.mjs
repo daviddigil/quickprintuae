@@ -130,7 +130,7 @@ try {
     await overflow(page, "checkout");
     await page.getByText("Name or short text on the mug: Sara").first().waitFor();
     if (!mobile) {
-      await page.getByTestId("place-order").click();
+      { const rc = page.getByTestId("rights-checkbox"); if (await rc.count()) await rc.check(); } await page.getByTestId("place-order").click();
       await page.waitForURL(/\/orders\//, { timeout: 30000 });
       await page.reload({ waitUntil: "networkidle" });
       const body = await page.locator("body").innerText();

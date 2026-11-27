@@ -72,6 +72,11 @@ Status legend: **App** = control built in the product. **Partly** = built, depen
 
 Trade licence and activity wording covering e-commerce/software and print services, trade-name display on the website, VAT registration, bank account, insurance, staff contracts, domain ownership: **You** (see `GO_LIVE.md`).
 
+## Company documents on file (from the owner)
+Operator: NEXSOFTURE TECH FZ-LLC, Ras Al Khaimah Economic Zone (RAKEZ) free-zone company, registration 0000004101100, incorporated 2026-11-05. Licences valid until 2027-11-04: IT Management / IT Network Services, Internet Marketing, E-Commerce through websites, General Trading. A RAKEZ bank-account letter (valid 90 days from 2026-11-05) is on file. The shareholder and manager details are in the owner's own records and are deliberately not copied into this repository.
+
+Gaps these documents leave (all for the lawyer/accountant): no licence for payment services or payment facilitation; free-zone company dealing with mainland shops and customers; VAT registration and the platform TRN (not yet issued, so platform invoices carry none); corporate-tax treatment of fees from mainland shops; each licence carries the "obtain approvals from competent authorities as applicable" remark. Enter the operator legal name, address and licence number under Superadmin > Settings > Platform identity.
+
 ## Open questions for the UAE lawyer
 - L1 Is holding customer funds and paying shops a regulated activity for us, or must it run through Stripe Connect / gateway marketplace terms?
 - L2 Mainland vs free-zone company, governing law and courts for the contracts.

@@ -152,7 +152,7 @@ try {
   const slots = page.locator('[data-testid="slots"] button');
   await slots.first().waitFor();
   await slots.nth((await slots.count()) - 1).click();
-  await page.getByTestId("place-order").click();
+  { const rc = page.getByTestId("rights-checkbox"); if (await rc.count()) await rc.check(); } await page.getByTestId("place-order").click();
   await page.waitForURL(/\/orders\//, { timeout: 30000 });
   await page.reload({ waitUntil: "networkidle" });
   const orderNo = (await page.locator("body").innerText()).match(/[A-Z]{2,4}-\d{4,}/)?.[0];

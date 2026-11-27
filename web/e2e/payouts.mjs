@@ -107,7 +107,7 @@ try {
   await c.fill('input[name="name"]', "Payout Test"); await c.fill('input[name="email"]', "payout@example.com"); await c.fill('input[name="phone"]', "+971501110001");
   await c.getByTestId("mode-pickup").click();
   await c.locator('[data-testid="slots"] button').last().click().catch(() => {});
-  await c.getByTestId("place-order").click(); await c.waitForURL(/\/orders\//, { timeout: 30000 });
+  { const rc = c.getByTestId("rights-checkbox"); if (await rc.count()) await rc.check(); } await c.getByTestId("place-order").click(); await c.waitForURL(/\/orders\//, { timeout: 30000 });
   await c.reload({ waitUntil: "load" }); await c.getByText(/Paid|Printing/i).first().waitFor({ timeout: 20000 });
   const orderNo = (await c.locator("body").innerText()).match(/[A-Z]{2,4}-\d{4,}/)?.[0];
   const [st] = await sql`select s.* from order_settlements s join orders o on o.id=s.order_id where o.number=${orderNo}`;
