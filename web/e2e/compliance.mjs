@@ -1,3 +1,4 @@
+// Run with KEEP_COOKIE_NOTICE=1 so helpers do not pre-dismiss the cookie notice.
 // UAE compliance surfaces: public pages (EN/AR), cookie notice, report-content flow into the superadmin queue, order page seller identity.
 // Usage: BASE=http://localhost:3200 SA_EMAIL=... SA_PASSWORD=... node --import tsx e2e/compliance.mjs
 import { chromium } from "playwright";

@@ -2,6 +2,21 @@
 // card step has a "Use test card" button. A new shop is unverified: use verifyShop() when a script needs live ordering.
 import postgres from "postgres";
 
+
+// The cookie notice is a fixed overlay that would intercept clicks in every script: pre-dismiss it in each new browser context
+// (e2e/compliance.mjs sets KEEP_COOKIE_NOTICE=1 to test the notice itself).
+import { chromium as __chromium } from "playwright";
+if (!process.env.KEEP_COOKIE_NOTICE) {
+  const __launch = __chromium.launch.bind(__chromium);
+  __chromium.launch = async (...a) => {
+    const b = await __launch(...a);
+    const nc = b.newContext.bind(b), np = b.newPage.bind(b);
+    b.newContext = async (o) => { const c = await nc(o); await c.addCookies([{ name: "qp_cookie_notice", value: "1", url: process.env.BASE ?? "http://localhost:3200" }]); return c; };
+    b.newPage = async (o) => { const c = await b.newContext(o); return c.newPage(); };
+    return b;
+  };
+}
+
 export const BASE = process.env.BASE ?? "http://localhost:3200";
 export const SA_PASSWORD = process.env.SA_PASSWORD ?? "change-me-now";
 export const sqlClient = () => postgres(process.env.DATABASE_URL ?? "postgres://qp:qp@localhost:5432/quickprint");
