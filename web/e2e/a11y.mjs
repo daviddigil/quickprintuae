@@ -21,7 +21,7 @@ const slug = "ax" + Date.now().toString(36);
 try {
   for (const [vp, name] of [[{ width: 1280, height: 860 }, "desktop"], [{ width: 390, height: 844 }, "mobile"]]) {
     const pub = await (await br.newContext({ viewport: vp })).newPage();
-    for (const u of ["/", "/pricing", "/signup", "/login", "/s/demo", "/s/demo/p/business-cards", "/s/demo/cart", "/s/demo/walk-in"]) await scan(pub, u, name);
+    for (const u of ["/", "/pricing", "/signup", "/terms", "/ar/privacy", "/login", "/s/demo", "/s/demo/p/business-cards", "/s/demo/cart", "/s/demo/walk-in"]) await scan(pub, u, name);
     const o = await (await br.newContext({ viewport: vp })).newPage();
     await signup(o, { base: BASE, slug: slug + name[0], name: "A11y Shop " + name });
     for (const u of ["/admin", "/admin/orders", "/admin/products", "/admin/billing", "/admin/verification", "/admin/settings", "/admin/whatsapp", "/admin/walk-in"]) await scan(o, u, name + ":admin");

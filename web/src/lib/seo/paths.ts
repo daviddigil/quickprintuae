@@ -19,6 +19,11 @@ export const MARKETING_PATHS: MarketingPath[] = [
   { path: "/solutions/whatsapp-ordering", priority: 0.8, changeFrequency: "monthly", translated: true },
   { path: "/stores", priority: 0.8, changeFrequency: "daily", translated: true },
   { path: "/signup", priority: 0.7, changeFrequency: "monthly", translated: true },
+  // legal pages (templates until a lawyer signs off; see src/lib/legal.ts)
+  { path: "/terms", priority: 0.3, changeFrequency: "yearly", translated: true },
+  { path: "/privacy", priority: 0.3, changeFrequency: "yearly", translated: true },
+  { path: "/refunds", priority: 0.3, changeFrequency: "yearly", translated: true },
+  { path: "/seller-agreement", priority: 0.3, changeFrequency: "yearly", translated: true },
 ];
 
 const norm = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p) || "/";

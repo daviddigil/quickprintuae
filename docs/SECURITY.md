@@ -41,6 +41,16 @@ This is an engineering document, not a certification. Re-read it before every go
 - Email: `src/server/email` (Resend, console). Reset tokens never appear in logs in production.
 - Storage: `src/server/storage.ts`, confidential files AES-256-GCM before they reach disk or the bucket.
 - Headers: `next.config.ts`.
+- Legal acceptance: `src/lib/legal.ts` (LEGAL_VERSION, needsReaccept), `src/server/legal.ts`, table `legal_acceptances` (version, documents, salted IP hash, user agent). Signup is refused (400) without the checkbox. Pages are templates for lawyer review.
+- Public uploads (`src/app/api/v1/store/[tenant]/uploads`, `src/server/uploads/*`):
+  - Rate limit per IP + shop: 30 uploads / 10 min, 200 / day, 300 MB / day (`rateLimitAsync`, shared via Redis when configured). Friendly 429.
+  - Size caps by type: images 25 MB, PDF 50 MB, office documents 25 MB, design files (ai, eps, indd, psd) 50 MB (413).
+  - Magic bytes are checked against the extension for PDF, PNG, JPEG, WebP, TIFF, GIF, PSD and OOXML/OLE office files (415 on mismatch). HEIC, SVG, AI, EPS and INDD are an allowlist by extension only (no reliable cheap signature) and are never parsed on the server. The stored mime is derived from the verified type, never from the browser's `file.type`; SVG is stored as `application/octet-stream`.
+  - PDF parsing is time-boxed (10 s) and capped at 2000 pages; PDFs over 50 MB are refused before parsing (422).
+  - Stored filenames are stripped of path separators and control characters.
+  - Orphans: `purgeOrphanUploads()` (called by `/api/cron/purge` and `/api/cron/walk-in`) deletes uploads older than 24 h that no order, order line, quote, print job or verification document references.
+  - Malware scan hook: `src/server/uploads/scan.ts`, no-op by default. `CLAMAV_HOST` (+ `CLAMAV_PORT`, default 3310) enables ClamAV clamd INSTREAM scanning; a scanner outage lets uploads through (logged) unless `CLAMAV_REQUIRED=1`, which fails closed.
+- CAPTCHA: Cloudflare Turnstile, `src/server/captcha.ts` + `TurnstileWidget`. Off until `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (browser) and `TURNSTILE_SECRET_KEY` (server) are set; then required on signup step 1, the quote form and the AI card designer, and fail-closed (timeout or Cloudflare error refuses the request). The CSP allows `challenges.cloudflare.com` for script, frame and connect.
 
 ## 4. Step-up API (for money screens)
 
@@ -74,7 +84,7 @@ Last run: 2 findings (1 high, 1 moderate), both `postcss <= 8.5.22` vendored ins
 
 1. CSP uses `'unsafe-inline'` for scripts (no per-request nonce). Moving to nonces needs middleware plus dynamic rendering of all pages.
 2. No WebAuthn / passkeys; TOTP can be phished by a real-time proxy.
-3. No CAPTCHA or bot protection on signup and login (Cloudflare Turnstile is the cheap fix).
+3. Turnstile is built for signup, quotes and the AI designer but is off until the keys are set; login and uploads have rate limits but no CAPTCHA.
 4. TOTP codes can be replayed inside their 30 s window (no last-used-step store). Throttles make this low risk.
 5. Maker-checker for payout batches only when two superadmins exist (payouts module); a single superadmin approves alone with step-up.
 6. Audit log lives in the application database; an attacker with DB write access can edit it. Ship to append-only external storage.

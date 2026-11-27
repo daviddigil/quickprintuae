@@ -9,6 +9,9 @@ import { Alert, Button, Card, CardHeader, Field, Input, Select, Textarea } from 
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Flash } from "@/components/admin/Flash";
 import { saveStoreSettings } from "../actions";
+import { listLegalAcceptances } from "@/server/legal";
+import { LEGAL_KEYS, LEGAL_PATHS, LEGAL_VERSION, needsReaccept } from "@/lib/legal";
+import { fmtDateTime } from "@/components/platform/PageTitle";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
 
 export const metadata = { title: "Store settings" };
@@ -18,6 +21,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const s = tenant.settings;
   const owner = user.role === "owner";
+  const legal = await listLegalAcceptances(tenant.id, 3);
   const aiLimit = await planDesignLimit(tenant);
   const aiRate = (await db.query.usageRates.findFirst({ where: eq(schema.usageRates.kind, "ai_card_design") }))?.priceAed ?? 0;
   const proto = env.appUrl.startsWith("https") ? "https" : "http";
@@ -92,6 +96,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <Button>Save settings</Button>
         </fieldset>
       </form>
+      <p className="text-sm text-on-surface-variant" data-testid="legal-history">
+        Legal terms: {legal.length ? <>accepted version {legal[0].version} on {fmtDateTime(legal[0].acceptedAt)}{legal.length > 1 && <> ({legal.length - 1} earlier)</>}{needsReaccept(legal[0]) && <> (current version is {LEGAL_VERSION})</>}</> : "no acceptance on record"}.{" "}
+        {LEGAL_KEYS.map((k, i) => <span key={k}>{i > 0 && " · "}<a href={LEGAL_PATHS[k]} target="_blank" rel="noopener noreferrer" className="underline">{k}</a></span>)}
+      </p>
       {owner && <TwoFactorPanel started={sp.setup === "1"} />}
     </div>
   );

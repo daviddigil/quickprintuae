@@ -13,7 +13,7 @@ import { findOfferForSignup, OFFER_FAILURE_MESSAGE } from "@/server/offers";
 import { LEGAL_VERSION, SIGNUP_ACCEPT_KEYS } from "@/lib/legal";
 import { recordLegalAcceptance } from "@/server/legal";
 import { verifyTurnstile } from "@/server/captcha";
-import { RESERVED_SLUGS, SignupBody } from "./schema";
+import { RESERVED_SLUGS, SignupBody, isLegalAccepted } from "./schema";
 
 /**
  * Step 1 of signup: account details. Creates the shop as 'incomplete' (no trial yet) and signs the owner in.
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   }
   const b = parsed.data;
   // legal acceptance is mandatory (checked before anything is created)
-  if (!b.acceptLegal) return NextResponse.json({ error: "Please accept the Terms, Privacy Policy and Seller Agreement to create your store.", code: "legal_required" }, { status: 400 });
+  if (!isLegalAccepted(b.acceptLegal)) return NextResponse.json({ error: "Please accept the Terms, Privacy Policy and Seller Agreement to create your store.", code: "legal_required" }, { status: 400 });
   const captcha = await verifyTurnstile(b.captchaToken, ip === "local" ? null : ip);
   if (!captcha.ok) return NextResponse.json({ error: captcha.message, code: "captcha_failed" }, { status: 400 });
   if (RESERVED_SLUGS.has(b.slug)) return NextResponse.json({ error: "This store address is reserved" }, { status: 409 });

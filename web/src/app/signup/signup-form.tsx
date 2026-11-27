@@ -4,6 +4,10 @@ import { Alert, Button, Field, Input, Label, Select } from "@/components/ui";
 import { EMIRATES } from "@/lib/types";
 import { fill, getCopy, type Locale } from "@/lib/i18n";
 import { describeOfferL, offerCopy } from "@/lib/i18n/offers";
+import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/security/TurnstileWidget";
+import { LEGAL_COPY } from "@/lib/i18n/legal";
+import { LEGAL_PATHS } from "@/lib/legal";
+import { hrefFor } from "@/lib/i18n";
 import { CardStep } from "@/components/platform/CardStep";
 
 const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
@@ -18,6 +22,11 @@ export function SignupForm({ plans, defaultPlan, locale = "en", live, fake, tria
   const [slugState, setSlugState] = useState<{ available: boolean; reason?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const [acceptError, setAcceptError] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaRound, setCaptchaRound] = useState(0);
+  const lg = LEGAL_COPY[locale].accept;
   const [step, setStep] = useState<"account" | "card">("account");
   const [email, setEmail] = useState("");
   // promo code (optional): validated against the server, redeemed only when the card step completes
@@ -56,11 +65,12 @@ export function SignupForm({ plans, defaultPlan, locale = "en", live, fake, tria
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!accepted) { setAcceptError(true); setError(lg.required); return; }
     setError(null); setLoading(true);
     const fd = Object.fromEntries(new FormData(e.currentTarget));
-    const res = await fetch("/api/v1/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...fd, shopName, slug }) });
+    const res = await fetch("/api/v1/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...fd, shopName, slug, acceptLegal: true, captchaToken: captcha ?? undefined }) });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { setLoading(false); setError(data.error ?? t.failed); return; }
+    if (!res.ok) { setLoading(false); setError(data.error ?? t.failed); if (TURNSTILE_SITE_KEY) { setCaptcha(null); setCaptchaRound((n) => n + 1); } return; }
     // step 2: the shop exists as 'incomplete' and the owner is signed in; the trial starts when the card is on file
     setEmail(String(fd.email ?? "")); setLoading(false); setStep("card");
     window.scrollTo({ top: 0 });
@@ -147,8 +157,21 @@ export function SignupForm({ plans, defaultPlan, locale = "en", live, fake, tria
         </div>
       </fieldset>
 
-      <Button size="lg" className="w-full" disabled={loading || slugState?.available === false}>{loading ? t.loading : t.submit}</Button>
-      <p className="text-center text-xs text-on-surface-variant">{t.terms}</p>
+      <div className={`rounded-shape-md border p-3 ${acceptError && !accepted ? "border-critical" : "border-outline-variant"}`}>
+        <label className="flex items-start gap-3 text-sm">
+          <input type="checkbox" name="acceptLegal" checked={accepted} onChange={(e) => { setAccepted(e.target.checked); if (e.target.checked) { setAcceptError(false); setError(null); } }}
+            aria-required="true" aria-describedby={acceptError && !accepted ? "accept-err" : undefined} data-testid="accept-legal" className="mt-0.5 size-5 shrink-0 accent-[var(--md-primary,currentColor)]" />
+          <span>
+            {lg.lead}
+            <a href={hrefFor(locale, LEGAL_PATHS.terms)} target="_blank" rel="noopener noreferrer" className="font-medium underline" data-testid="accept-terms-link">{lg.terms}<span className="sr-only"> {lg.newTab}</span></a>{lg.sep1}
+            <a href={hrefFor(locale, LEGAL_PATHS.privacy)} target="_blank" rel="noopener noreferrer" className="font-medium underline">{lg.privacy}<span className="sr-only"> {lg.newTab}</span></a>{lg.sep2}
+            <a href={hrefFor(locale, LEGAL_PATHS["seller-agreement"])} target="_blank" rel="noopener noreferrer" className="font-medium underline">{lg.seller}<span className="sr-only"> {lg.newTab}</span></a>{lg.end}
+          </span>
+        </label>
+        {acceptError && !accepted && <p id="accept-err" role="alert" className="mt-2 text-xs text-critical">{lg.required}</p>}
+      </div>
+      <TurnstileWidget key={captchaRound} onToken={setCaptcha} />
+      <Button size="lg" className="w-full" disabled={loading || slugState?.available === false || (!!TURNSTILE_SITE_KEY && !captcha)}>{loading ? t.loading : t.submit}</Button>
     </form>
   );
 }

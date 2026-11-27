@@ -40,6 +40,7 @@ async function shopSignup(page, { promoFromUrl, slug }) {
   await page.fill('input[name="ownerName"]', "Owner"); await page.fill('input[name="phone"]', uniquePhone());
   await page.fill('input[name="email"]', `${slug}@example.com`); await page.fill('input[name="password"]', "pw123456pw");
   await page.selectOption('select[name="plan"]', "growth");
+  await page.getByTestId("accept-legal").check();
 }
 const finishCard = async (page) => { await page.getByRole("button", { name: /continue to card/i }).click(); await page.getByTestId("card-step").waitFor({ timeout: 60000 }); await page.getByTestId("use-test-card").click(); await page.waitForURL(/\/admin/, { timeout: 60000 }); };
 
@@ -145,7 +146,7 @@ try {
   assert(!(await hasBanner(`${BASE}/`)), "paused: banner hidden");
   const rej = await (await fetch(`${BASE}/api/v1/offers/validate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: CODE, plan: "growth" }) })).json();
   assert(rej.ok === false && /isn't valid/.test(rej.error) && !JSON.stringify(rej).includes(NAME), "paused: code rejected without revealing anything: " + JSON.stringify(rej));
-  const rej2 = await fetch(`${BASE}/api/v1/signup`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": "10.9.1.2" }, body: JSON.stringify({ shopName: "X Shop", slug: "x" + stamp, ownerName: "O", email: `x${stamp}@example.com`, phone: uniquePhone(), password: "pw123456pw", emirate: "Dubai", plan: "growth", promoCode: CODE }) });
+  const rej2 = await fetch(`${BASE}/api/v1/signup`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": "10.9.1.2" }, body: JSON.stringify({ shopName: "X Shop", slug: "x" + stamp, ownerName: "O", email: `x${stamp}@example.com`, phone: uniquePhone(), password: "pw123456pw", emirate: "Dubai", plan: "growth", acceptLegal: true, promoCode: CODE }) });
   assert(rej2.status === 400, "signup with a paused code is refused");
   await sa.locator(`[data-testid=offer-row][data-offer-name="${NAME}"]`).getByRole("button", { name: "Resume" }).click(); await sa.waitForURL(/saved=1/);
   assert(await hasBanner(`${BASE}/`), "resumed: banner back");

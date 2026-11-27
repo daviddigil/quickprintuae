@@ -34,6 +34,7 @@ export async function signup(page, opts = {}) {
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', password);
   if (opts.plan) await page.selectOption('select[name="plan"]', opts.plan);
+  if (opts.accept !== false) await page.getByTestId("accept-legal").check(); // Terms, Privacy and Seller Agreement
   await page.getByRole("button", { name: /continue to card/i }).click();
   if (opts.expectError) return { slug, email, password, phone };
   await page.getByTestId("card-step").waitFor({ timeout: 60000 });
@@ -90,7 +91,7 @@ export async function loginSuperadmin(page, base = BASE) {
 export async function signupApi(base, body = {}) {
   const stamp = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
   const slug = body.slug ?? `ap${stamp}`.slice(0, 30);
-  const payload = { shopName: `Shop ${slug}`, slug, ownerName: "Owner", email: `${slug}@example.com`, phone: uniquePhone(), password: "pw123456pw", emirate: "Dubai", plan: "growth", ...body };
+  const payload = { shopName: `Shop ${slug}`, slug, ownerName: "Owner", email: `${slug}@example.com`, phone: uniquePhone(), password: "pw123456pw", emirate: "Dubai", plan: "growth", acceptLegal: true, ...body };
   const res = await fetch(`${base}/api/v1/signup`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": `10.1.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` }, body: JSON.stringify(payload) });
   const cookie = (res.headers.getSetCookie?.() ?? []).map((c) => c.split(";")[0]).join("; ");
   if (!res.ok) return { ok: false, status: res.status, body: await res.json().catch(() => ({})), slug, payload };

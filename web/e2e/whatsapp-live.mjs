@@ -414,7 +414,7 @@ const slug2 = `wa-iso-${Date.now().toString(36)}`;
 let ownerT2;
 await step("second shop signs up; it cannot see or touch the first shop's conversations (404)", async () => {
   ownerT2 = await pwRequest.newContext({ baseURL: A });
-  const su = await ownerT2.post("/api/v1/signup", { data: { shopName: "WA Iso Shop", slug: slug2, ownerName: "Iso Owner", email: `iso-${slug2}@example.com`, phone: `+9715${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`, password: "iso-pass-12345", emirate: "Dubai", plan: "growth" } });
+  const su = await ownerT2.post("/api/v1/signup", { data: { shopName: "WA Iso Shop", slug: slug2, ownerName: "Iso Owner", email: `iso-${slug2}@example.com`, phone: `+9715${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`, password: "iso-pass-12345", emirate: "Dubai", plan: "growth", acceptLegal: true } });
   eq(su.status(), 200, "signup " + (await su.text()).slice(0, 100));
   eq((await ownerT2.post("/api/v1/billing/card/fake", { data: {} })).status(), 200, "test card starts the trial");   eq((await json(await ownerT2.get("/api/v1/admin/whatsapp/conversations"))).conversations.length, 0, "empty list");
   eq((await ownerT2.get(`/api/v1/admin/whatsapp/conversations/${convA.id}`)).status(), 404, "read other shop's chat");

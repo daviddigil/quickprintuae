@@ -1,5 +1,7 @@
 import type { Copy } from "@/lib/i18n/en";
-import { getCopy, hrefFor, SOLUTION_SLUGS, type Locale } from "@/lib/i18n";
+import { getLegalCopy } from "@/lib/i18n/legal";
+import { LEGAL_KEYS, LEGAL_PATHS } from "@/lib/legal";
+import { DEFAULT_TRIAL_DAYS, getCopy, hrefFor, SOLUTION_SLUGS, type Locale } from "@/lib/i18n";
 
 /** Single source for marketing navigation. Add a page here and it appears in the header, mobile menu and footer. */
 export interface NavLink { label: string; href: string; /** submenu (desktop dropdown, indented in the mobile menu) */ children?: NavLink[] }
@@ -20,11 +22,12 @@ export function navLinks(locale: Locale = "en"): NavLink[] {
 }
 
 export function footerColumns(locale: Locale = "en"): { title: string; links: NavLink[] }[] {
-  const c = getCopy(locale), h = (p: string) => hrefFor(locale, p);
+  const c = getCopy(locale), h = (p: string) => hrefFor(locale, p), legal = getLegalCopy(locale, DEFAULT_TRIAL_DAYS);
   return [
     { title: c.footer.product, links: [{ label: c.nav.features, href: h("/#features") }, { label: c.nav.liveStores, href: h("/stores") }, { label: c.nav.pricing, href: h("/pricing") }, { label: c.footer.liveDemo, href: "/s/demo" }] },
     { title: c.footer.solutions, links: SOLUTION_SLUGS.map((s) => ({ label: solutionLabel(c, s), href: h(`/solutions/${s}`) })) },
     { title: c.footer.start, links: [{ label: c.footer.startTrial, href: h("/signup") }, { label: c.nav.signIn, href: "/login" }, { label: c.nav.faq, href: h("/#faq") }] },
+    { title: legal.footerTitle, links: LEGAL_KEYS.map((k) => ({ label: legal.nav[k], href: h(LEGAL_PATHS[k]) })) },
   ];
 }
 

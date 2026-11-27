@@ -44,7 +44,7 @@ export function MarketingFooter({ locale = "en" }: { locale?: Locale }) {
   const c = getCopy(locale);
   return (
     <footer className="border-t border-outline-variant bg-surface-low">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
         <div>
           <Logo href={hrefFor(locale, "/")} label={c.common.homeAria} />
           <p className="mt-3 max-w-xs text-sm text-on-surface-variant">{c.footer.tagline}</p>

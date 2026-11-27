@@ -10,6 +10,8 @@ import { getPlanUsage, hasFeature, tenantWalkInStats } from "@/server/billing";
 import { agentOnline } from "@/server/walk-in/agents";
 import { CommissionTerms } from "@/components/superadmin/CommissionTerms";
 import { describeRule, resolveRule } from "@/lib/commission";
+import { listLegalAcceptances } from "@/server/legal";
+import { LEGAL_VERSION, needsReaccept } from "@/lib/legal";
 import { walkInSettings } from "@/server/walk-in/settings";
 import { deleteTenant, disableWalkIn, extendTrial, setDirectoryListed, setTenantStatus, updateTenantDomain, updateTenantPlan } from "../../actions";
 
@@ -27,6 +29,7 @@ export default async function TenantDetail({ params, searchParams }: { params: P
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const t = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, id) });
   if (!t) notFound();
+  const [legalLast] = await listLegalAcceptances(t.id, 1);
   const [plans, usage, staff, invoices, [{ n: totalOrders }], recentAudit] = await Promise.all([
     db.query.plans.findMany({ orderBy: schema.plans.sortOrder }),
     getPlanUsage(t.id),
@@ -71,6 +74,7 @@ export default async function TenantDetail({ params, searchParams }: { params: P
           <dl className="grid grid-cols-3 gap-y-2 px-5 py-4 text-sm">
             <dt className="text-on-surface-variant">Verification</dt><dd className="col-span-2 flex items-center gap-2"><VerificationBadge status={t.verificationStatus} /><Link href="/superadmin/verifications" className="text-xs text-primary hover:underline">Review queue</Link></dd>
             <dt className="text-on-surface-variant">Card on file</dt><dd className="col-span-2">{t.cardStatus === "on_file" ? `${t.billingRef?.cardBrand ?? "Card"} •••• ${t.billingRef?.cardLast4 ?? ""}` : t.cardStatus}</dd>
+            <dt className="text-on-surface-variant">Legal terms</dt><dd className="col-span-2" data-testid="legal-acceptance">{legalLast ? <>Accepted v{legalLast.version} on {fmtDateTime(legalLast.acceptedAt)}{needsReaccept(legalLast) && <span className="text-warning"> (current is v{LEGAL_VERSION})</span>}</> : "No acceptance on record"}</dd>
             <dt className="text-on-surface-variant">Legal name</dt><dd className="col-span-2">{t.legalName ?? "—"}</dd>
             <dt className="text-on-surface-variant">TRN</dt><dd className="col-span-2">{t.trn ?? "—"}</dd>
             <dt className="text-on-surface-variant">Email</dt><dd className="col-span-2">{t.email ?? "—"}</dd>
