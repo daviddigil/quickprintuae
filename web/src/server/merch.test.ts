@@ -46,7 +46,7 @@ async function input(t: Awaited<ReturnType<typeof shop>>, line: Partial<Checkout
   return {
     contact: { name: "Aisha Test", email: "a@example.com", phone: "0501234567" },
     lines: [{ productId: t.product.id, quantity: 1, pages: 1, selections: {}, fileIds: [], ...line }],
-    fulfillment: "pickup", pickupLocationId: t.pickup.id, slotStart: slot.start, provider: "stripe",
+    fulfillment: "pickup", pickupLocationId: t.pickup.id, slotStart: slot.start, provider: "stripe", rightsDeclared: true,
   };
 }
 const rejects = (p: Promise<unknown>, re: RegExp) => assert.rejects(p, (e: Error) => e instanceof CheckoutError && re.test(e.message));

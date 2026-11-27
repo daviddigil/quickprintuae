@@ -18,7 +18,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ tenant:
   try {
     order = await createOrder(tenant, parsed.data, customer?.id ?? null);
   } catch (e) {
-    if (e instanceof CheckoutError) return NextResponse.json({ error: e.message }, { status: e.status });
+    if (e instanceof CheckoutError) return NextResponse.json(e.code ? { error: e.code, message: e.message } : { error: e.message }, { status: e.status });
     console.error("checkout failed", e);
     return NextResponse.json({ error: "Could not place your order. Please try again." }, { status: 500 });
   }

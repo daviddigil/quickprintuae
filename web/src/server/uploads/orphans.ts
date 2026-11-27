@@ -2,6 +2,7 @@ import "server-only";
 import { and, inArray, isNull, lt, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { deleteFile } from "@/server/storage";
+import { withoutHeld } from "@/server/retention";
 
 export const ORPHAN_HOURS = 24;
 
@@ -37,7 +38,8 @@ export async function purgeOrphanUploads(opts: { hours?: number; now?: Date; lim
   if (!candidates.length) return 0;
   const keep = await referencedFileIds(candidates.map((f) => f.id));
   const docKeys = new Set((await db.select({ k: schema.sellerVerifications.documentKey }).from(schema.sellerVerifications)).map((r) => r.k).filter(Boolean) as string[]);
-  const doomed = candidates.filter((f) => !keep.has(f.id) && !docKeys.has(f.storageKey));
+  // legal hold: never purge files of a held order or a held shop
+  const doomed = await withoutHeld(candidates.filter((f) => !keep.has(f.id) && !docKeys.has(f.storageKey)));
   for (const f of doomed) await deleteFile(f.storageKey);
   if (doomed.length) await db.update(schema.files).set({ deletedAt: new Date() }).where(inArray(schema.files.id, doomed.map((f) => f.id)));
   return doomed.length;

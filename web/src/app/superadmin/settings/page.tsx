@@ -42,6 +42,10 @@ export default async function PlatformSettings() {
         <CardHeader title="Free trial length" subtitle="Days of free use for every new shop (all plans)."
           action={<Link href="/superadmin/settings/trial" className="rounded-lg bg-inverse-surface px-4 py-2 text-sm font-semibold text-white">Set trial length</Link>} />
       </Card>
+      <Card className="mb-6" data-testid="identity-setting-link">
+        <CardHeader title="Platform identity (tax)" subtitle="Legal name, TRN, address and VAT status printed on SaaS invoices, credit notes and statements."
+          action={<Link href="/superadmin/settings/identity" className="rounded-lg bg-inverse-surface px-4 py-2 text-sm font-semibold text-white">Edit identity</Link>} />
+      </Card>
       <Card className="mb-6">
         <CardHeader title="Runtime" />
         <dl className="grid grid-cols-2 gap-y-2 px-5 py-4 text-sm sm:grid-cols-4">

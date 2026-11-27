@@ -1,5 +1,5 @@
 import "server-only";
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { and, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -16,9 +16,11 @@ import { walkInSettings } from "./walk-in/settings";
 import { storefrontColumns } from "./storefront-products";
 import { createPrintJobs, nextTicketNo } from "./walk-in/queue";
 import { NOT_OPEN_MESSAGE, orderingState } from "./trust/gating";
+import { requiresRightsDeclaration } from "@/lib/rights-declaration";
+import { RIGHTS_DECLARATION_VERSION } from "@/lib/compliance";
 
 export class CheckoutError extends Error {
-  constructor(message: string, public status = 400) { super(message); }
+  constructor(message: string, public status = 400, public code?: string) { super(message); }
 }
 
 /* ---------- guest order access tokens ---------- */
@@ -85,6 +87,8 @@ export const CheckoutInput = z.object({
   slotStart: z.string().datetime(),
   provider: z.literal("stripe").default("stripe"),
   notes: z.string().max(1000).optional(),
+  /** customer ticked "I own / may print this content and it is lawful" (required when the cart has an uploaded file or design) */
+  rightsDeclared: z.boolean().optional(),
 });
 export type CheckoutInputT = z.infer<typeof CheckoutInput>;
 
@@ -98,6 +102,11 @@ export async function createOrder(tenant: Tenant, input: CheckoutInputT, custome
   await assertTenantCanTakeOrders(tenant);
   if (!(await enabledProviders(tenant)).includes(input.provider as ProviderCode))
     throw new CheckoutError("Selected payment method is not available.");
+
+  // UAE compliance: the customer must declare they may print what they upload / design (rejected with 400 rights_declaration_required)
+  const needsDeclaration = requiresRightsDeclaration(input.lines);
+  if (needsDeclaration && input.rightsDeclared !== true)
+    throw new CheckoutError("Please confirm that you own this content or have the right to print it.", 400, "rights_declaration_required");
 
   const ds = deliverySettings(tenant);
   const productIds = [...new Set(input.lines.map((l) => l.productId))];
@@ -173,7 +182,15 @@ export async function createOrder(tenant: Tenant, input: CheckoutInputT, custome
       deliveryAddress: addr, slotStart: new Date(slot.start), slotEnd: new Date(slot.end),
       subtotal: totals.subtotal, deliveryFee: totals.deliveryFee, discount: totals.discount, vat: totals.vat, total: totals.total,
       currency: "AED", paymentProvider: input.provider, notes: input.notes || null,
+      ...(needsDeclaration ? { rightsDeclaredAt: new Date(), rightsDeclarationVersion: RIGHTS_DECLARATION_VERSION } : {}),
     }).returning();
+    if (needsDeclaration) {
+      await tx.insert(schema.consentLogs).values({
+        tenantId: tenant.id, userId: customerId,
+        subjectKey: createHash("sha256").update(input.contact.email.toLowerCase()).digest("hex"),
+        purpose: "rights_declaration", granted: true, version: RIGHTS_DECLARATION_VERSION,
+      });
+    }
     await tx.insert(schema.orderItems).values(items.map((i) => ({
       orderId: order.id, productId: i.product.id, productName: i.product.name, kind: i.product.kind,
       quantity: i.quantity, pages: i.pages, selections: i.selections, selectionLabels: i.labels,

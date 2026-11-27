@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { OrderStatus } from "@/lib/types";
 import { deleteFile } from "./storage";
+import { withoutHeld } from "./retention";
 
 /** Allowed manual transitions in the admin panel. */
 export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
@@ -25,6 +26,8 @@ export async function setOrderStatus(orderId: string, status: OrderStatus, messa
     await (await import("@/server/commission")).reverseOrderCommission(o.id).catch((e) => console.error("commission reversal failed", e));
     // a paid order that is refunded/cancelled: post a reversing (negative) ledger row so the shop's payout is reduced
     if (o.paidAt) await (await import("@/server/payouts/ledger")).applyRefund(o.id, o.total).catch((e) => console.error("ledger refund failed", e));
+    // tax: a credit note (sequential per shop, idempotent) for the paid order that was refunded or cancelled after payment
+    if (o.paidAt) await (await import("@/server/credit-notes")).issueOrderCreditNote(o.id, o.total, message ?? `Order ${status}`).catch((e) => console.error("credit note failed", e));
   }
   return o;
 }
@@ -56,9 +59,10 @@ async function scheduleConfidentialPurge(orderId: string, tenantId: string) {
     .where(and(eq(schema.files.orderId, orderId), eq(schema.files.confidential, true), isNull(schema.files.deletedAt)));
 }
 
-/** Cron: physically delete confidential files past retention. */
+/** Cron: physically delete confidential files past retention (skips legal-hold orders and shops). */
 export async function purgeExpiredFiles() {
-  const due = await db.query.files.findMany({ where: (f, { lt, and, isNull }) => and(lt(f.deleteAfter, new Date()), isNull(f.deletedAt)) });
+  // legal hold: files of a held order / held shop are skipped (they are purged on a later run once the hold is lifted)
+  const due = await withoutHeld(await db.query.files.findMany({ where: (f, { lt, and, isNull }) => and(lt(f.deleteAfter, new Date()), isNull(f.deletedAt)) }));
   for (const f of due) await deleteFile(f.storageKey);
   if (due.length) await db.update(schema.files).set({ deletedAt: new Date() }).where(inArray(schema.files.id, due.map((f) => f.id)));
   return due.length;
