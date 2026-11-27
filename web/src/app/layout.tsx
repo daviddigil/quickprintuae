@@ -5,6 +5,7 @@ import { SITE, siteUrl } from "@/lib/seo/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationLd, softwareApplicationLd, websiteLd } from "@/lib/seo/jsonld";
 import { getSeoPlans } from "@/lib/seo/knowledge";
+import { CookieNotice } from "@/components/platform/CookieNotice";
 
 /** Pages that describe the product + plans get SoftwareApplication (with AED offers from the plans table). */
 const SOFTWARE_PATHS = new Set(["/", "/pricing", "/ar", "/ar/pricing"]);
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen">
         {scope === "platform" && <JsonLd data={[organizationLd(), websiteLd(), ...(software ? [software] : [])]} />}
         {children}
+        {scope !== "private" && <CookieNotice locale={locale} />}
       </body>
     </html>
   );

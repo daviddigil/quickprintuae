@@ -12,6 +12,8 @@ import { saveStoreSettings } from "../actions";
 import { listLegalAcceptances } from "@/server/legal";
 import { LEGAL_KEYS, LEGAL_PATHS, LEGAL_VERSION, needsReaccept } from "@/lib/legal";
 import { fmtDateTime } from "@/components/platform/PageTitle";
+import { saveConsumerTerms } from "./consumer-actions";
+import { RETURNS_POLICY_TEMPLATE } from "@/lib/consumer-terms";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
 
 export const metadata = { title: "Store settings" };
@@ -94,6 +96,21 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </div>
           </Card>
           <Button>Save settings</Button>
+        </fieldset>
+      </form>
+      <form action={saveConsumerTerms} data-testid="consumer-terms-form">
+        <fieldset disabled={!owner}>
+          <Card>
+            <CardHeader title="Customer terms: cancellation, returns and delivery" subtitle="Shown to customers on the checkout page before they pay and on their order confirmation. Leave blank to use the template text." />
+            <div className="grid gap-4 p-5">
+              <Field label="Complaints email" hint="(defaults to your shop email)"><Input type="email" name="complaintEmail" defaultValue={tenant.complaintEmail ?? ""} placeholder={tenant.email ?? "complaints@yourshop.ae"} /></Field>
+              <Field label="Returns, cancellation and delivery policy" hint="(separate paragraphs with a blank line)">
+                <Textarea name="returnsPolicy" rows={8} defaultValue={tenant.returnsPolicy ?? ""} placeholder={RETURNS_POLICY_TEMPLATE.en.join("\n\n")} data-testid="returns-policy" />
+              </Field>
+              <p className="text-xs text-on-surface-variant">Template for review: must be checked by a UAE lawyer. The placeholder above is the default shown to customers (English and Arabic) until you write your own.</p>
+              <div><Button>Save customer terms</Button></div>
+            </div>
+          </Card>
         </fieldset>
       </form>
       <p className="text-sm text-on-surface-variant" data-testid="legal-history">

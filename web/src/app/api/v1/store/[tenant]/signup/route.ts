@@ -4,12 +4,15 @@ import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { createSession, hashPassword } from "@/lib/auth";
 import { resolveTenant } from "@/lib/tenant";
+import { setMarketingOptIn } from "@/server/consent";
 
 const Body = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(7).max(30),
   password: z.string().min(8).max(200),
+  /** unticked checkbox: only "on" counts as consent */
+  marketing: z.string().optional(),
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ tenant: string }> }) {
@@ -23,6 +26,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ tenant:
   const [u] = await db.insert(schema.users).values({
     tenantId: tenant.id, role: "customer", email: email.toLowerCase(), name, phone, passwordHash: await hashPassword(password),
   }).returning();
+  if (parsed.data.marketing === "on") await setMarketingOptIn(tenant.id, u.id, true, req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null);
   await createSession({ uid: u.id, role: "customer", tid: tenant.id });
   return NextResponse.json({ ok: true });
 }

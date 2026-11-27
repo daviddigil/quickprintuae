@@ -36,6 +36,7 @@ export function AccountAuth({ store }: { store: string }) {
           <Field label="Email"><Input name="email" type="email" required autoComplete="email" /></Field>
           <Field label="Mobile"><Input name="phone" type="tel" required placeholder="+971 5x xxx xxxx" autoComplete="tel" /></Field>
           <Field label="Password" hint="(min 8 characters)"><Input name="password" type="password" minLength={8} required autoComplete="new-password" /></Field>
+          <label className="flex items-start gap-2 text-xs text-on-surface-variant"><input type="checkbox" name="marketing" className="mt-0.5 size-5" /><span>Send me offers by email and WhatsApp (optional, you can switch it off any time).</span></label>
           <Button variant="store" className="w-full" disabled={busy}>{busy ? "Creating…" : "Create account"}</Button>
         </form>
       )}

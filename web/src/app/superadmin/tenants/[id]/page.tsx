@@ -13,6 +13,7 @@ import { describeRule, resolveRule } from "@/lib/commission";
 import { listLegalAcceptances } from "@/server/legal";
 import { LEGAL_VERSION, needsReaccept } from "@/lib/legal";
 import { walkInSettings } from "@/server/walk-in/settings";
+import { setTenantLegalHold } from "./legal-hold-actions";
 import { deleteTenant, disableWalkIn, extendTrial, setDirectoryListed, setTenantStatus, updateTenantDomain, updateTenantPlan } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +24,9 @@ const ERRORS: Record<string, string> = {
   domain_taken: "That domain is already used by another store.",
 };
 
-export default async function TenantDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string; walkin?: string }> }) {
+export default async function TenantDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string; walkin?: string; hold?: string }> }) {
   const { id } = await params;
-  const { error, walkin } = await searchParams;
+  const { error, walkin, hold } = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const t = await db.query.tenants.findFirst({ where: eq(schema.tenants.id, id) });
   if (!t) notFound();
@@ -203,6 +204,17 @@ export default async function TenantDetail({ params, searchParams }: { params: P
             </li>
           ))}
         </ul>
+      </Card>
+
+      <Card className={`mt-6 ${t.legalHold ? "border-warning" : ""}`} data-testid="legal-hold-section">
+        <CardHeader title="Legal hold" subtitle="While on, automatic purges (confidential files, walk-in files, orphan uploads) skip every file of this shop, e.g. during a dispute or investigation. Only the superadmin can change it. Audited."
+          action={<Badge tone={t.legalHold ? "yellow" : "gray"}>{t.legalHold ? "on hold" : "no hold"}</Badge>} />
+        {hold && <div className="px-5 pt-4"><Alert tone="green">Legal hold turned {hold}.</Alert></div>}
+        <form action={setTenantLegalHold} className="flex flex-wrap items-end gap-2 px-5 py-4">
+          <input type="hidden" name="tenantId" value={t.id} /><input type="hidden" name="hold" value={t.legalHold ? "0" : "1"} />
+          <Field label="Reason (audit log)"><Input name="reason" className="w-72" placeholder="e.g. dispute #123" /></Field>
+          <Button variant={t.legalHold ? "secondary" : "danger"} data-testid="legal-hold-toggle">{t.legalHold ? "Release legal hold" : "Place legal hold"}</Button>
+        </form>
       </Card>
 
       <Card className="mt-6 border-critical/40">

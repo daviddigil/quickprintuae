@@ -6,15 +6,17 @@ import { requireStorefrontTenant } from "@/lib/tenant";
 import { formatAED } from "@/lib/pricing";
 import { formatUaeDateTime } from "@/lib/slots";
 import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/types";
-import { Badge, Card, EmptyState, ORDER_STATUS_TONE } from "@/components/ui";
+import { Alert, Badge, Button, Card, EmptyState, ORDER_STATUS_TONE } from "@/components/ui";
 import { AccountAuth } from "@/components/store/account-auth";
 import { orderToken } from "@/server/checkout";
+import { requestErasure, updateMarketing } from "./actions";
 
 export const metadata = { title: "My account" };
 export const dynamic = "force-dynamic";
 
-export default async function AccountPage({ params }: { params: Promise<{ tenant: string }> }) {
+export default async function AccountPage({ params, searchParams }: { params: Promise<{ tenant: string }>; searchParams: Promise<{ ok?: string; error?: string }> }) {
   const tenant = await requireStorefrontTenant((await params).tenant);
+  const sp = await searchParams;
   const customer = await getCustomer(tenant.id);
   const base = `/s/${tenant.slug}`;
   if (!customer) {
@@ -38,6 +40,8 @@ export default async function AccountPage({ params }: { params: Promise<{ tenant
         <div><h1 className="text-2xl font-bold">Hi, {customer.name.split(" ")[0]}</h1><p className="text-sm text-on-surface-variant">{customer.email}{customer.phone ? ` · ${customer.phone}` : ""}</p></div>
         <a href={`/logout?next=${base}`} className="text-sm font-medium text-on-surface-variant hover:text-on-surface">Sign out</a>
       </div>
+      {sp.error && <div className="mt-4" role="alert"><Alert tone="red">{sp.error}</Alert></div>}
+      {sp.ok && <div className="mt-4" role="status"><Alert tone="green">{sp.ok}</Alert></div>}
       <h2 className="mb-3 mt-8 text-lg font-semibold">Your orders</h2>
       {orders.length === 0 ? (
         <Card><EmptyState title="No orders yet"><Link href={base} className="text-store mt-2 inline-block font-medium">Start printing →</Link></EmptyState></Card>
@@ -65,6 +69,28 @@ export default async function AccountPage({ params }: { params: Promise<{ tenant
           ))}
         </div>
       )}
+
+      <section aria-labelledby="privacy-h" className="mt-10" data-testid="privacy-section">
+        <h2 id="privacy-h" className="mb-3 text-lg font-semibold">Your privacy</h2>
+        <Card className="space-y-5 p-4">
+          <form action={updateMarketing} className="space-y-2">
+            <input type="hidden" name="store" value={tenant.slug} />
+            <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="marketing" defaultChecked={customer.marketingOptIn} className="mt-0.5 size-5" /><span>Send me offers by email and WhatsApp. <span className="block text-on-surface-variant">Off by default. Order updates are always sent.</span></span></label>
+            <Button size="sm" variant="secondary">Save preference</Button>
+          </form>
+          <div className="border-t border-outline-variant pt-4">
+            <p className="text-sm font-medium">Download my data</p>
+            <p className="text-sm text-on-surface-variant">A JSON file with your profile, orders, quote requests and uploaded file details from {tenant.name}.</p>
+            <a href={`${base}/account/export`} className="text-store mt-2 inline-flex min-h-11 items-center text-sm font-semibold underline">Download my data (JSON)</a>
+          </div>
+          <form action={requestErasure} className="space-y-2 border-t border-outline-variant pt-4">
+            <input type="hidden" name="store" value={tenant.slug} />
+            <p className="text-sm font-medium">Delete my data</p>
+            <p className="text-sm text-on-surface-variant">We will remove your personal details and uploaded files and close your account. Invoices and order totals must be kept by law, without your personal details. {tenant.name} will confirm within 30 days.</p>
+            <Button size="sm" variant="danger">Request deletion of my data</Button>
+          </form>
+        </Card>
+      </section>
     </div>
   );
 }
