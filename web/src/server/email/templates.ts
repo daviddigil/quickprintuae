@@ -9,13 +9,16 @@ export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
 const safeUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : "#");
 
 /** Layout wrapper: table-based, inline styles, 600px, works in Gmail/Outlook. `bodyHtml` must already be escaped. */
+/** Absolute URL of the white-wordmark logo (emails are opened outside the app, so the link must be absolute). */
+const logoUrl = () => `${(process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "")}/brand/horizontal-dark-480.png`;
+
 export function layout(opts: { title: string; bodyHtml: string; preheader?: string; footerNote?: string }): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(opts.title)}</title></head>
 <body style="margin:0;background:#f4f5f9;font-family:Arial,Helvetica,sans-serif;color:#1D1E3A">
 <span style="display:none;max-height:0;overflow:hidden">${esc(opts.preheader ?? "")}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f9;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden">
-<tr><td style="background:#1D1E3A;padding:20px 28px"><span style="font-size:20px;font-weight:800;letter-spacing:.5px;color:#ffffff">QUICKPRINT</span> <span style="font-size:12px;font-weight:700;color:#00FFCC">UAE</span></td></tr>
+<tr><td style="background:#1D1E3A;padding:20px 28px"><img src="${esc(logoUrl())}" width="190" height="45" alt="QuickPrint UAE" style="display:block;border:0;outline:none;height:auto;max-width:190px"></td></tr>
 <tr><td style="height:4px;background:linear-gradient(90deg,#00FFCC,#FF007F,#3300FF)"></td></tr>
 <tr><td style="padding:28px;font-size:16px;line-height:1.6">${opts.bodyHtml}</td></tr>
 <tr><td style="padding:16px 28px 24px;font-size:12px;line-height:1.5;color:#5b5d7a;border-top:1px solid #e6e7f0">${esc(opts.footerNote ?? "You are receiving this because of activity on your QuickPrint account.")}<br>Powered by Nexsofture Tech</td></tr>

@@ -9,3 +9,6 @@
 **/playwright-report
 .git
 docs
+
+# brand source files (web-ready copies ship from web/public/brand)
+Quickprint_logos

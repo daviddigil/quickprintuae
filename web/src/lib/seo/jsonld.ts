@@ -26,7 +26,7 @@ const sameAsFromEnv = () => (process.env.SOCIAL_LINKS ?? "").split(",").map((s) 
 export function organizationLd(): LdNode {
   return compact({
     "@type": "Organization", "@id": ids.org(), name: SITE.legalName, legalName: SITE.legalName, url: siteUrl(),
-    logo: { "@type": "ImageObject", url: abs("/icon"), width: 512, height: 512 },
+    logo: { "@type": "ImageObject", url: abs("/brand/icon-512.png"), width: 512, height: 512 },
     brand: { "@type": "Brand", name: SITE.name },
     areaServed: { "@type": "Country", name: "United Arab Emirates" },
     sameAs: sameAsFromEnv(),

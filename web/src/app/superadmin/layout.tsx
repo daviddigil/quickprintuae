@@ -1,3 +1,4 @@
+import { LogoImage } from "@/components/platform/Logo";
 import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth";
 import { PoweredBy } from "@/components/PoweredBy";
@@ -26,7 +27,7 @@ export default async function SuperadminLayout({ children }: { children: React.R
     <div className="min-h-screen lg:flex">
       <aside className="bg-inverse-surface text-inverse-on-surface/75 lg:min-h-screen lg:w-60 lg:shrink-0">
         <div className="flex items-center justify-between px-5 py-4 lg:block">
-          <Link href="/superadmin" className="flex items-center gap-2 text-lg font-extrabold text-white"><span aria-hidden className="grid size-7 place-items-center rounded-lg text-[11px] font-extrabold" style={{ background: "linear-gradient(135deg,#00ffcc,#ff007f 50%,#3300ff)" }}>QP</span>QuickPrint <span className="text-xs font-semibold text-[#00ffcc]">HQ</span></Link>
+          <Link href="/superadmin" className="flex items-center gap-2" aria-label="QuickPrint HQ"><LogoImage variant="horizontal" onDark height={30} /><span className="text-xs font-semibold text-[#00ffcc]">HQ</span></Link>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm lg:flex-col lg:pb-0">
           {NAV.map((n) => (

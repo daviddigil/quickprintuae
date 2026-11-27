@@ -1,3 +1,5 @@
+<p align="center"><img src="Quickprint_logos/Quickprint-Horizontal.png" alt="QuickPrint UAE" width="320"></p>
+
 # QuickPrint UAE
 
 > **Powered by Nexsofture Tech**

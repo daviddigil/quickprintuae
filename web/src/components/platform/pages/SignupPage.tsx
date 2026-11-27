@@ -21,7 +21,7 @@ export async function SignupPage({ locale, plan }: { locale: Locale; plan?: stri
     <LiveOfferBanner locale={locale} />
     <main className="min-h-screen bg-surface-low lg:grid lg:grid-cols-2">
       <section className="hidden bg-inverse-surface p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <Logo onDark href={home} label={copy.common.homeAria} />
+        <Logo onDark href={home} label={copy.common.homeAria} height={44} priority />
         <div>
           <h1 className="text-4xl font-extrabold leading-tight">{t.headline}</h1>
           <ul className="mt-8 space-y-3 text-inverse-on-surface/80">

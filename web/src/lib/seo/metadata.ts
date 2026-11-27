@@ -19,7 +19,7 @@ export interface PageMetaInput {
   /** use the title as is (no "| QuickPrint" suffix), e.g. for the home page */
   absoluteTitle?: boolean;
   noindex?: boolean;
-  /** absolute or site-relative OG image; defaults to the generated /opengraph-image */
+  /** absolute or site-relative OG image; defaults to the static /opengraph-image.png */
   image?: string;
   type?: "website" | "article";
 }
@@ -33,7 +33,7 @@ export function pageMetadata(i: PageMetaInput): Metadata {
     for (const l of SITE.locales) languages[SITE.hreflang[l]] = abs(localizedPath(i.path, l));
     languages["x-default"] = abs(localizedPath(i.path, "en"));
   }
-  const image = i.image ? (i.image.startsWith("http") ? i.image : abs(i.image)) : abs("/opengraph-image");
+  const image = i.image ? (i.image.startsWith("http") ? i.image : abs(i.image)) : abs("/opengraph-image.png");
   return {
     metadataBase: new URL(abs("/")),
     title: i.absoluteTitle ? { absolute: i.title } : i.title,

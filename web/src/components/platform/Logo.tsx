@@ -1,14 +1,42 @@
 import Link from "next/link";
 
-/** Brand mark: gradient QP tile (placeholder until the master logo lands in /public/brand) + QUICKPRINT / UAE.COM wordmark. */
-export function Logo({ className = "", href = "/", onDark = false, label = "QuickPrint uae.com home" }: { className?: string; href?: string; onDark?: boolean; label?: string }) {
+/**
+ * The official QuickPrint UAE logo (files in public/brand, built from Quickprint_logos by scripts/build-brand-assets.py).
+ * horizontal = header/footer/auth, stacked = hero/poster, signature = tight one-line spaces, mark = icon only.
+ * Light-background art by default; `onDark` swaps to the white-wordmark versions. Plain <img>/<picture> with explicit
+ * width and height (no layout shift, no dependency on Next image optimisation in the Docker standalone build).
+ */
+export type LogoVariant = "horizontal" | "stacked" | "signature" | "mark";
+
+const ART: Record<LogoVariant, { ratio: number; widths: number[]; webp: boolean }> = {
+  horizontal: { ratio: 1200 / 287, widths: [240, 480, 960], webp: true },
+  stacked: { ratio: 1024 / 876, widths: [320, 640], webp: true },
+  signature: { ratio: 840 / 123, widths: [280, 560], webp: true },
+  mark: { ratio: 1, widths: [64, 128, 256], webp: false },
+};
+
+export function LogoImage({ variant = "horizontal", onDark = false, height = 36, className = "", priority = false, alt = "QuickPrint UAE" }: {
+  variant?: LogoVariant; onDark?: boolean; height?: number; className?: string; priority?: boolean; alt?: string;
+}) {
+  const a = ART[variant];
+  const base = variant === "mark" ? "mark" : `${variant}${onDark ? "-dark" : ""}`;
+  const width = Math.round(height * a.ratio);
+  const set = (ext: string) => a.widths.map((w) => `/brand/${base}-${w}.${ext} ${w}w`).join(", ");
+  const mid = a.widths[Math.min(1, a.widths.length - 1)];
+  const img = (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={`/brand/${base}-${mid}.png`} srcSet={set("png")} sizes={`${width}px`} width={width} height={height} alt={alt}
+      decoding="async" {...(priority ? { fetchPriority: "high" as const } : { loading: "lazy" as const })} className={`block h-auto max-w-full ${className}`} style={{ height, width }} />
+  );
+  return a.webp ? <picture><source type="image/webp" srcSet={set("webp")} sizes={`${width}px`} />{img}</picture> : img;
+}
+
+export function Logo({ className = "", href = "/", onDark = false, label = "QuickPrint UAE home", variant = "horizontal", height = 36, priority = false }: {
+  className?: string; href?: string; onDark?: boolean; label?: string; variant?: LogoVariant; height?: number; priority?: boolean;
+}) {
   return (
-    <Link href={href} title={label} className={`inline-flex items-center gap-2.5 ${onDark ? "text-white" : "text-on-surface"} ${className}`}>
-      <span aria-hidden className="grid h-8 w-8 place-items-center rounded-xl text-[13px] font-extrabold tracking-tight text-white" style={{ background: "linear-gradient(135deg,#00ffcc 0%,#ff007f 50%,#3300ff 100%)" }}>QP</span>
-      <span className="flex flex-col leading-none">
-        <span className="text-lg font-extrabold uppercase tracking-tight">QuickPrint</span>
-        <span className={`mt-0.5 text-[10px] font-semibold uppercase tracking-[0.22em] ${onDark ? "text-[#00ffcc]" : "text-tertiary"}`}>uae.com</span>
-      </span>
+    <Link href={href} title={label} className={`inline-flex items-center ${className}`}>
+      <LogoImage variant={variant} onDark={onDark} height={height} priority={priority} />
     </Link>
   );
 }

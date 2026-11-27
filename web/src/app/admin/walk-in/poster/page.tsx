@@ -1,6 +1,7 @@
 import { requireStaff } from "@/lib/auth";
 import { hasFeature } from "@/server/billing";
 import { PoweredBy } from "@/components/PoweredBy";
+import { LogoImage } from "@/components/platform/Logo";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { LinkButton } from "@/components/ui";
 import { redirect } from "next/navigation";
@@ -33,7 +34,8 @@ export default async function PosterPage() {
           ))}
         </ol>
         <p className="mt-auto pt-10 text-sm text-on-surface-variant">Online payment only · Cards, Apple Pay &amp; Google Pay</p>
-        <PoweredBy className="mt-3" />
+        <div className="mt-3 flex items-center justify-center gap-2 text-xs text-on-surface-variant"><span>Ordering by</span><LogoImage variant="horizontal" height={20} /></div>
+        <PoweredBy className="mt-2" />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LayoutDashboard, ShoppingBag, Package, Truck, CreditCard, Settings, Users, Receipt, Menu, X, ExternalLink, LogOut, UserRound, Sparkles, MessageCircle, ScanLine, Inbox, Landmark, ShieldCheck } from "lucide-react";
 import { cn } from "@/components/ui";
+import { LogoImage } from "@/components/platform/Logo";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -35,7 +36,7 @@ export function AdminNav({ shopName, storeUrl, isOwner, userName, planLine, walk
       </div>
       <aside className={cn("w-full shrink-0 flex-col border-r border-outline-variant bg-surface-lowest lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 print:hidden", open ? "flex" : "hidden")}>
         <div className="border-b border-outline-variant px-5 py-4">
-          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-on-surface-variant"><span aria-hidden className="grid size-6 place-items-center rounded-lg text-[10px] font-extrabold text-white" style={{ background: "linear-gradient(135deg,#00ffcc,#ff007f 50%,#3300ff)" }}>QP</span>QuickPrint Admin</p>
+          <p className="flex items-center gap-2"><LogoImage variant="horizontal" height={28} /><span className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">Admin</span></p>
           <p className="mt-1 truncate font-bold">{shopName}</p>
           <p className="text-xs text-on-surface-variant">{planLine}</p>
         </div>

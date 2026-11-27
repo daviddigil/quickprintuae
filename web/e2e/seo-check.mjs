@@ -67,7 +67,7 @@ await check("llms-full.txt: answer-first knowledge (quick facts, AED pricing, pr
 });
 await check("manifest, OG image, icons, security.txt", async () => {
   const m = await (await get("/manifest.webmanifest")).json(); truthy(m.name && m.short_name && m.icons?.length && m.theme_color && m.start_url, "manifest fields");
-  for (const p of ["/opengraph-image", "/icon", "/apple-icon"]) { const r = await get(p); eq(r.status, 200, p); eq(r.headers.get("content-type"), "image/png", p + " type"); const b = Buffer.from(await r.arrayBuffer()); truthy(b.length > 1000 && b[0] === 0x89 && b[1] === 0x50, p + " is a real PNG"); }
+  for (const p of ["/opengraph-image.png", "/icon.png", "/apple-icon.png"]) { const r = await get(p); eq(r.status, 200, p); eq(r.headers.get("content-type"), "image/png", p + " type"); const b = Buffer.from(await r.arrayBuffer()); truthy(b.length > 1000 && b[0] === 0x89 && b[1] === 0x50, p + " is a real PNG"); }
   const s = await (await get("/.well-known/security.txt")).text(); truthy(/^Contact: /m.test(s) && /^Expires: /m.test(s), "security.txt Contact+Expires");
 });
 await check("private areas send X-Robots-Tag: noindex", async () => {

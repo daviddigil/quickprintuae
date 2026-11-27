@@ -14,7 +14,7 @@ export function MarketingNav({ locale = "en" }: { locale?: Locale }) {
   return (
     <header className="sticky top-0 z-40 border-b border-outline-variant/60 bg-surface/80 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/70">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Logo href={hrefFor(locale, "/")} label={c.common.homeAria} />
+        <Logo href={hrefFor(locale, "/")} label={c.common.homeAria} height={36} priority />
         <nav aria-label={c.nav.mainAria} className="hidden items-center gap-1 md:flex">
           {links.map((l) => l.children ? (
             <div key={l.href} className="group relative">
