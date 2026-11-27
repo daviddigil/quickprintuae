@@ -106,6 +106,12 @@ export const tenants = pgTable("tenants", {
   pendingPlanId: uuid("pending_plan_id"),
   pendingPlanAt: timestamp("pending_plan_at", { withTimezone: true }),
   autoRenew: boolean("auto_renew").notNull().default(true),
+  /** legal hold: personal-data deletion and purge jobs must skip this shop's records while a dispute/investigation is open */
+  legalHold: boolean("legal_hold").notNull().default(false),
+  /** shop's cancellation / returns / delivery terms, shown before payment and on the order confirmation */
+  returnsPolicy: text("returns_policy"),
+  /** where customers can send complaints (defaults to the shop email) */
+  complaintEmail: text("complaint_email"),
   settings: jsonb("settings").$type<TenantSettings>().notNull().default({} as TenantSettings),
   createdAt: createdAt(),
 });
@@ -130,6 +136,11 @@ export const users = pgTable("users", {
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   active: boolean("active").notNull().default(true),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  /** marketing messages need an explicit opt-in (transactional messages do not) */
+  marketingOptIn: boolean("marketing_opt_in").notNull().default(false),
+  marketingOptInAt: timestamp("marketing_opt_in_at", { withTimezone: true }),
+  /** set when the personal data of this account was erased/anonymised on request */
+  anonymisedAt: timestamp("anonymised_at", { withTimezone: true }),
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex("users_tenant_email_idx").on(sql`coalesce(${t.tenantId}::text, 'platform')`, sql`lower(${t.email})`),
@@ -473,6 +484,13 @@ export const orders = pgTable("orders", {
   paymentRoute: text("payment_route").notNull().default("own"),
   walkInCustomerId: uuid("walk_in_customer_id").references(() => walkInCustomers.id, { onDelete: "set null" }),
   ticketNo: text("ticket_no"),
+  /** customer declared they own / may print the uploaded content (see src/lib/compliance.ts RIGHTS_DECLARATION_VERSION) */
+  rightsDeclaredAt: timestamp("rights_declared_at", { withTimezone: true }),
+  rightsDeclarationVersion: text("rights_declaration_version"),
+  /** legal hold: no erasure/purge of this order's data while set */
+  legalHold: boolean("legal_hold").notNull().default(false),
+  /** the shop declined/cancelled the job under the acceptable-use policy */
+  declinedReason: text("declined_reason"),
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -794,6 +812,115 @@ export const legalAcceptances = pgTable("legal_acceptances", {
   userAgent: text("user_agent"),
 }, (t) => [index("legal_acceptances_tenant_idx").on(t.tenantId, t.acceptedAt)]);
 export type LegalAcceptance = typeof legalAcceptances.$inferSelect;
+
+
+/* ---------- UAE compliance ---------- */
+/** Public "report content" / takedown requests, worked by the superadmin. */
+export const contentReports = pgTable("content_reports", {
+  id: id(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "set null" }),
+  orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+  /** illegal | offensive | infringes_ip | counterfeit | personal_data | other */
+  category: text("category").notNull(),
+  description: text("description").notNull(),
+  url: text("url"),
+  reporterName: text("reporter_name"),
+  reporterEmail: text("reporter_email"),
+  /** open | reviewing | actioned | rejected */
+  status: text("status").notNull().default("open"),
+  resolution: text("resolution"),
+  handledBy: uuid("handled_by"),
+  handledAt: timestamp("handled_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index("content_reports_status_idx").on(t.status, t.createdAt)]);
+
+/** Data-subject requests (PDPL): customers asking a shop for their data or its erasure; shop owners asking the platform. */
+export const dataSubjectRequests = pgTable("data_subject_requests", {
+  id: id(),
+  /** shop the data belongs to; null for a request about the shop-owner's own account (handled by the platform) */
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  requesterEmail: text("requester_email").notNull(),
+  /** access | erasure | correction | objection */
+  kind: text("kind").notNull(),
+  /** requested | in_progress | completed | rejected */
+  status: text("status").notNull().default("requested"),
+  note: text("note"),
+  resolution: text("resolution"),
+  /** response deadline (set at creation from DSR_DUE_DAYS) */
+  dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  handledBy: uuid("handled_by"),
+  createdAt: createdAt(),
+}, (t) => [index("dsr_tenant_status_idx").on(t.tenantId, t.status, t.dueAt)]);
+
+/** Security / personal-data incident register (superadmin). */
+export const securityIncidents = pgTable("security_incidents", {
+  id: id(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  /** low | medium | high | critical */
+  severity: text("severity").notNull().default("medium"),
+  /** open | contained | resolved */
+  status: text("status").notNull().default("open"),
+  detectedAt: timestamp("detected_at", { withTimezone: true }).notNull().defaultNow(),
+  containedAt: timestamp("contained_at", { withTimezone: true }),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  personalDataInvolved: boolean("personal_data_involved").notNull().default(false),
+  dataCategories: jsonb("data_categories").$type<string[]>().notNull().default([]),
+  affectedTenantIds: jsonb("affected_tenant_ids").$type<string[]>().notNull().default([]),
+  affectedCount: integer("affected_count"),
+  actionsTaken: text("actions_taken"),
+  /** decision on notifying the regulator / affected people, with reasoning (a lawyer decides; this records it) */
+  notifiedRegulatorAt: timestamp("notified_regulator_at", { withTimezone: true }),
+  notifiedSubjectsAt: timestamp("notified_subjects_at", { withTimezone: true }),
+  notificationDecision: text("notification_decision"),
+  createdBy: uuid("created_by"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Append-only consent / opt-in log (cookies, marketing, rights declaration). */
+export const consentLogs = pgTable("consent_logs", {
+  id: id(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  /** a stable subject key when there is no user (hashed email) */
+  subjectKey: text("subject_key"),
+  /** cookies_analytics | marketing_email | marketing_whatsapp | rights_declaration */
+  purpose: text("purpose").notNull(),
+  granted: boolean("granted").notNull(),
+  version: text("version"),
+  ipHash: text("ip_hash"),
+  createdAt: createdAt(),
+}, (t) => [index("consent_logs_subject_idx").on(t.tenantId, t.userId, t.purpose, t.createdAt)]);
+
+/** Credit notes for refunded shop orders (issuer = the shop) and refunded SaaS invoices (issuer = QuickPrint). Sequential per issuer. */
+export const creditNotes = pgTable("credit_notes", {
+  id: id(),
+  /** 'platform' or 'tenant:<tenantId>' : numbering is gapless within a scope */
+  scope: text("scope").notNull(),
+  seq: integer("seq").notNull(),
+  number: text("number").notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "set null" }),
+  orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+  saasInvoiceId: uuid("saas_invoice_id").references(() => saasInvoices.id, { onDelete: "set null" }),
+  /** the original invoice/order number being credited */
+  refersTo: text("refers_to").notNull(),
+  subtotal: money("subtotal").notNull(),
+  vat: money("vat").notNull(),
+  total: money("total").notNull(),
+  currency: text("currency").notNull().default("AED"),
+  reason: text("reason"),
+  issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("credit_notes_scope_seq_idx").on(t.scope, t.seq),
+  uniqueIndex("credit_notes_order_total_idx").on(t.orderId, t.total).where(sql`${t.orderId} is not null`),
+]);
+export type ContentReport = typeof contentReports.$inferSelect;
+export type DataSubjectRequest = typeof dataSubjectRequests.$inferSelect;
+export type SecurityIncident = typeof securityIncidents.$inferSelect;
+export type CreditNote = typeof creditNotes.$inferSelect;
 
 /** Pre-launch waitlist: shown instead of signup in production while no live payment gateway is configured. */
 export const signupWaitlist = pgTable("signup_waitlist", {

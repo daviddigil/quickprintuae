@@ -148,6 +148,13 @@
       "when": 1795799840395,
       "tag": "0020_legal_acceptances",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795804763804,
+      "tag": "0021_uae_compliance",
+      "breakpoints": true
     }
   ]
 }
