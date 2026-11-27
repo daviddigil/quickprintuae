@@ -134,6 +134,13 @@
       "when": 1795718182606,
       "tag": "0018_unusual_nighthawk",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795761770292,
+      "tag": "0019_legal_network",
+      "breakpoints": true
     }
   ]
 }

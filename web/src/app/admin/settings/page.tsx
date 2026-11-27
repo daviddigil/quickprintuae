@@ -1,3 +1,6 @@
+import { eq } from "drizzle-orm";
+import { db, schema } from "@/db";
+import { planDesignLimit } from "@/server/ai/card-quota";
 import { requireStaff } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { EMIRATES } from "@/lib/types";
@@ -15,6 +18,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const s = tenant.settings;
   const owner = user.role === "owner";
+  const aiLimit = await planDesignLimit(tenant);
+  const aiRate = (await db.query.usageRates.findFirst({ where: eq(schema.usageRates.kind, "ai_card_design") }))?.priceAed ?? 0;
   const proto = env.appUrl.startsWith("https") ? "https" : "http";
   const subdomainUrl = `${proto}://${tenant.slug}.${env.rootDomain}`;
   return (
@@ -57,7 +62,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <Field label="Homepage headline"><Input name="heroTitle" defaultValue={s.heroTitle ?? ""} /></Field>
               <Field label="Homepage sub-headline"><Input name="heroSubtitle" defaultValue={s.heroSubtitle ?? ""} /></Field>
               <div className="md:col-span-2"><Field label="Announcement bar" hint="e.g. Eid holiday hours"><Textarea name="announcement" rows={2} defaultValue={s.announcement ?? ""} /></Field></div>
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="aiDesignerEnabled" defaultChecked={s.aiDesignerEnabled} />Show the AI business card designer</label>
+              <div>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="aiDesignerEnabled" defaultChecked={s.aiDesignerEnabled} />Show the AI business card designer</label>
+                <p className="mt-1 text-xs text-on-surface-variant" data-testid="ai-billing-note">Each customer can create {aiLimit} AI designs a month on your plan. Every AI design is billed to your monthly invoice{aiRate > 0 ? ` (AED ${aiRate} each)` : ""} whether or not the customer checks out. Templates and the editor are free.</p>
+              </div>
             </div>
           </Card>
           <Card>

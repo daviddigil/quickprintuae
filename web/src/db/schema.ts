@@ -1,5 +1,5 @@
 import {
-  pgTable, text, integer, boolean, timestamp, jsonb, numeric, uuid, pgEnum, uniqueIndex, index,
+  pgTable, text, integer, boolean, timestamp, jsonb, numeric, uuid, pgEnum, uniqueIndex, index, primaryKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { WaCartItem } from "@/server/whatsapp/cart-math";
@@ -40,6 +40,8 @@ export const plans = pgTable("plans", {
   /** how shops on this plan pay: 'subscription' (monthly fee, no commission) | 'commission' (no monthly fee, commission per order) */
   billingModel: text("billing_model").notNull().default("subscription"),
   /** free monthly allowance of pay-as-you-go usage per kind, e.g. { ai_chat_turn: 200 } */
+  /** AI business-card designs one customer may generate per calendar month on this plan (billed to the shop as usage) */
+  aiDesignsPerCustomer: integer("ai_designs_per_customer").notNull().default(3),
   includedUsage: jsonb("included_usage").$type<Record<string, number>>().notNull().default({}),
   /** commission: optional flat fee per print job, and min/max fee per order (null max = no cap) */
   perJobFee: numeric("per_job_fee", { precision: 8, scale: 2, mode: "number" }).notNull().default(0),
@@ -675,6 +677,15 @@ export const cardDesigns = pgTable("card_designs", {
 });
 
 /* ---------- SaaS billing ---------- */
+/** Per-customer monthly counter for AI card designs (atomic reservation, see src/server/ai/card-quota.ts). subjectKey = customer id, anonymous visitor id or hashed IP. */
+export const aiDesignQuota = pgTable("ai_design_quota", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  subjectKey: text("subject_key").notNull(),
+  period: text("period").notNull(), // YYYY-MM (Asia/Dubai)
+  used: integer("used").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.tenantId, t.subjectKey, t.period] })]);
+
 /** Platform rate card for pay-as-you-go usage (AED per unit). 0 = not billed. Edited by the superadmin. */
 export const usageRates = pgTable("usage_rates", {
   id: id(),

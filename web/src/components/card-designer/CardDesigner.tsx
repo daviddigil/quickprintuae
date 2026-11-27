@@ -290,12 +290,20 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
     return out;
   }, [details, colors, useColors]);
 
+  const [quota, setQuota] = useState<{ used: number; limit: number; remaining: number } | null>(null);
+  useEffect(() => {
+    if (!aiEnabled) return;
+    let alive = true;
+    fetch(`/api/v1/ai/business-card?store=${encodeURIComponent(store)}`).then((r) => r.json()).then((d) => { if (alive && d.quota) setQuota(d.quota); }).catch(() => {});
+    return () => { alive = false; };
+  }, [aiEnabled, store]);
+
   async function generate(ev: React.FormEvent) {
     ev.preventDefault();
     if (!clean.name) return setError("Enter at least your name");
     setError(null); setNote(null);
     if (clean.website) onQr(clean.website.startsWith("http") ? clean.website : `https://${clean.website}`);
-    if (!aiEnabled) { setDesigns(templateDesigns(clean, { widthMm: W, heightMm: H, count: 6, doubleSided })); return; }
+    if (!aiEnabled || quota?.remaining === 0) { setDesigns(templateDesigns(clean, { widthMm: W, heightMm: H, count: 6, doubleSided })); if (quota?.remaining === 0) setNote(`You have used all ${quota.limit} AI designs for this month. Pick a template or edit a design yourself.`); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/v1/ai/business-card", {
@@ -303,6 +311,7 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
         body: JSON.stringify({ store, details: clean, widthMm: W, heightMm: H, doubleSided }),
       });
       const data = await res.json();
+      if (data.quota) setQuota(data.quota);
       if (!res.ok) throw new Error(data.error ?? "Could not generate designs");
       setDesigns(data.designs ?? []);
       if (data.note) setNote(data.note);
@@ -319,6 +328,7 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
     <div className="space-y-3 rounded-xl border border-outline-variant bg-white p-4 text-sm">
       <form onSubmit={generate} className="space-y-2">
         <p className="text-on-surface-variant">{aiEnabled ? "Tell us about you — AI creates 3 print-ready designs you can edit." : "Fill in your details and pick a template."}</p>
+        {aiEnabled && quota && <p data-testid="ai-quota" className={`text-xs font-medium ${quota.remaining === 0 ? "text-critical" : "text-on-surface-variant"}`}>{quota.remaining === 0 ? `You have used all ${quota.limit} AI designs this month. Templates and the editor are still free.` : `${quota.remaining} of ${quota.limit} AI designs left this month`}</p>}
         <input className={inp} placeholder="Full name *" value={details.name} onChange={set("name")} required />
         <div className="grid grid-cols-2 gap-2">
           <input className={inp} placeholder="Job title" value={details.title} onChange={set("title")} />
@@ -348,7 +358,7 @@ function AiPanel({ store, aiEnabled, W, H, doubleSided, onPick, onQr }: {
         </label>
         {error && <p className="rounded bg-critical-container px-2 py-1 text-critical">{error}</p>}
         <button disabled={loading} className="btn-store w-full rounded-lg px-4 py-2 font-semibold disabled:opacity-60">
-          {loading ? "Designing… (10–30 s)" : aiEnabled ? "✨ Generate designs" : "Show templates"}
+          {loading ? "Designing… (10–30 s)" : aiEnabled && quota?.remaining !== 0 ? "✨ Generate designs" : aiEnabled ? "Show templates" : "Show templates"}
         </button>
       </form>
 

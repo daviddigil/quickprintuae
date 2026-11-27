@@ -25,6 +25,7 @@ function PlanForm({ plan }: { plan?: Plan }) {
       <Field label="AED / month"><Input name="priceMonthly" type="number" step="0.01" defaultValue={plan?.priceMonthly ?? 0} /></Field>
       <Field label="AED / year"><Input name="priceYearly" type="number" step="0.01" defaultValue={plan?.priceYearly ?? 0} /></Field>
       <Field label="Commission %" hint="(of order value, ex VAT)"><Input name="orderFeePct" type="number" step="0.01" defaultValue={plan?.orderFeePct ?? 0} /></Field>
+      <Field label="AI designs / customer / month" hint="(AI business-card designer, billed to the shop)"><Input name="aiDesignsPerCustomer" type="number" min="0" max="100" step="1" defaultValue={plan?.aiDesignsPerCustomer ?? 3} /></Field>
       <Field label="Per print job (AED)" hint="(optional flat fee)"><Input name="perJobFee" type="number" step="0.01" min="0" defaultValue={plan?.perJobFee ?? 0} /></Field>
       <Field label="Min per order (AED)"><Input name="minOrderFee" type="number" step="0.01" min="0" defaultValue={plan?.minOrderFee ?? 0} /></Field>
       <Field label="Max per order (AED)" hint="(blank = no cap)"><Input name="maxOrderFee" type="number" step="0.01" min="0" defaultValue={plan?.maxOrderFee ?? ""} /></Field>

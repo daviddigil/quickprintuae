@@ -9,6 +9,8 @@ import { backfillTrustKeys } from "../src/server/trust/keys";
 async function main() {
   const { db, client } = createDb();
   await ensurePlans(db);
+  // default AI price (AED per AI business-card design, billed to the shop on its monthly invoice). Never overrides a rate the superadmin set.
+  await db.insert(schema.usageRates).values({ kind: "ai_card_design", priceAed: 1, active: true }).onConflictDoNothing();
 
   const saEmail = process.env.SUPERADMIN_EMAIL ?? "admin@quickprint.ae";
   const saPass = process.env.SUPERADMIN_PASSWORD || "change-me-now";

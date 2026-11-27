@@ -82,6 +82,7 @@ export async function savePlan(fd: FormData) {
     priceYearly: num(fd, "priceYearly") ?? 0,
     orderFeePct: num(fd, "orderFeePct") ?? 0,
     perJobFee: num(fd, "perJobFee") ?? 0,
+    aiDesignsPerCustomer: Math.min(100, Math.max(0, Math.floor(num(fd, "aiDesignsPerCustomer") ?? 3))),
     minOrderFee: num(fd, "minOrderFee") ?? 0,
     maxOrderFee: num(fd, "maxOrderFee"),
     maxOrdersPerMonth: num(fd, "maxOrdersPerMonth"),
