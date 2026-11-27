@@ -10,6 +10,9 @@ import { setupMode } from "@/server/billing/gateway";
 import { assertSignupAllowed, guardErrorFromDb, recordSignupIp } from "@/server/trust/guards";
 import { clientIp } from "@/server/trust/request";
 import { findOfferForSignup, OFFER_FAILURE_MESSAGE } from "@/server/offers";
+import { LEGAL_VERSION, SIGNUP_ACCEPT_KEYS } from "@/lib/legal";
+import { recordLegalAcceptance } from "@/server/legal";
+import { verifyTurnstile } from "@/server/captcha";
 import { RESERVED_SLUGS, SignupBody } from "./schema";
 
 /**
@@ -30,6 +33,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `${first.path.join(".")}: ${first.message}`, issues: parsed.error.issues }, { status: 400 });
   }
   const b = parsed.data;
+  // legal acceptance is mandatory (checked before anything is created)
+  if (!b.acceptLegal) return NextResponse.json({ error: "Please accept the Terms, Privacy Policy and Seller Agreement to create your store.", code: "legal_required" }, { status: 400 });
+  const captcha = await verifyTurnstile(b.captchaToken, ip === "local" ? null : ip);
+  if (!captcha.ok) return NextResponse.json({ error: captcha.message, code: "captcha_failed" }, { status: 400 });
   if (RESERVED_SLUGS.has(b.slug)) return NextResponse.json({ error: "This store address is reserved" }, { status: 409 });
   if (await db.query.tenants.findFirst({ where: eq(schema.tenants.slug, b.slug), columns: { id: true } }))
     return NextResponse.json({ error: "This store address is already taken" }, { status: 409 });
@@ -46,7 +53,9 @@ export async function POST(req: Request) {
     });
     if (offer.ok) await db.update(schema.tenants).set({ billingRef: { ...tenant.billingRef, pendingOffer: offer.offer.id } }).where(eq(schema.tenants.id, tenant.id));
     await createSession({ uid: owner.id, role: "owner", tid: tenant.id });
+    await recordLegalAcceptance({ tenantId: tenant.id, userId: owner.id, ip: ip === "local" ? null : ip, userAgent: req.headers.get("user-agent") });
     await audit("tenant.signup", { slug: tenant.slug, plan: b.plan }, tenant.id);
+    await audit("legal.accepted", { documents: SIGNUP_ACCEPT_KEYS, version: LEGAL_VERSION, via: "signup" }, tenant.id);
     await recordSignupIp(tenant.id, ip === "local" ? null : ip);
     return NextResponse.json({ ok: true, slug: tenant.slug, next: "card", fake: mode.fake, live: mode.live?.code ?? null });
   } catch (e) {

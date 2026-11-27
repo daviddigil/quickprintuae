@@ -2,6 +2,7 @@
 import { useId, useRef, useState } from "react";
 import { CheckCircle2, X } from "lucide-react";
 import { Button, Field, Input, Textarea, Alert } from "@/components/ui";
+import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/security/TurnstileWidget";
 import { FileUploader, type UploadedFile } from "./file-uploader";
 
 /** "Request a quote" button + dialog on the product page. */
@@ -24,6 +25,8 @@ export function QuoteRequestButton({ store, product, selections, quantity, label
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [qty, setQty] = useState<string>("");
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaRound, setCaptchaRound] = useState(0);
 
   function open() {
     setQty(quantity ? String(quantity) : "");
@@ -44,7 +47,7 @@ export function QuoteRequestButton({ store, product, selections, quantity, label
         body: JSON.stringify({
           name: fd.get("name"), phone: fd.get("phone"), email: fd.get("email") ?? "", message: fd.get("message"),
           website: fd.get("website") ?? "", quantity: Number.isInteger(q) && q > 0 ? q : null,
-          productId: product.id, selections: selections ?? {}, fileIds: files.map((f) => f.id),
+          productId: product.id, selections: selections ?? {}, fileIds: files.map((f) => f.id), captchaToken: captcha ?? undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -53,6 +56,7 @@ export function QuoteRequestButton({ store, product, selections, quantity, label
     } catch (err) {
       setError((err as Error).message);
       setState("form");
+      if (TURNSTILE_SITE_KEY) { setCaptcha(null); setCaptchaRound((n) => n + 1); } // a token works once
     }
   }
 
@@ -93,10 +97,11 @@ export function QuoteRequestButton({ store, product, selections, quantity, label
               </div>
               {/* honeypot: hidden from people and assistive tech */}
               <div aria-hidden className="absolute -start-[9999px] h-0 w-0 overflow-hidden"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
+              <TurnstileWidget key={captchaRound} onToken={setCaptcha} />
               {error && <div role="alert"><Alert tone="red">{error}</Alert></div>}
               <div className="flex flex-wrap justify-end gap-2">
                 <Button type="button" variant="secondary" onClick={close} className="min-h-11">Cancel</Button>
-                <Button type="submit" disabled={state === "sending"} className="min-h-11" data-testid="quote-submit">{state === "sending" ? "Sending…" : "Send request"}</Button>
+                <Button type="submit" disabled={state === "sending" || (!!TURNSTILE_SITE_KEY && !captcha)} className="min-h-11" data-testid="quote-submit">{state === "sending" ? "Sending…" : "Send request"}</Button>
               </div>
             </form>
           )}

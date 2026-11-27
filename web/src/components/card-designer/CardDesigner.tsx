@@ -1,4 +1,5 @@
 "use client";
+import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/security/TurnstileWidget";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CardDesign, CardElement, CardSide } from "@/lib/types";
 import { CARD_FONTS, GOOGLE_FONTS_URL } from "./fonts";
@@ -316,6 +317,8 @@ function AiPanel({ store, W, H, doubleSided, details, onDetails, quota, onQuota,
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaRound, setCaptchaRound] = useState(0);
   const clean = useMemo(() => cleanDetails(details), [details]);
 
   async function generate(ev: React.FormEvent) {
@@ -329,7 +332,7 @@ function AiPanel({ store, W, H, doubleSided, details, onDetails, quota, onQuota,
     try {
       const res = await fetch("/api/v1/ai/business-card", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ store, details: clean, widthMm: W, heightMm: H, doubleSided }),
+        body: JSON.stringify({ store, details: clean, widthMm: W, heightMm: H, doubleSided, captchaToken: captcha ?? undefined }),
       });
       const data = await res.json();
       if (data.quota) onQuota(data.quota);
@@ -341,6 +344,7 @@ function AiPanel({ store, W, H, doubleSided, details, onDetails, quota, onQuota,
       setDesigns(templateDesigns(clean, { widthMm: W, heightMm: H, count: 3, doubleSided }));
     } finally {
       setLoading(false);
+      if (TURNSTILE_SITE_KEY) { setCaptcha(null); setCaptchaRound((n) => n + 1); } // a token works once
     }
   }
 
@@ -351,7 +355,8 @@ function AiPanel({ store, W, H, doubleSided, details, onDetails, quota, onQuota,
         {quota && <p data-testid="ai-quota" className={`text-xs font-medium ${quota.remaining === 0 ? "text-critical" : "text-on-surface-variant"}`}>{quota.remaining === 0 ? `You have used all ${quota.limit} AI designs this month. Templates and the editor are still free.` : `${quota.remaining} of ${quota.limit} AI designs left this month`}</p>}
         <DetailsForm value={details} onChange={onDetails} showStyle compact idPrefix="ai" />
         {error && <p className="rounded bg-critical-container px-2 py-1 text-critical">{error}</p>}
-        <button disabled={loading} data-testid="ai-generate" className="btn-store min-h-11 w-full rounded-lg px-4 py-2 font-semibold disabled:opacity-60">
+        <TurnstileWidget key={captchaRound} onToken={setCaptcha} />
+        <button disabled={loading || (!!TURNSTILE_SITE_KEY && !captcha && quota?.remaining !== 0)} data-testid="ai-generate" className="btn-store min-h-11 w-full rounded-lg px-4 py-2 font-semibold disabled:opacity-60">
           {loading ? "Designing… (10–30 s)" : quota?.remaining !== 0 ? "✨ Generate designs" : "Show templates"}
         </button>
       </form>

@@ -778,6 +778,23 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: createdAt(),
 });
 
+/**
+ * Records that a shop owner accepted the legal documents (terms, privacy, seller agreement) at a given LEGAL_VERSION.
+ * Append-only evidence: the IP is stored only as a salted hash, never in clear.
+ */
+export const legalAcceptances = pgTable("legal_acceptances", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  /** document keys accepted, e.g. ["terms","privacy","seller-agreement"] */
+  documents: jsonb("documents").$type<string[]>().notNull(),
+  version: text("version").notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+  ipHash: text("ip_hash"),
+  userAgent: text("user_agent"),
+}, (t) => [index("legal_acceptances_tenant_idx").on(t.tenantId, t.acceptedAt)]);
+export type LegalAcceptance = typeof legalAcceptances.$inferSelect;
+
 /** Pre-launch waitlist: shown instead of signup in production while no live payment gateway is configured. */
 export const signupWaitlist = pgTable("signup_waitlist", {
   id: id(),

@@ -7,6 +7,7 @@ import { recordUsage } from "@/server/usage";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { resolveTenant } from "@/lib/tenant";
+import { verifyTurnstile } from "@/server/captcha";
 import { generateCardDesigns } from "@/server/ai/card-designer";
 
 export const runtime = "nodejs";
@@ -14,6 +15,8 @@ export const maxDuration = 120;
 
 const Body = z.object({
   store: z.string().min(1).max(120),
+  /** Cloudflare Turnstile token (only checked when TURNSTILE_SECRET_KEY is set) */
+  captchaToken: z.string().max(4096).optional(),
   widthMm: z.number().min(40).max(120).optional(),
   heightMm: z.number().min(40).max(120).optional(),
   doubleSided: z.boolean().optional(),
@@ -57,6 +60,8 @@ export async function POST(req: Request) {
   if (limited(`${tenant.id}:${ip}`)) return NextResponse.json({ error: "Too many designs requested. Please wait a few minutes." }, { status: 429 });
 
   // per-customer monthly allowance by plan (Starter 3, Growth 5, Enterprise 15); the shop is billed for every AI design it generates
+  const cap = await verifyTurnstile(parsed.data.captchaToken, ip === "local" ? null : ip);
+  if (!cap.ok) return NextResponse.json({ error: cap.message, captcha: true }, { status: 400 });
   const who = await identify(tenant.id);
   const run = await withDesignQuota(tenant, who.subject, ip, () => generateCardDesigns(details, { widthMm, heightMm, doubleSided }));
   if (!run.allowed) return withVisitor(NextResponse.json({ error: quotaMessage(run.quota), quota: run.quota, limitReached: true }, { status: 429 }), who);

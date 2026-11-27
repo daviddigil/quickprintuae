@@ -19,4 +19,8 @@ export const SignupBody = z.object({
   plan: z.enum(["starter", "growth", "enterprise"]).default("growth"),
   /** optional promo code; blank = the running campaign (if any) applies automatically */
   promoCode: z.string().trim().max(40).optional(),
+  /** must be exactly true: "I agree to the Terms, Privacy Policy and Seller Agreement" (checkbox value "on" from forms is accepted) */
+  acceptLegal: z.union([z.literal(true), z.literal("true"), z.literal("on")]).optional(),
+  /** Cloudflare Turnstile token (only checked when TURNSTILE_SECRET_KEY is set) */
+  captchaToken: z.string().max(4096).optional(),
 });
