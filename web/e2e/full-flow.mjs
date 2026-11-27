@@ -87,7 +87,7 @@ await loginSuperadmin(sa, BASE);
 await sa.screenshot({ path: `${OUT}/superadmin.png`, fullPage: true });
 step("superadmin login + dashboard");
 await sa.goto(`${BASE}/superadmin/tenants`);
-await sa.getByText("Demo Print Hub").first().click();
+await sa.getByRole("link", { name: "Demo Print Hub" }).first().click();
 await sa.getByRole("button", { name: /Impersonate/i }).first().click();
 await sa.waitForURL(/\/admin/);
 await sa.getByText(/Return to superadmin/i).waitFor();
