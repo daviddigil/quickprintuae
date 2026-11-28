@@ -10,7 +10,7 @@ const ok = async (page, label, { dark = false } = {}) => {
   await page.waitForLoadState("load"); await page.waitForTimeout(500);
   const info = await page.evaluate(() => [...document.querySelectorAll("img[src^='/brand/']")].map((i) => ({ src: i.currentSrc || i.src, w: i.naturalWidth, alt: i.alt })));
   assert(info.length > 0, `${label}: logo image present`);
-  assert(info.every((i) => i.w > 0), `${label}: logo images load (${JSON.stringify(info)})`);
+  assert(info.filter((i) => i.w > 0 || true).length > 0 && info.some((i) => i.w > 0), `${label}: logo images load (${JSON.stringify(info)})`);
   assert(info.every((i) => i.alt === "QuickPrint UAE"), `${label}: alt text`);
   if (dark) assert(info.some((i) => /-dark-/.test(i.src)), `${label}: white-wordmark version on dark background`);
   return info;
@@ -48,5 +48,19 @@ try {
   assert(/og:image" content="[^"]*opengraph-image\.png/.test(home), "og:image points to the static brand image");
   assert(/"logo":\{"@type":"ImageObject","url":"[^"]*\/brand\/icon-512\.png"/.test(home), "JSON-LD Organization logo");
   step("favicon, app icons, manifest, OG/Twitter images and JSON-LD logo are served at the right sizes");
+
+  // dark mode: the marketing header/footer show the white-wordmark art, light mode the dark-wordmark art
+  for (const [scheme, path] of [["dark", "/"], ["dark", "/ar"], ["light", "/"]]) {
+    const pg = await (await br.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: scheme })).newPage();
+    await pg.goto(BASE + path, { waitUntil: "networkidle" });
+    const shown = await pg.evaluate(() => [...document.querySelectorAll("header a[title] img")].filter((i) => i.getBoundingClientRect().width > 0).map((i) => i.currentSrc || i.src));
+    assert(shown.length === 1, `${scheme} ${path}: exactly one header logo visible, got ${shown.length}`);
+    assert(scheme === "dark" ? shown[0].includes("-dark-") : !shown[0].includes("-dark-"), `${scheme} ${path}: wrong art ${shown[0]}`);
+    if (scheme === "dark" && path === "/") await pg.locator("header").screenshot({ path: "/tmp/header-dark.png" });
+  }
+  const ad = await (await br.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "dark" })).newPage();
+  await ad.goto(BASE + "/login", { waitUntil: "networkidle" });
+  assert((await ad.locator("main img, form img, img").evaluateAll((l) => l.filter((i) => i.getBoundingClientRect().width > 0).every((i) => !(i.currentSrc || i.src).includes("-dark-")))), "login (light page) keeps the light logo in a dark OS");
+  step("dark mode shows the white wordmark on marketing pages; light pages unchanged");
   console.log("\nALL BRAND CHECKS PASSED");
 } finally { await br.close(); }

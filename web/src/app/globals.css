@@ -111,6 +111,14 @@
 
 /* `.theme-auto` follows the system setting. Pages opt in (marketing, auth, design system);
    storefront/admin stay light until they migrate to tokens. `.dark` forces dark anywhere. */
+/* Logo: the white-wordmark art is shown instead of the dark one wherever the page is in dark mode. */
+.logo-art-dark { display: none; }
+.dark .logo-art-light { display: none; }
+.dark .logo-art-dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  .theme-auto:not(.light) .logo-art-light { display: none; }
+  .theme-auto:not(.light) .logo-art-dark { display: block; }
+}
 @media (prefers-color-scheme: dark) {
   .theme-auto:not(.light) {
     color-scheme: dark;

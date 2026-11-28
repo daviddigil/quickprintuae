@@ -34,9 +34,18 @@ export function LogoImage({ variant = "horizontal", onDark = false, height = 36,
 export function Logo({ className = "", href = "/", onDark = false, label = "QuickPrint UAE home", variant = "horizontal", height = 36, priority = false }: {
   className?: string; href?: string; onDark?: boolean; label?: string; variant?: LogoVariant; height?: number; priority?: boolean;
 }) {
+  // On `.theme-auto` pages the system theme can be dark, so render both artworks and let CSS (globals.css: .logo-art-*) show the right one.
+  const both = !onDark && variant !== "mark";
   return (
     <Link href={href} title={label} className={`inline-flex items-center ${className}`}>
-      <LogoImage variant={variant} onDark={onDark} height={height} priority={priority} />
+      {both ? (
+        <>
+          <span className="logo-art-light"><LogoImage variant={variant} height={height} priority={priority} /></span>
+          <span className="logo-art-dark"><LogoImage variant={variant} onDark height={height} priority={priority} /></span>
+        </>
+      ) : (
+        <LogoImage variant={variant} onDark={onDark} height={height} priority={priority} />
+      )}
     </Link>
   );
 }
