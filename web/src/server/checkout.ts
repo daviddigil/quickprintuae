@@ -226,6 +226,8 @@ export const WalkInCheckoutInput = z.object({
   phone: z.string().trim().min(7).max(30),
   files: z.array(WalkInFile).min(1).max(50),
   provider: z.literal("stripe").default("stripe"),
+  /** customer ticked "I own / may print this content and it is lawful" (always required: a walk-in order always has uploaded files) */
+  rightsDeclared: z.boolean().optional(),
 });
 export type WalkInCheckoutInputT = z.infer<typeof WalkInCheckoutInput>;
 
@@ -239,6 +241,8 @@ export const walkInStatusPath = (slug: string, orderId: string) => `/s/${slug}/w
  */
 export async function createWalkInOrder(tenant: Tenant, input: WalkInCheckoutInputT) {
   await assertTenantCanTakeOrders(tenant);
+  if (input.rightsDeclared !== true)
+    throw new CheckoutError("Please confirm that you own this content or have the right to print it.", 400, "rights_declaration_required");
   const gate = await walkInGate(tenant);
   if (!gate.ok) throw new CheckoutError("Walk-in printing isn't available at this shop.", 403);
   const settings = walkInSettings(tenant);
@@ -296,7 +300,12 @@ export async function createWalkInOrder(tenant: Tenant, input: WalkInCheckoutInp
       status: "pending_payment", fulfillment: "pickup", pickupLocationId: null, slotStart: null, slotEnd: null,
       subtotal: totals.subtotal, deliveryFee: 0, discount: 0, vat: totals.vat, total: totals.total,
       currency: "AED", paymentProvider: input.provider, source: "walk_in", walkInCustomerId: cust.id, ticketNo,
+      rightsDeclaredAt: new Date(), rightsDeclarationVersion: RIGHTS_DECLARATION_VERSION,
     }).returning();
+    await tx.insert(schema.consentLogs).values({
+      tenantId: tenant.id, userId: null, subjectKey: createHash("sha256").update(phone).digest("hex"),
+      purpose: "rights_declaration", granted: true, version: RIGHTS_DECLARATION_VERSION,
+    });
     const rows = await tx.insert(schema.orderItems).values(items.map((i) => ({
       orderId: order.id, productId: product.id, productName: product.name, kind: product.kind,
       quantity: i.copies, pages: i.pages, selections: i.selections, selectionLabels: i.price.labels,

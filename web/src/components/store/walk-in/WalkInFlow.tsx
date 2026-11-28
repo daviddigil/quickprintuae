@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
 import { CreditCard, FileText, Loader2, Minus, Plus, Upload, X } from "lucide-react";
+import { RightsDeclarationCheckbox } from "../RightsDeclarationCheckbox";
 import { Alert, Button, Card, Field, Input, Select, cn } from "@/components/ui";
 import { computeLinePrice, computeOrderTotals, formatAED } from "@/lib/pricing";
 import type { OptionGroup, ProductConfig } from "@/lib/types";
@@ -26,6 +27,7 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
   const [items, setItems] = useState<Item[]>([]);
   const provider = providers[0];
   const [busy, setBusy] = useState(false);
+  const [declared, setDeclared] = useState(false);
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
@@ -78,11 +80,11 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
 
   /* ---------- step 3 ---------- */
   async function pay() {
-    if (!provider) return;
+    if (!provider || !declared) return;
     setError(null); setBusy(true);
     const res = await fetch(`/api/v1/store/${store}/walk-in/checkout`, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, phone, provider, files: items.map((i) => ({ fileId: i.id, copies: i.copies, color: i.color, sides: i.sides, paperSize: i.paperSize, pages: i.pageCount == null ? i.pages : undefined })) }),
+      body: JSON.stringify({ name, phone, provider, rightsDeclared: declared, files: items.map((i) => ({ fileId: i.id, copies: i.copies, color: i.color, sides: i.sides, paperSize: i.paperSize, pages: i.pageCount == null ? i.pages : undefined })) }),
     });
     const j = await res.json().catch(() => ({}));
     if (res.ok && j.url) { window.location.href = j.url; return; }
@@ -198,7 +200,8 @@ export function WalkInFlow({ store, shopName, config, maxFiles, vatRate, pricesI
                 </div>
                 <p className="text-xs text-on-surface-variant">Online payment only — no cash. Printing starts as soon as you&apos;ve paid.</p>
               </div>}
-          <Button variant="store" className="h-12 w-full text-base" disabled={busy || !provider} onClick={pay} data-testid="pay">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}Pay {formatAED(totals.total)}</Button>
+          <RightsDeclarationCheckbox checked={declared} onChange={setDeclared} />
+          <Button variant="store" className="h-12 w-full text-base" disabled={busy || !provider || !declared} onClick={pay} data-testid="pay">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}Pay {formatAED(totals.total)}</Button>
           <button type="button" className="text-sm text-on-surface-variant underline" onClick={() => setStep(2)}>← Back to my files</button>
         </div>
       )}

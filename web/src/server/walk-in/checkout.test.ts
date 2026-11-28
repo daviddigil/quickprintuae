@@ -32,7 +32,7 @@ async function file(tenantId: string, filename: string, pageCount: number | null
   const [f] = await db.insert(schema.files).values({ tenantId, filename, storageKey: `k/${Math.random()}`, mime: "application/pdf", size: 10, pageCount, ...extra }).returning();
   return f;
 }
-const input = (files: WalkInCheckoutInputT["files"], extra: Partial<WalkInCheckoutInputT> = {}): WalkInCheckoutInputT => ({ name: "Aisha Test", phone: "050 123 4567", provider: "stripe", files, ...extra });
+const input = (files: WalkInCheckoutInputT["files"], extra: Partial<WalkInCheckoutInputT> = {}): WalkInCheckoutInputT => ({ name: "Aisha Test", phone: "050 123 4567", provider: "stripe", files, rightsDeclared: true, ...extra });
 const rejects = (p: Promise<unknown>, re: RegExp) => assert.rejects(p, (e: Error) => e instanceof CheckoutError && re.test(e.message));
 
 after(async () => { for (const id of created) await db.delete(schema.tenants).where(eq(schema.tenants.id, id)); await db.delete(schema.plans).where(eq(schema.plans.code, NOFLAG)); });
@@ -62,6 +62,7 @@ test("happy path: priced server-side, jobs awaiting payment, pages verified flag
 test("client-supplied pages are ignored when the server counted them", async () => {
   const t = await shop(); const f = await file(t.id, "x.pdf", 3);
   const o = await createWalkInOrder(t, input([{ fileId: f.id, copies: 1, color: "bw", sides: "single", paperSize: "A4", pages: 999 }]));
+  assert.ok(o.rightsDeclaredAt && o.rightsDeclarationVersion, "declaration stored on the walk-in order");
   const [item] = await db.select().from(schema.orderItems).where(eq(schema.orderItems.orderId, o.id));
   assert.equal(item.pages, 3);
 });
@@ -74,6 +75,7 @@ test("rejections: plan/switch off, bad phone, foreign/used/confidential/bad-type
   await assert.rejects(() => createWalkInOrder(off, input([line(of.id)])), (e: Error) => e instanceof CheckoutError && (e as CheckoutError).status === 403);
   const f = await file(ok.id, "a.pdf", 1);
   await rejects(createWalkInOrder(ok, input([line(f.id)], { phone: "12" })), /valid mobile/);
+  await assert.rejects(() => createWalkInOrder(ok, input([line(f.id)], { rightsDeclared: false })), (e: Error) => e instanceof CheckoutError && (e as CheckoutError).status === 400 && /right to print/.test(e.message));
   const other = await shop(); const foreign = await file(other.id, "a.pdf", 1);
   await rejects(createWalkInOrder(ok, input([line(foreign.id)])), /no longer available/);
   await rejects(createWalkInOrder(ok, input([line((await file(ok.id, "art.ai", null)).id)])), /can't be printed/);

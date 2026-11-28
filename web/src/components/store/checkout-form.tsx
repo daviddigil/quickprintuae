@@ -1,4 +1,5 @@
 "use client";
+import { RightsDeclarationCheckbox } from "./RightsDeclarationCheckbox";
 import { useMemo, useState } from "react";
 import { CreditCard, Loader2, MapPin, Store, Truck } from "lucide-react";
 import { Alert, Button, Field, Input, LinkButton, Select, Textarea, cn } from "@/components/ui";
@@ -6,7 +7,6 @@ import { clearCart, useCart } from "@/lib/cart";
 import { computeOrderTotals, formatAED } from "@/lib/pricing";
 import { generateSlots } from "@/lib/slots";
 import { EMIRATES, type DeliverySettings } from "@/lib/types";
-import { RIGHTS_DECLARATION } from "@/lib/compliance";
 import { requiresRightsDeclaration } from "@/lib/rights-declaration";
 import type { SellerIdentity } from "@/lib/seller-identity";
 import { SellerIdentityBlock } from "./seller-identity-block";
@@ -168,15 +168,7 @@ export function CheckoutForm(d: CheckoutData) {
         </section>
 
         {needsDeclaration && (
-          <section data-testid="rights-declaration">
-            <label className="flex cursor-pointer gap-3 rounded-lg border border-outline-variant p-3 text-sm">
-              <input type="checkbox" name="rightsDeclared" checked={declared} onChange={(e) => setDeclared(e.target.checked)} className="mt-1" data-testid="rights-checkbox" required />
-              <span>
-                <span className="block">{RIGHTS_DECLARATION.en}</span>
-                <span dir="rtl" lang="ar" className="mt-1 block text-on-surface-variant">{RIGHTS_DECLARATION.ar}</span>
-              </span>
-            </label>
-          </section>
+          <RightsDeclarationCheckbox checked={declared} onChange={setDeclared} />
         )}
 
         <section>

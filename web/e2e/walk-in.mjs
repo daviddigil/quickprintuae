@@ -38,6 +38,8 @@ async function walkIn(page, name, files) {
   const total = await page.getByTestId("total").innerText();
   await page.getByTestId("to-pay").click();
   await page.getByTestId("step-3").waitFor();
+  assert(await page.getByTestId("pay").isDisabled(), "Pay is disabled until the rights declaration is ticked");
+  await page.getByTestId("rights-checkbox").check();
   await page.getByTestId("pay").click();
   await page.waitForURL(/walk-in\/status\//, { timeout: 30000 });
   await page.getByTestId("ticket-no").waitFor();
