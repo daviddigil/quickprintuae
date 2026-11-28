@@ -37,9 +37,9 @@ services:
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-change-me-now}
       # Demo shop with published passwords: created on localhost only (never when APP_URL is a real domain)
       SEED_DEMO: ${SEED_DEMO:-true}
-      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (openssl rand -hex 32)}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY (openssl rand -hex 32)}
-      CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET missing. Updating an existing install? Run update-local.bat (or ./update-local.sh): it reuses your current secrets. See RUN-LOCALLY.md}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY missing. Do NOT invent a new one on an existing database: run update-local.bat (or ./update-local.sh) to reuse the current key. See RUN-LOCALLY.md}
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET missing. Run update-local.bat (or ./update-local.sh), or add CRON_SECRET=<random> to .env. See RUN-LOCALLY.md}
       UPLOAD_DIR: /data/uploads
     ports:
       - "${WEB_PORT:-5050}:3000"

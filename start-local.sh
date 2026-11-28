@@ -7,6 +7,10 @@ PORT="${WEB_PORT:-5050}"
 command -v docker >/dev/null 2>&1 || { echo "Docker is not installed. Install Docker Desktop first: https://www.docker.com/products/docker-desktop/"; exit 1; }
 docker info >/dev/null 2>&1 || { echo "Docker is installed but not running. Open Docker Desktop, wait until it says it is running, then run ./start-local.sh again."; exit 1; }
 
+if [ ! -f .env ] && docker volume ls --format '{{.Name}}' | grep -q pgdata; then
+  echo "You already have a QuickPrint database but no .env. New secrets would make stored encrypted data unreadable."
+  echo "Run ./update-local.sh instead: it keeps your data and reuses the current secrets."; exit 1
+fi
 if [ ! -f .env ]; then
   gen() { openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
   {

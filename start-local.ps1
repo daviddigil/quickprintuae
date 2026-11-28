@@ -19,6 +19,11 @@ function New-Secret {
   ($b | ForEach-Object { $_.ToString("x2") }) -join ""
 }
 
+if (-not (Test-Path ".env") -and ((docker volume ls --format "{{.Name}}" | Select-String "pgdata"))) {
+  Write-Host "You already have a QuickPrint database but no .env. Creating new secrets would make stored encrypted data (bank details, 2FA, gateway keys) unreadable." -ForegroundColor Yellow
+  Write-Host "Double-click update-local.bat instead: it keeps your data and reuses the current secrets." -ForegroundColor Yellow
+  exit 1
+}
 if (-not (Test-Path ".env")) {
   $lines = @(
     "# Created by start-local - LOCAL TRIAL ONLY (simulated payment + courier).",

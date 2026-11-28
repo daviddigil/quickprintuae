@@ -16,6 +16,12 @@ This trial mode **simulates payment and couriers** (no real money moves). Never 
 **If the page doesn't open:** check http://localhost:5050/api/health — it says if the database or setup is the problem. Or run `docker compose logs web` and send me the last lines.
 
 
+## Updating an existing install (keeps your data)
+
+After `git pull`, double-click **update-local.bat** (Mac/Linux: `./update-local.sh`). It reads the secrets from your running container, writes them to `.env`, rebuilds and restarts. Compose now refuses to start without `AUTH_SECRET`, `ENCRYPTION_KEY` and `CRON_SECRET`.
+
+Never make up a new `ENCRYPTION_KEY` for an existing database: it protects stored bank details, 2FA secrets and gateway keys, and a different key makes them unreadable. Never use `docker compose down -v` unless the data is disposable (it deletes the database).
+
 ## Developer mode: `npm run dev` inside Docker (live reload)
 Use this when you want to change the code and see it update in the browser instantly.
 ```
